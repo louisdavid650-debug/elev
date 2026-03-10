@@ -578,10 +578,16 @@
   async function sbSave(table, records) {
     const user = await getUser();
     if (!user) { console.log('sbSave: no user'); return; }
-    console.log('sbSave:', table, records.length, 'records for', user.email);
+    console.log('sbSave start:', table, 'user:', user.email);
     const rows = records.map(r => ({ id: String(r.id), user_id: user.id, data: r }));
-    const { error } = await db.from(table).upsert(rows, { onConflict: 'id' });
-    if (error) console.error('sbSave error:', error);
+    console.log('sbSave rows:', JSON.stringify(rows));
+    try {
+      const result = await db.from(table).upsert(rows, { onConflict: 'id' });
+      console.log('sbSave result:', JSON.stringify(result));
+      if (result.error) console.error('sbSave error:', result.error);
+    } catch(e) {
+      console.error('sbSave exception:', e);
+    }
   }
 
   async function sbDelete(table, id) {
