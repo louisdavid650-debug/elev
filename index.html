@@ -1026,9 +1026,6 @@
     }
 
     // Create new
-    const name = document.getElementById('routineName').value.trim();
-    if (!name) { showToast('Donne un nom'); return; }
-    if (!draftRoutineExs.length) { showToast('Ajoute au moins un exercice'); return; }
     const newRoutine = { id: Date.now(), name, exercises: [...draftRoutineExs] };
     routines.push(newRoutine);
     showSyncBadge('Sauvegarde...');
