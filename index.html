@@ -60,7 +60,7 @@
   .rest-overlay.show { opacity: 1; pointer-events: all; }
   .rest-time { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; letter-spacing: -1px; color: var(--accent); line-height: 1; }
   .rest-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
-  .rest-skip { background: none; border: 1px solid var(--border2); border-radius: 2px; padding: 6px 12px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .rest-skip { background: none; border: 1px solid var(--border2); border-radius: 8px; padding: 10px 18px; font-size: 18px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .rest-skip:hover { border-color: var(--accent2); color: var(--accent2); }
 
   /* Chips */
@@ -539,7 +539,10 @@
     <div class="rest-time" id="restDisplay">01:30</div>
     <div class="rest-label">Repos</div>
   </div>
-  <button class="rest-skip" onclick="skipRest()">Passer ›</button>
+  <div style="display:flex;gap:16px;margin-top:8px">
+    <button class="rest-skip" id="restPauseBtn" onclick="toggleRestPause()" title="Pause">⏸</button>
+    <button class="rest-skip" onclick="skipRest()" title="Arrêter">⏹</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -785,7 +788,32 @@
       }
     }, 1000);
   }
-  function skipRest() { clearInterval(restInterval); document.getElementById('restOverlay').classList.remove('show'); }
+  let restPaused = false;
+  function toggleRestPause() {
+    const btn = document.getElementById('restPauseBtn');
+    if (restPaused) {
+      // Resume
+      restPaused = false;
+      restInterval = setInterval(() => {
+        restRemaining--;
+        updateRestDisplay();
+        if (restRemaining <= 0) {
+          clearInterval(restInterval);
+          document.getElementById('restOverlay').classList.remove('show');
+          showToast("C'est reparti ! 💪");
+          if (navigator.vibrate) navigator.vibrate([200,100,200]);
+          playBeep();
+        }
+      }, 1000);
+      btn.textContent = '⏸';
+    } else {
+      // Pause
+      restPaused = true;
+      clearInterval(restInterval);
+      btn.textContent = '▶';
+    }
+  }
+  function skipRest() { clearInterval(restInterval); restPaused = false; document.getElementById('restOverlay').classList.remove('show'); document.getElementById('restPauseBtn').textContent = '⏸'; }
 
   function playBeep() {
     try {
@@ -817,6 +845,7 @@
       muscles: getSelectedMuscles(),
       notes: document.getElementById('sessionNotes')?.value || '',
       timerSec,
+      timerWasRunning: timerRunning,
       loadedRoutineId,
       routineName: routine?.name || null,
       savedAt: Date.now()
@@ -847,8 +876,17 @@
       if (!draft.exercises?.length) return false;
       exercises = draft.exercises;
       loadedRoutineId = draft.loadedRoutineId || null;
-      timerSec = draft.timerSec || 0;
+      // Compute elapsed time since last save and add it
+      const elapsedSinceLastSave = Math.floor((Date.now() - draft.savedAt) / 1000);
+      timerSec = (draft.timerSec || 0) + (draft.timerWasRunning ? elapsedSinceLastSave : 0);
       updateTimer();
+      // Auto-restart timer if it was running
+      if (draft.timerWasRunning) {
+        timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
+        timerRunning = true;
+        const btn = document.getElementById('timerBtn');
+        if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
+      }
       // Restore muscles
       if (draft.muscles?.length) {
         document.querySelectorAll('.chip').forEach(c => {
