@@ -374,12 +374,12 @@
     </div>
 
     <!-- Séance libre -->
-    <div id="freeSessionBlock">
+    <button id="freeSessionToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleFreeSessionBlock()">⚡ Démarrer une séance libre</button>
+    <div id="freeSessionBlock" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="label" style="margin:0">Séance libre</div>
+        <div class="label" style="margin:0">Séance en cours</div>
         <div id="freeSessionRoutineTag" style="font-size:11px;color:var(--accent);font-family:'Geist Mono',monospace;"></div>
       </div>
-
       <div class="label" style="font-size:9px;margin-bottom:8px">Durée</div>
       <div class="timer-card">
         <div>
@@ -561,7 +561,10 @@
     </div>
 
     <!-- History -->
-    <div class="label">Historique</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div class="label" style="margin:0">Historique</div>
+      <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:140px;font-size:11px;padding:5px 8px" onchange="renderWeightTab()" title="Filtrer par mois"/>
+    </div>
     <div class="weight-hist-list" id="weightHistList"></div>
   </div>
 
@@ -1077,10 +1080,15 @@
       const btn = document.getElementById('timerBtn');
       if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
     }
+    // Show free session block
+    const block = document.getElementById('freeSessionBlock');
+    const btn = document.getElementById('freeSessionToggleBtn');
+    if (block) { block.style.display = 'block'; }
+    if (btn) { btn.textContent = '✕ Annuler la séance'; }
     renderExercises(); renderRoutinePicker();
     showToast(`"${routine.name}" lancée ! ⏱`);
     autosaveDraft();
-    setTimeout(() => document.getElementById('exerciseList').scrollIntoView({behavior:'smooth',block:'start'}), 200);
+    setTimeout(() => block && block.scrollIntoView({behavior:'smooth',block:'start'}), 200);
   }
 
   function closeRoutineConfirm() {
@@ -1088,6 +1096,31 @@
   }
 
   // ── Exercises ──
+  function toggleFreeSessionBlock() {
+    const block = document.getElementById('freeSessionBlock');
+    const btn = document.getElementById('freeSessionToggleBtn');
+    const isOpen = block.style.display !== 'none';
+    if (isOpen) {
+      if (exercises.length && !confirm('Annuler la séance en cours ?')) return;
+      block.style.display = 'none';
+      btn.textContent = '⚡ Démarrer une séance libre';
+      exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      if (document.getElementById('sessionNotes')) document.getElementById('sessionNotes').value = '';
+      renderExercises();
+    } else {
+      block.style.display = 'block';
+      btn.textContent = '✕ Annuler la séance';
+      if (!timerRunning) {
+        timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
+        timerRunning = true;
+        const timerBtn = document.getElementById('timerBtn');
+        if (timerBtn) { timerBtn.textContent = '⏸'; timerBtn.classList.add('active'); }
+      }
+      setTimeout(() => block.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+    }
+  }
+
   function startFreeSession() {
     if (exercises.length && !confirm('Démarrer une nouvelle séance libre ? La séance en cours sera perdue.')) return;
     exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
@@ -1285,6 +1318,10 @@
   async function saveSessionOnly() {
     closeSaveRoutineModal();
     await _persistSession(null);
+    const block = document.getElementById('freeSessionBlock');
+    const btn = document.getElementById('freeSessionToggleBtn');
+    if (block) block.style.display = 'none';
+    if (btn) btn.textContent = '⚡ Démarrer une séance libre';
     showToast('Séance sauvegardée ✓');
   }
 
@@ -1300,6 +1337,10 @@
     await sbSave('routines', [newRoutine]);
     await _persistSession(name);
     showToast(`Séance sauvegardée + routine "${name}" créée ✓`);
+    const block = document.getElementById('freeSessionBlock');
+    const btn = document.getElementById('freeSessionToggleBtn');
+    if (block) block.style.display = 'none';
+    if (btn) btn.textContent = '⚡ Démarrer une séance libre';
     renderRoutinesList(); renderRoutinePicker();
   }
 
@@ -1763,8 +1804,12 @@
     drawWeightChart();
     const histEl=document.getElementById('weightHistList');
     if (!bodyWeights.length) { histEl.innerHTML='<div style="padding:16px;font-size:11px;color:var(--muted2);text-align:center">Aucun enregistrement encore.</div>'; return; }
-    const sorted=[...bodyWeights].reverse().slice(0,14);
-    histEl.innerHTML=sorted.map((w,i,arr)=>{
+    const monthFilter = document.getElementById('weightSearchDate')?.value || '';
+    let displayWeights = [...bodyWeights].reverse();
+    if (monthFilter) displayWeights = displayWeights.filter(w => w.date.startsWith(monthFilter));
+    else displayWeights = displayWeights.slice(0, 14);
+    if (!displayWeights.length) { histEl.innerHTML='<div style="padding:16px;font-size:11px;color:var(--muted2);text-align:center">Aucun résultat pour ce mois.</div>'; return; }
+    histEl.innerHTML=displayWeights.map((w,i,arr)=>{
       const prev=arr[i+1]; const diff=prev?(w.kg-prev.kg).toFixed(1):null;
       const diffStr=diff?`<span style="font-size:10px;color:${diff>0?'var(--accent2)':'var(--accent)'};margin-left:8px">${diff>0?'+':''}${diff}</span>`:'';
       const dateStr=new Date(w.date).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
