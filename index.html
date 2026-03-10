@@ -1470,9 +1470,12 @@
           const _histBest = _pr ? _pr.weight : 0;
           // Best weight in current session for this exercise
           const _sessionBest = Math.max(0, ...ex.sets.map(ss => parseFloat(ss.w||0)));
-          const _isSessionBest = _w > 0 && _w >= _sessionBest;
-          const _isAllTimePR = _w > 0 && _w > _histBest;
-          const _medal = _isAllTimePR ? '🥇' : (_isSessionBest && _w > 0 ? '🥈' : '');
+          // Only the LAST set with the best weight gets the medal
+          const _lastBestIdx = ex.sets.reduce((best, ss, idx) => parseFloat(ss.w||0) >= parseFloat(ex.sets[best]?.w||0) ? idx : best, 0);
+          const _isTopSet = si === _lastBestIdx && _w > 0;
+          const _isAllTimePR = _isTopSet && _w > _histBest;
+          const _isSessionBest = _isTopSet && _w >= _sessionBest;
+          const _medal = _isAllTimePR ? '🥇' : (_isSessionBest ? '🥈' : '');
           const _medalHtml = _medal ? '<span class="set-medal">' + _medal + '</span>' : '';
           return `<div class="set-row ${_isAllTimePR ? 'set-row-pr' : ''}">
             <div class="set-n">${si+1}</div>
