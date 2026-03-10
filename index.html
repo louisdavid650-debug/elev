@@ -370,6 +370,27 @@
   .sync-dot.offline { background:#e57373;animation:pulse 1.5s infinite; }
   .sync-dot.syncing { background:#ffa726;animation:pulse 0.6s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── Résumé hebdomadaire ── */
+  .weekly-card { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:22px;position:relative;overflow:hidden; }
+  .weekly-card::before { content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),#7ab893); }
+  .weekly-title { font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:2px; }
+  .weekly-sub { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:18px; }
+  .weekly-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px; }
+  .weekly-stat { text-align:center; }
+  .weekly-stat-val { font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--text);line-height:1; }
+  .weekly-stat-lbl { font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px; }
+  .weekly-days { display:flex;gap:6px;margin-bottom:16px;justify-content:center; }
+  .weekly-day { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0;border:1px solid var(--border);color:var(--muted2);flex-direction:column;gap:1px; }
+  .weekly-day.done { background:var(--accent);color:#fff;border-color:var(--accent); }
+  .weekly-day.today { border-color:var(--accent);color:var(--accent); }
+  .weekly-muscles { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px; }
+  .weekly-muscle-chip { background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:3px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
+  .weekly-pr-line { font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);padding:2px 0; }
+  .weekly-empty { text-align:center;padding:20px 0;font-size:13px;color:var(--muted);font-style:italic;font-family:'Cormorant Garamond',serif; }
+  .weekly-compare { font-size:10px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace; }
+  .weekly-compare.up { color:#4caf50; }
+  .weekly-compare.down { color:#e57373; }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 </head>
@@ -684,6 +705,8 @@
 
   <!-- ══ STATS ══ -->
   <div class="section" id="tab-stats">
+    <div class="label">Cette semaine</div>
+    <div class="weekly-card" id="weeklyCard"></div>
     <div class="label">Calendrier</div>
     <div class="calendar-wrap">
       <div class="cal-header">
@@ -1072,7 +1095,7 @@
     document.querySelector(`.nav-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById('bnav-' + tab).classList.add('active');
     if (tab === 'history') renderHistory();
-    if (tab === 'stats') { renderCalendar(); renderStats(); }
+    if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') renderRoutinesList();
     if (tab === 'poids') renderWeightTab();
   }
@@ -2289,6 +2312,108 @@
   function fmt(s){const m=Math.floor(s/60);return m>0?`${m} min`:`${s}s`;}
 
   // ── Stats ──
+
+  function renderWeeklySummary() {
+    const el = document.getElementById('weeklyCard');
+    if (!el) return;
+
+    // Get current week (Mon–Sun)
+    const now = new Date();
+    const dow = (now.getDay() + 6) % 7; // 0=Mon
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - dow); weekStart.setHours(0,0,0,0);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
+
+    const weekSessions = sessions.filter(s => {
+      const d = new Date(s.date);
+      return d >= weekStart && d <= weekEnd;
+    });
+
+    // Previous week for comparison
+    const prevStart = new Date(weekStart); prevStart.setDate(prevStart.getDate() - 7);
+    const prevEnd = new Date(weekStart); prevEnd.setHours(0,0,0,0);
+    const prevSessions = sessions.filter(s => {
+      const d = new Date(s.date);
+      return d >= prevStart && d < prevEnd;
+    });
+
+    // Date range label
+    const opts = { day: 'numeric', month: 'short' };
+    const rangeLabel = weekStart.toLocaleDateString('fr-FR', opts) + ' – ' + weekEnd.toLocaleDateString('fr-FR', opts);
+
+    if (!weekSessions.length) {
+      el.innerHTML = "<div class='weekly-empty'>Aucune séance cette semaine.<br>C'est le moment de commencer 💪</div>";
+      return;
+    }
+
+    // Stats
+    const nbSessions = weekSessions.length;
+    const totalSets = weekSessions.reduce((a, s) => a + s.exercises.reduce((b, e) => b + e.sets.filter(st => st.w || st.done).length, 0), 0);
+    const totalVol = Math.round(weekSessions.reduce((a, s) => a + s.exercises.reduce((b, e) => b + e.sets.reduce((c, st) => c + (parseFloat(st.w||0) * parseFloat(st.r||0)), 0), 0), 0));
+    const prevVol = Math.round(prevSessions.reduce((a, s) => a + s.exercises.reduce((b, e) => b + e.sets.reduce((c, st) => c + (parseFloat(st.w||0) * parseFloat(st.r||0)), 0), 0), 0));
+
+    // Volume comparison
+    let compareHtml = '';
+    if (prevVol > 0) {
+      const diff = Math.round((totalVol - prevVol) / prevVol * 100);
+      const sign = diff >= 0 ? '+' : '';
+      const cls = diff >= 0 ? 'up' : 'down';
+      const arrow = diff >= 0 ? '↑' : '↓';
+      compareHtml = '<div class="weekly-compare ' + cls + '">' + arrow + ' ' + sign + diff + '% vs semaine dernière</div>';
+    }
+
+    // Days of week
+    const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const daysHtml = dayLabels.map((lbl, i) => {
+      const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+      const hasSess = weekSessions.some(s => new Date(s.date).toDateString() === d.toDateString());
+      const isToday = d.toDateString() === now.toDateString();
+      const cls = hasSess ? 'done' : isToday ? 'today' : '';
+      return '<div class="weekly-day ' + cls + '">' + lbl + '</div>';
+    }).join('');
+
+    // Muscles
+    const muscles = [...new Set(weekSessions.flatMap(s => s.muscles || []))];
+    const musclesHtml = muscles.map(m => '<span class="weekly-muscle-chip">' + m + '</span>').join('');
+
+    // New PRs this week
+    const weekPRs = [];
+    weekSessions.forEach(sess => {
+      sess.exercises.forEach(ex => {
+        ex.sets.forEach(st => {
+          const w = parseFloat(st.w || 0);
+          if (w > 0) {
+            const prevBest = sessions
+              .filter(s => new Date(s.date) < weekStart)
+              .flatMap(s => s.exercises.filter(e => e.name === ex.name))
+              .flatMap(e => e.sets)
+              .reduce((max, s) => Math.max(max, parseFloat(s.w||0)), 0);
+            if (w > prevBest && !weekPRs.find(p => p.name === ex.name)) {
+              weekPRs.push({ name: ex.name, weight: w });
+            }
+          }
+        });
+      });
+    });
+    const prsHtml = weekPRs.length
+      ? '<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px"><div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">🏆 Records cette semaine</div>'
+        + weekPRs.map(p => '<div class="weekly-pr-line">🥇 ' + p.name + ' — ' + p.weight + ' kg</div>').join('')
+        + '</div>'
+      : '';
+
+    el.innerHTML =
+      '<div class="weekly-title">' + nbSessions + ' séance' + (nbSessions > 1 ? 's' : '') + '</div>' +
+      '<div class="weekly-sub">' + rangeLabel + '</div>' +
+      '<div class="weekly-days">' + daysHtml + '</div>' +
+      '<div class="weekly-grid">' +
+        '<div class="weekly-stat"><div class="weekly-stat-val">' + nbSessions + '</div><div class="weekly-stat-lbl">Séances</div></div>' +
+        '<div class="weekly-stat"><div class="weekly-stat-val">' + totalSets + '</div><div class="weekly-stat-lbl">Séries</div></div>' +
+        '<div class="weekly-stat"><div class="weekly-stat-val">' + (totalVol > 0 ? Math.round(totalVol/1000*10)/10 + 't' : '—') + '</div><div class="weekly-stat-lbl">Volume</div></div>' +
+      '</div>' +
+      compareHtml +
+      (muscles.length ? '<div class="weekly-muscles" style="margin-top:12px">' + musclesHtml + '</div>' : '') +
+      prsHtml;
+  }
+
   function renderStats() {
     const grid=document.getElementById('statsGrid'),topEl=document.getElementById('topEx'),prEl=document.getElementById('prList');
     if(!sessions.length){grid.innerHTML='';prEl.innerHTML='<div style="padding:12px 0;font-size:11px;color:var(--muted2)">Aucun record encore.</div>';topEl.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Pas encore de données</div><div class="empty-sub">Tes statistiques apparaîtront après ta première séance.</div></div>`;renderProgSelector();return;}
