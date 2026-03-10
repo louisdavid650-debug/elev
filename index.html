@@ -419,7 +419,10 @@
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
       <div id="routineExList" class="routine-ex-list"></div>
       <div class="form-row">
-        <input class="inp" id="rExName" placeholder="Exercice" type="text"/>
+        <div style="position:relative;flex:1">
+          <input class="inp" id="rExName" placeholder="Exercice" type="text" oninput="filterRoutineExSuggestions()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+          <div class="ex-suggestions ex-add-suggestions" id="rExSuggestions"></div>
+        </div>
         <select class="inp" id="rExMuscle">
           <option value="">Muscle</option>
           <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
@@ -440,7 +443,10 @@
         <input class="inp" id="rExRestCustom" type="number" placeholder="Sec." style="max-width:70px;display:none;" min="5" max="600"/>
         <button class="btn-ghost" onclick="addRoutineEx()">+</button>
       </div>
-      <button class="btn-add" onclick="saveRoutine()">Enregistrer la routine</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la routine</button>
+        <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
+      </div>
     </div>
     <div class="label" style="margin-bottom:12px">Mes routines</div>
     <div class="routines-list" id="routinesList"></div>
@@ -956,7 +962,70 @@
       <button class="routine-ex-del" onclick="delDraftEx(${i})">✕</button></div>`).join('');
   }
   function delDraftEx(i) { draftRoutineExs.splice(i,1); renderDraftRoutineExs(); }
+  // ── Routine form autocomplete ──
+  function filterRoutineExSuggestions() {
+    const q = document.getElementById('rExName').value.trim().toLowerCase();
+    const box = document.getElementById('rExSuggestions');
+    if (!q) { box.classList.remove('show'); return; }
+    const matches = getKnownExercises().filter(e => e.name.toLowerCase().includes(q)).slice(0, 8);
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onclick="selectRoutineExSuggestion('${e.name.replace(/'/g,"\'")}','${e.muscle.replace(/'/g,"\'")}')">
+      <span>${e.name}</span>${e.muscle?`<span class="ex-sug-muscle">${e.muscle}</span>`:''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+  function selectRoutineExSuggestion(name, muscle) {
+    document.getElementById('rExName').value = name;
+    if (muscle) document.getElementById('rExMuscle').value = muscle;
+    document.getElementById('rExSuggestions').classList.remove('show');
+  }
+
+  // ── Edit routine ──
+  let editingRoutineId = null;
+
+  function editRoutine(ri) {
+    const r = routines[ri];
+    editingRoutineId = r.id;
+    document.getElementById('routineName').value = r.name;
+    draftRoutineExs = r.exercises.map(e => ({...e}));
+    renderDraftRoutineExs();
+    document.getElementById('saveRoutineBtn').textContent = '💾 Sauvegarder les modifications';
+    document.getElementById('cancelEditRoutineBtn').style.display = 'block';
+    // Scroll to form
+    document.getElementById('routineName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast(`Modification de "${r.name}"`);
+  }
+
+  function cancelEditRoutine() {
+    editingRoutineId = null;
+    draftRoutineExs = [];
+    document.getElementById('routineName').value = '';
+    renderDraftRoutineExs();
+    document.getElementById('saveRoutineBtn').textContent = 'Enregistrer la routine';
+    document.getElementById('cancelEditRoutineBtn').style.display = 'none';
+  }
+
   async function saveRoutine() {
+    const name = document.getElementById('routineName').value.trim();
+    if (!name) { showToast('Donne un nom'); return; }
+    if (!draftRoutineExs.length) { showToast('Ajoute au moins un exercice'); return; }
+
+    if (editingRoutineId !== null) {
+      // Update existing
+      const idx = routines.findIndex(r => r.id === editingRoutineId);
+      if (idx !== -1) {
+        routines[idx] = { ...routines[idx], name, exercises: [...draftRoutineExs] };
+        showSyncBadge('Sauvegarde...');
+        await sbSave('routines', [routines[idx]]);
+        showSyncBadge('✓ Sync', true);
+        showToast(`"${name}" mise à jour !`);
+      }
+      cancelEditRoutine();
+      renderRoutinesList(); renderRoutinePicker();
+      return;
+    }
+
+    // Create new
     const name = document.getElementById('routineName').value.trim();
     if (!name) { showToast('Donne un nom'); return; }
     if (!draftRoutineExs.length) { showToast('Ajoute au moins un exercice'); return; }
@@ -976,7 +1045,10 @@
       const muscles=[...new Set(r.exercises.map(e=>e.muscle).filter(Boolean))];
       return `<div class="routine-card">
         <div class="rc-head"><div><div class="rc-name">${r.name}</div><div class="rc-meta">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div></div>
-        <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">Supprimer</button></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost" onclick="editRoutine(${ri})">✏️ Modifier</button>
+          <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">Supprimer</button>
+        </div></div>
         ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
         <div class="rc-exs-list">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
       </div>`;
