@@ -35,7 +35,7 @@
   .header-date { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; }
 
   /* Nav */
-  .nav { display: flex; padding: 0 20px; border-bottom: 1px solid var(--border); gap: 18px; overflow-x: auto; }
+  .nav { display: flex; padding: 0 28px; border-bottom: 1px solid var(--border); gap: 18px; overflow-x: auto; }
   .nav::-webkit-scrollbar { display: none; }
   .nav-btn { background: none; border: none; color: var(--muted); font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase; padding: 14px 0; cursor: pointer; position: relative; transition: color 0.2s; white-space: nowrap; flex-shrink: 0; }
   .nav-btn.active { color: var(--text); }
@@ -570,7 +570,7 @@
       </div>
       <div class="weight-input-row">
         <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
-        <button class="weight-save" onclick="logWeight()">Logger</button>
+        <button class="weight-save" onclick="logWeight()">Ajouter</button>
       </div>
     </div>
 
@@ -1853,7 +1853,7 @@
   function drawWeightChart() {
     const canvas=document.getElementById('weightChart'), wrap=document.getElementById('weightChartWrap');
     // 30 derniers jours calendaires
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 29); cutoff.setHours(0,0,0,0);
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30); cutoff.setHours(0,0,0,0);
     const data = bodyWeights.filter(d => new Date(d.date) >= cutoff);
     if(data.length<2){canvas.style.display='none';return;} canvas.style.display='block';
     const dpr=window.devicePixelRatio||1, W=wrap.clientWidth-32, H=140;
