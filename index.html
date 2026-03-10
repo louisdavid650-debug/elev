@@ -336,22 +336,6 @@
     <div class="label">Charger une routine</div>
     <div id="routinePickerList" style="margin-bottom:4px"></div>
     <div class="section-divider"></div>
-    <div class="label">Repos entre séries</div>
-    <div class="rest-settings">
-      <div class="rest-opt" data-val="60" onclick="setRestDur(60,this)">1 min</div>
-      <div class="rest-opt sel" data-val="90" onclick="setRestDur(90,this)">1 min 30</div>
-      <div class="rest-opt" data-val="120" onclick="setRestDur(120,this)">2 min</div>
-      <div class="rest-opt" data-val="180" onclick="setRestDur(180,this)">3 min</div>
-      <div class="rest-opt" data-val="0" onclick="setRestDur(0,this)">Désactivé</div>
-      <div class="rest-opt" data-val="custom" onclick="setRestDur('custom',this)">Perso.</div>
-    </div>
-    <div id="customRestWrap" style="display:none;margin-bottom:22px;">
-      <div class="label" style="margin-bottom:8px">Durée personnalisée</div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <input class="inp" id="customRestInput" type="number" placeholder="Secondes (ex: 75)" min="5" max="600" style="max-width:200px;" oninput="applyCustomRest(this.value)"/>
-        <span style="font-size:11px;color:var(--muted2)">secondes</span>
-      </div>
-    </div>
     <div class="section-divider"></div>
     <div class="label">Durée de séance</div>
     <div class="timer-card">
@@ -390,6 +374,17 @@
           <option>Biceps</option><option>Triceps</option><option>Jambes</option>
           <option>Abdos</option><option>Fessiers</option><option>Autre</option>
         </select>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <select class="inp" id="exRest" onchange="document.getElementById('exRestCustom').style.display=this.value==='custom'?'block':'none'">
+          <option value="60">Repos 1 min</option>
+          <option value="90" selected>Repos 1 min 30</option>
+          <option value="120">Repos 2 min</option>
+          <option value="180">Repos 3 min</option>
+          <option value="0">Sans repos</option>
+          <option value="custom">Personnalisé...</option>
+        </select>
+        <input class="inp" id="exRestCustom" type="number" placeholder="Sec." style="max-width:80px;display:none;" min="5" max="600"/>
       </div>
       <button class="btn-add" onclick="addExercise()">+ Ajouter</button>
     </div>
@@ -1007,9 +1002,18 @@
   function addExercise() {
     const name = document.getElementById('exName').value.trim();
     if (!name) { showToast("Entre un nom d'exercice"); return; }
-    exercises.push({ id: Date.now(), name, muscle: document.getElementById('exMuscle').value, sets: [{w:'',r:'',done:false}] });
-    document.getElementById('exName').value = ''; document.getElementById('exMuscle').value = '';
+    const restSel = document.getElementById('exRest');
+    const restTime = restSel.value === 'custom'
+      ? (parseInt(document.getElementById('exRestCustom').value) || 90)
+      : parseInt(restSel.value);
+    exercises.push({ id: Date.now(), name, muscle: document.getElementById('exMuscle').value, restTime, sets: [{w:'',r:'',done:false}] });
+    document.getElementById('exName').value = '';
+    document.getElementById('exMuscle').value = '';
+    restSel.value = '90';
+    document.getElementById('exRestCustom').style.display = 'none';
+    document.getElementById('exRestCustom').value = '';
     renderExercises();
+    autosaveDraft();
   }
   function renderExercises() {
     const el = document.getElementById('exerciseList');
