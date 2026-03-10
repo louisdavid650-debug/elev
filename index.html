@@ -426,9 +426,11 @@
     <!-- Séance libre -->
     <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border)">
       <div class="label">Séance libre</div>
-      <button id="freeSessionToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" ontouchend="event.preventDefault();event.stopPropagation();toggleFreeSessionBlock()" onclick="event.stopPropagation();toggleFreeSessionBlock()">Démarrer une séance libre</button>
-    </div>
-    <div id="freeSessionBlock" style="display:none">
+      <div id="freeSessionBlock">
+        <div id="freeSessionStartBtn" style="margin-bottom:16px">
+          <button id="freeSessionToggleBtn" class="btn-add" style="width:100%;" onclick="toggleFreeSessionBlock()">Démarrer une séance libre</button>
+        </div>
+        <div id="freeSessionContent" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div class="label" style="margin:0">Séance en cours</div>
         <div id="freeSessionRoutineTag" style="font-size:11px;color:var(--accent);font-family:'Geist Mono',monospace;"></div>
@@ -496,7 +498,8 @@
         <button class="save-btn" onclick="saveSession()">Terminer la séance</button>
         <button onclick="abandonSession()" style="background:none;border:1px solid #ddd;border-radius:4px;padding:10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;width:100%;">Annuler la séance</button>
       </div>
-    </div>
+        </div><!-- end freeSessionContent -->
+      </div><!-- end freeSessionBlock -->
   </div>
 
   <!-- ══ SAVE AS ROUTINE MODAL ══ -->
@@ -1029,6 +1032,7 @@
     clearDraft();
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
     document.getElementById('sessionNotes').value = '';
+    hideSessionContent();
     renderExercises(); renderRoutinePicker();
     showToast('Séance supprimée');
   }
@@ -1073,12 +1077,7 @@
         if (remaining > 0) startRest(remaining);
       }
       // Restore free session block visibility
-      const block = document.getElementById('freeSessionBlock');
-      const btn = document.getElementById('freeSessionToggleBtn');
-      if (block && exercises.length) {
-        block.style.display = 'block';
-        if (btn) btn.textContent = '✕ Annuler la séance';
-      }
+      if (exercises.length) showSessionContent();
       const ago = Math.round((Date.now() - draft.savedAt) / 60000);
       showToast(`Session restaurée (il y a ${ago < 1 ? "moins d'1 min" : ago + " min"})`);
       return true;
@@ -1149,11 +1148,8 @@
       const btn = document.getElementById('timerBtn');
       if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
     }
-    // Show free session block
-    const block = document.getElementById('freeSessionBlock');
-    const btn = document.getElementById('freeSessionToggleBtn');
-    if (block) { block.style.display = 'block'; }
-    if (btn) { btn.textContent = '✕ Annuler la séance'; }
+    // Show free session content
+    showSessionContent();
     renderExercises(); renderRoutinePicker();
     showToast(`"${routine.name}" lancée ! ⏱`);
     autosaveDraft();
@@ -1168,31 +1164,34 @@
 
   // ── Exercises ──
   let _ignoreToggleUntil = 0;
+  function showSessionContent() {
+    document.getElementById('freeSessionStartBtn').style.display = 'none';
+    document.getElementById('freeSessionContent').style.display = 'block';
+    document.getElementById('freeSessionToggleBtn').textContent = '✕ Annuler la séance';
+  }
+  function hideSessionContent() {
+    document.getElementById('freeSessionContent').style.display = 'none';
+    document.getElementById('freeSessionStartBtn').style.display = 'block';
+    document.getElementById('freeSessionToggleBtn').textContent = 'Démarrer une séance libre';
+  }
   function toggleFreeSessionBlock() {
-    // Guard against ghost clicks after modal close OR after loadRoutine call
-    if (Date.now() < _ignoreToggleUntil) return;
-    if (Date.now() - _lastLoadRoutineTime < 800) return;
-    const block = document.getElementById('freeSessionBlock');
-    const btn = document.getElementById('freeSessionToggleBtn');
-    const isOpen = block.style.display !== 'none';
+    const isOpen = document.getElementById('freeSessionContent').style.display !== 'none';
     if (isOpen) {
       if (exercises.length && !confirm('Annuler la séance en cours ?')) return;
-      block.style.display = 'none';
-      btn.textContent = 'Démarrer une séance libre';
+      hideSessionContent();
       exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
       if (document.getElementById('sessionNotes')) document.getElementById('sessionNotes').value = '';
       renderExercises();
     } else {
-      block.style.display = 'block';
-      btn.textContent = '✕ Annuler la séance';
+      showSessionContent();
       if (!timerRunning) {
         timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
         timerRunning = true;
         const timerBtn = document.getElementById('timerBtn');
         if (timerBtn) { timerBtn.textContent = '⏸'; timerBtn.classList.add('active'); }
       }
-      setTimeout(() => block.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+      setTimeout(() => document.getElementById('freeSessionBlock').scrollIntoView({behavior:'smooth', block:'start'}), 50);
     }
   }
 
@@ -1410,10 +1409,7 @@
   async function saveSessionOnly() {
     closeSaveRoutineModal();
     await _persistSession(null);
-    const block = document.getElementById('freeSessionBlock');
-    const btn = document.getElementById('freeSessionToggleBtn');
-    if (block) block.style.display = 'none';
-    if (btn) btn.textContent = 'Démarrer une séance libre';
+    hideSessionContent();
     showToast('Séance sauvegardée ✓');
   }
 
@@ -1429,10 +1425,7 @@
     await sbSave('routines', [newRoutine]);
     await _persistSession(name);
     showToast(`Séance sauvegardée + routine "${name}" créée ✓`);
-    const block = document.getElementById('freeSessionBlock');
-    const btn = document.getElementById('freeSessionToggleBtn');
-    if (block) block.style.display = 'none';
-    if (btn) btn.textContent = 'Démarrer une séance libre';
+    hideSessionContent();
     renderRoutinesList(); renderRoutinePicker();
   }
 
