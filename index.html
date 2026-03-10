@@ -519,8 +519,8 @@
       <div style="font-size:12px;color:var(--muted);margin-bottom:20px;" id="routineConfirmExs"></div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Le chrono démarrera automatiquement.</div>
       <div class="ex-replace-actions">
-        <button class="ex-replace-cancel" onclick="closeRoutineConfirm()">Annuler</button>
-        <button class="ex-replace-confirm" onclick="confirmLoadRoutine()">C'est parti 💪</button>
+        <button class="ex-replace-cancel" onclick="event.stopPropagation();closeRoutineConfirm()">Annuler</button>
+        <button class="ex-replace-confirm" onclick="event.stopPropagation();confirmLoadRoutine()">C'est parti 💪</button>
       </div>
     </div>
   </div>
