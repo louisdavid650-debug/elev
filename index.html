@@ -85,6 +85,7 @@
   /* Exercise cards */
   .exercise-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
   .ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; animation: fadeUp 0.2s ease; }
+  @keyframes prPop { 0%{transform:translateY(-50%) scale(0)} 60%{transform:translateY(-50%) scale(1.4)} 100%{transform:translateY(-50%) scale(1)} }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   .ex-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
   .ex-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; }
@@ -263,7 +264,10 @@
 
   /* History */
   .h-list { display: flex; flex-direction: column; gap: 12px; }
-  .h-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; transition: border-color 0.2s; animation: fadeUp 0.2s ease; cursor: pointer; }
+  .h-card-wrap { position: relative; overflow: hidden; border-radius: 4px; margin-bottom: 10px; }
+  .h-card-wrap .h-swipe-del { position: absolute; right: 0; top: 0; bottom: 0; width: 72px; background: #c0392b; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; border-radius: 0 4px 4px 0; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .h-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; transition: transform 0.2s ease, border-color 0.2s; animation: fadeUp 0.2s ease; cursor: pointer; position: relative; touch-action: pan-y; }
+  .h-card:hover { border-color: var(--border2); }
   .h-card:hover { border-color: var(--border2); }
   .h-detail { display: none; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
   .h-detail.open { display: block; }
@@ -274,7 +278,6 @@
   .pr-search-wrap { position: relative; margin-bottom: 10px; }
   .pr-search-inp { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; box-sizing: border-box; outline: none; background: var(--warm); }
   .pr-search-inp:focus { border-color: var(--accent); }
-  .h-card:hover { border-color: var(--border2); }
   .h-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
   .h-date { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 400; text-transform: capitalize; }
   .h-dur { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
@@ -304,6 +307,33 @@
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── Edit session modal ── */
+  .edit-modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s; }
+  .edit-modal-overlay.show { opacity:1;pointer-events:all; }
+  .edit-modal { background:var(--bg);border-radius:12px 12px 0 0;padding:24px 20px 40px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); }
+  .edit-modal-overlay.show .edit-modal { transform:translateY(0); }
+  .edit-modal-title { font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;margin-bottom:16px; }
+  .edit-ex-block { border:1px solid var(--border);border-radius:4px;margin-bottom:12px;overflow:hidden; }
+  .edit-ex-name { padding:10px 14px;background:var(--warm);font-size:13px;font-weight:500;border-bottom:1px solid var(--border); }
+  .edit-set-row { display:grid;grid-template-columns:24px 1fr 1fr 28px;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border); }
+  .edit-set-row:last-child { border-bottom:none; }
+  .edit-set-n { font-size:10px;color:var(--muted);text-align:center; }
+  .edit-set-inp { background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:5px 8px;font-family:'Geist Mono',monospace;font-size:12px;color:var(--text);width:100%;text-align:center; }
+  .edit-set-del { background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;text-align:center; }
+  /* ── Share modal ── */
+  .share-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s; }
+  .share-overlay.show { opacity:1;pointer-events:all; }
+  .share-card { background:var(--bg);border-radius:8px;padding:28px 24px;width:100%;max-width:340px;text-align:center; }
+  .share-title { font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px; }
+  .share-preview { background:var(--warm);border-radius:4px;padding:18px;margin-bottom:16px;text-align:left; }
+  .share-btns { display:flex;gap:10px; }
+  .share-btn { flex:1;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer;border:none; }
+  /* ── Drag session exercises ── */
+  .ex-card { touch-action: pan-y; }
+  .ex-drag-handle { cursor:grab;color:var(--muted);font-size:16px;padding:0 6px 0 0;user-select:none;touch-action:none; }
+  .ex-card.ex-dragging { opacity:0.4; }
+  .ex-card.ex-drag-over { border-color: var(--accent); border-style: dashed; }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 </head>
@@ -1212,10 +1242,21 @@
     el.innerHTML = exercises.map((ex, ei) => {
       const lastSets = getLastSessionData(ex.name);
       const pr = getPR(ex.name);
-      return `<div class="ex-card" id="excard-${ei}">
-        <div class="ex-head"><div><div class="ex-name">${ex.name}</div>
-        <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">PR ${pr.weight}kg</span>`:''}</div></div>
-        <div style="display:flex;gap:8px;align-items:center"><button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button><button class="ex-del" onclick="delEx(${ei})">✕</button></div></div>
+      return `<div class="ex-card" id="excard-${ei}" draggable="true"
+        ondragstart="onExDragStart(event,${ei})"
+        ondragover="onExDragOver(event)"
+        ondragend="onExDragEnd(event)"
+        ondrop="onExDrop(event,${ei})"
+        ontouchstart="onExTouchStart(event,${ei})"
+        ontouchmove="onExTouchMove(event,${ei})"
+        ontouchend="onExTouchEnd(event,${ei})">
+        <div class="ex-head">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="ex-drag-handle" title="Déplacer">⠿</span>
+            <div><div class="ex-name">${ex.name}</div>
+            <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">🏆 PR ${pr.weight}kg</span>`:''}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center"><button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button><button class="ex-del" onclick="delEx(${ei})">✕</button></div></div>
         <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:8px">Dernière</div><div>✓</div></div>
         ${ex.sets.map((s,si)=>{
           const prev=lastSets&&lastSets[si]?lastSets[si]:null;
@@ -1226,7 +1267,7 @@
             <div class="set-n">${si+1}</div>
             <div style="position:relative">
               <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
-              ${s.w && checkNewPR(ex.name, parseFloat(s.w)) && parseFloat(s.w) > 0 ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:10px;pointer-events:none">🏆</span>' : ''}
+              ${(()=>{ const _pr=getPR(ex.name); const _w=parseFloat(s.w); if(_w>0&&checkNewPR(ex.name,_w)) return '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:10px;pointer-events:none;animation:prPop 0.4s ease" title="Nouveau PR !">🏆</span>'; if(_pr) return '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_pr.weight+'<br>kg</span>'; return ''; })()}
             </div>
             <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
@@ -1318,7 +1359,7 @@
   function upd(ei,si,f,v) {
     exercises[ei].sets[si][f]=v;
     autosaveDraft();
-    if (f==='w'&&v) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);} }
+    if (f==='w'&&v) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);if(navigator.vibrate)navigator.vibrate([80,40,120]);} }
   }
   function tick(ei,si) { exercises[ei].sets[si].done=!exercises[ei].sets[si].done; if(exercises[ei].sets[si].done){ const exRest = exercises[ei].restTime; startRest(exRest !== undefined ? exRest : restDur); } renderExercises(); autosaveDraft(); }
   function getSelectedMuscles() { return [...document.querySelectorAll('.chip.on')].map(c=>c.textContent); }
@@ -2013,19 +2054,33 @@
         </div>`).join('')}
         ${s.notes?`<div class="h-note" style="margin-top:8px">${s.notes}</div>`:''}
       </div>` : '';
-      return `<div class="h-card">
-        <div class="h-top" onclick="toggleHistory(${s.id})" style="cursor:pointer">
-          <div class="h-date">${dateStr}</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="h-dur">${dur}</div>
-            <span style="font-size:11px;color:var(--muted)">${isOpen?'▲':'▼'}</span>
-            <button onclick="event.stopPropagation();deleteSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;" title="Supprimer">🗑</button>
+      return `<div class="h-card-wrap" id="hwrap-${s.id}">
+        <div class="h-swipe-del" id="hswipedel-${s.id}">🗑</div>
+        <div class="h-card" id="hcard-${s.id}"
+          data-sid="${s.id}"
+          ontouchstart="swipeStart(event,${s.id})"
+          ontouchmove="swipeMove(event,${s.id})"
+          ontouchend="swipeEnd(event,${s.id})">
+          <div class="h-top" onclick="toggleHistory(${s.id})" style="cursor:pointer">
+            <div>
+              ${s.routineName ? `<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:3px">📌 ${s.routineName}</div>` : ''}
+              <div class="h-date">${dateStr}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="h-dur">${dur}</div>
+              <span style="font-size:11px;color:var(--muted)">${isOpen?'▲':'▼'}</span>
+              <button onclick="event.stopPropagation();openEditSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;" title="Modifier">✏️</button>
+              <button onclick="event.stopPropagation();openShare(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;" title="Partager">↑</button>
+              <button onclick="event.stopPropagation();deleteSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;" title="Supprimer">🗑</button>
+            </div>
           </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length?'6px':'0'}">${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
+          ${detail}
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length||s.routineName?'6px':'0'}">${s.routineName?`<span class="h-routine-tag">📌 ${s.routineName}</span>`:''}${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
-        ${detail}
       </div>`;
     }).join('');
+    // Init swipe state
+    swipeSessions = {};
   }
 
   async function deleteSession(id) {
@@ -2063,6 +2118,213 @@
     topEl.innerHTML=sorted.map(([name,count])=>`<div class="top-row"><div class="top-info"><div class="top-name">${name}</div><div class="top-cnt">${count}×</div></div><div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div></div>`).join('');
   }
 
+
+  // ── Swipe to delete (history) ──
+  let swipeSessions = {}, swipeThreshold = 72;
+  function swipeStart(e, id) {
+    swipeSessions[id] = { startX: e.touches[0].clientX, swiping: false };
+  }
+  function swipeMove(e, id) {
+    if (!swipeSessions[id]) return;
+    const dx = swipeSessions[id].startX - e.touches[0].clientX;
+    if (dx < 0) { swipeSessions[id] = null; return; }
+    swipeSessions[id].swiping = true;
+    const card = document.getElementById('hcard-' + id);
+    const del = document.getElementById('hswipedel-' + id);
+    if (!card) return;
+    const clamped = Math.min(dx, swipeThreshold + 16);
+    card.style.transform = `translateX(-${clamped}px)`;
+    if (del) del.style.opacity = Math.min(dx / swipeThreshold, 1);
+    e.preventDefault();
+  }
+  function swipeEnd(e, id) {
+    if (!swipeSessions[id]?.swiping) return;
+    const dx = swipeSessions[id].startX - e.changedTouches[0].clientX;
+    const card = document.getElementById('hcard-' + id);
+    const del = document.getElementById('hswipedel-' + id);
+    if (dx > swipeThreshold) {
+      // Confirm delete
+      if (card) { card.style.transition = 'transform 0.2s'; card.style.transform = `translateX(-${swipeThreshold}px)`; }
+      if (confirm('Supprimer cette séance ?')) {
+        deleteSession(id);
+      } else {
+        if (card) { card.style.transform = ''; card.style.transition = ''; }
+        if (del) del.style.opacity = 0;
+      }
+    } else {
+      if (card) { card.style.transition = 'transform 0.2s'; card.style.transform = ''; setTimeout(() => card.style.transition = '', 200); }
+      if (del) del.style.opacity = 0;
+    }
+    swipeSessions[id] = null;
+  }
+
+  // ── Edit session ──
+  let editSessionId = null;
+  let editSessionData = null;
+  function openEditSession(id) {
+    const s = sessions.find(x => x.id === id);
+    if (!s) return;
+    editSessionId = id;
+    // Deep clone for editing
+    editSessionData = JSON.parse(JSON.stringify(s));
+    const body = document.getElementById('editSessionBody');
+    renderEditBody();
+    document.getElementById('editSessionOverlay').classList.add('show');
+  }
+  function renderEditBody() {
+    const body = document.getElementById('editSessionBody');
+    if (!editSessionData) return;
+    body.innerHTML = editSessionData.exercises.map((ex, ei) => `
+      <div class="edit-ex-block">
+        <div class="edit-ex-name">${ex.name}</div>
+        ${ex.sets.map((set, si) => `
+          <div class="edit-set-row">
+            <div class="edit-set-n">${si+1}</div>
+            <input class="edit-set-inp" type="number" placeholder="kg" value="${set.w||set.weight||''}"
+              onchange="editSessionData.exercises[${ei}].sets[${si}].w=this.value" />
+            <input class="edit-set-inp" type="number" placeholder="reps" value="${set.r||set.reps||''}"
+              onchange="editSessionData.exercises[${ei}].sets[${si}].r=this.value" />
+            <button class="edit-set-del" onclick="delEditSet(${ei},${si})">✕</button>
+          </div>`).join('')}
+        <button onclick="addEditSet(${ei})" style="width:100%;padding:7px;background:none;border:none;border-top:1px solid var(--border);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px">+ série</button>
+      </div>`).join('');
+  }
+  function delEditSet(ei, si) {
+    editSessionData.exercises[ei].sets.splice(si, 1);
+    renderEditBody();
+  }
+  function addEditSet(ei) {
+    editSessionData.exercises[ei].sets.push({w:'',r:'',done:false});
+    renderEditBody();
+  }
+  function closeEditSession() {
+    document.getElementById('editSessionOverlay').classList.remove('show');
+    editSessionId = null; editSessionData = null;
+  }
+  async function saveEditSession() {
+    if (!editSessionData || !editSessionId) return;
+    const idx = sessions.findIndex(s => s.id === editSessionId);
+    if (idx === -1) return;
+    sessions[idx] = { ...sessions[idx], exercises: editSessionData.exercises };
+    showSyncBadge('Sauvegarde...');
+    await sbSave('sessions', [sessions[idx]]);
+    showSyncBadge('✓ Sync', true);
+    showToast('Séance modifiée ✓');
+    closeEditSession();
+    renderHistory();
+  }
+
+  // ── Share session ──
+  let shareSessionId = null;
+  function openShare(id) {
+    const s = sessions.find(x => x.id === id);
+    if (!s) return;
+    shareSessionId = id;
+    const d = new Date(s.date);
+    const dateStr = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+    const dur = s.duration > 0 ? fmt(s.duration) : '';
+    const NL = String.fromCharCode(10);
+    let text = '\ud83d\udcaa ' + dateStr + (dur ? ' \u00b7 ' + dur : '') + NL;
+    if (s.routineName) text += '\ud83d\udccc ' + s.routineName + NL;
+    text += NL;
+    s.exercises.forEach(function(ex) {
+      text += ex.name + NL;
+      ex.sets.forEach(function(set, i) {
+        const w = set.w || set.weight || '-';
+        const r = set.r || set.reps || '-';
+        text += '  Serie ' + (i+1) + ' : ' + w + 'kg x ' + r + ' reps' + NL;
+      });
+      text += NL;
+    });
+    text += '\u2014 Elev';
+    const preview = document.getElementById('sharePreview');
+    preview.innerHTML = '<pre style="font-family:Geist Mono,monospace;font-size:11px;color:var(--text);white-space:pre-wrap;margin:0">' + text + '</pre>';
+    preview._text = text;
+    document.getElementById('shareOverlay').classList.add('show');
+  }
+  function closeShare() { document.getElementById('shareOverlay').classList.remove('show'); shareSessionId = null; }
+  async function copyShareText() {
+    const preview = document.getElementById('sharePreview');
+    const text = preview._text || '';
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copié dans le presse-papier ✓');
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('Copié ✓');
+    }
+    closeShare();
+  }
+
+  // ── Drag & drop exercises in session ──
+  let exDragSrc = null;
+  // ── Drag desktop exercises ──
+  function onExDragStart(e, ei) {
+    exDragSrc = ei;
+    e.currentTarget.classList.add('ex-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  function onExDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function onExDrop(e, ei) {
+    e.preventDefault();
+    if (exDragSrc === null || exDragSrc === ei) return;
+    const moved = exercises.splice(exDragSrc, 1)[0];
+    exercises.splice(ei, 0, moved);
+    exDragSrc = null;
+    renderExercises();
+    autosaveDraft();
+  }
+  function onExDragEnd(e) {
+    exDragSrc = null;
+    document.querySelectorAll('.ex-card').forEach(c => c.classList.remove('ex-dragging'));
+  }
+
+  // ── Drag tactile exercises ──
+  let exTouchDragEl = null, exTouchDragEi = null, exTouchClone = null, exTouchStartY = 0;
+  function onExTouchStart(e, ei) {
+    if (!e.target.closest('.ex-drag-handle')) return;
+    e.preventDefault();
+    exTouchDragEi = ei;
+    exTouchDragEl = document.getElementById('excard-' + ei);
+    exTouchStartY = e.touches[0].clientY;
+    exTouchClone = exTouchDragEl.cloneNode(true);
+    exTouchClone.style.cssText = `position:fixed;z-index:9999;width:${exTouchDragEl.offsetWidth}px;opacity:0.85;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.15);left:${exTouchDragEl.getBoundingClientRect().left}px;top:${exTouchDragEl.getBoundingClientRect().top}px;`;
+    document.body.appendChild(exTouchClone);
+    exTouchDragEl.style.opacity = '0.3';
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+  function onExTouchMove(e, ei) {
+    if (!exTouchClone) return;
+    e.preventDefault();
+    const dy = e.touches[0].clientY - exTouchStartY;
+    exTouchClone.style.top = (exTouchDragEl.getBoundingClientRect().top + dy) + 'px';
+    // Find target card
+    const cards = document.querySelectorAll('.ex-card');
+    cards.forEach(c => c.classList.remove('ex-drag-over'));
+    const touch = e.touches[0];
+    cards.forEach((c, i) => {
+      const r = c.getBoundingClientRect();
+      if (touch.clientY > r.top && touch.clientY < r.bottom && i !== exTouchDragEi) c.classList.add('ex-drag-over');
+    });
+  }
+  function onExTouchEnd(e, ei) {
+    if (!exTouchClone) return;
+    exTouchClone.remove(); exTouchClone = null;
+    exTouchDragEl.style.opacity = '';
+    const overCard = document.querySelector('.ex-card.ex-drag-over');
+    if (overCard) {
+      const targetEi = parseInt(overCard.id.replace('excard-', ''));
+      const moved = exercises.splice(exTouchDragEi, 1)[0];
+      exercises.splice(targetEi, 0, moved);
+      renderExercises(); autosaveDraft();
+    }
+    document.querySelectorAll('.ex-card').forEach(c => c.classList.remove('ex-drag-over'));
+    exTouchDragEl = null; exTouchDragEi = null;
+  }
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -2073,5 +2335,29 @@
     t._hideTimer = setTimeout(() => t.classList.remove('show'), 2800);
   }
 </script>
+
+<!-- ══ EDIT SESSION MODAL ══ -->
+<div class="edit-modal-overlay" id="editSessionOverlay" onclick="if(event.target===this)closeEditSession()">
+  <div class="edit-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="edit-modal-title">Modifier la séance</div>
+      <button onclick="closeEditSession()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>
+    </div>
+    <div id="editSessionBody"></div>
+    <button onclick="saveEditSession()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:8px;">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- ══ SHARE SESSION MODAL ══ -->
+<div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShare()">
+  <div class="share-card">
+    <div class="share-title">Partager la séance</div>
+    <div class="share-preview" id="sharePreview"></div>
+    <div class="share-btns">
+      <button class="share-btn" style="background:var(--accent);color:#fff" onclick="copyShareText()">📋 Copier</button>
+      <button class="share-btn" style="background:var(--warm);border:1px solid var(--border);color:var(--text)" onclick="closeShare()">Fermer</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
