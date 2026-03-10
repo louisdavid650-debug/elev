@@ -306,6 +306,18 @@
 </style>
 </head>
 <body>
+
+<!-- ══ LOADING SCREEN ══ -->
+<div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:32px;letter-spacing:8px;text-transform:uppercase;color:var(--ink)">Séance</div>
+  <div style="width:32px;height:2px;background:var(--border2);border-radius:2px;overflow:hidden;">
+    <div style="height:100%;background:var(--accent);animation:loadBar 1.2s ease-in-out infinite;"></div>
+  </div>
+</div>
+<style>
+@keyframes loadBar { 0%{width:0;margin-left:0} 50%{width:100%;margin-left:0} 100%{width:0;margin-left:100%} }
+</style>
+
 <!-- ══ LOGIN SCREEN ══ -->
 <div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:32px;">
   <div style="width:100%;max-width:340px;">
@@ -382,7 +394,10 @@
     <div class="label">Exercices</div>
     <div class="exercise-list" id="exerciseList"></div>
     <div class="add-form">
-      <button id="addExToggleBtn" class="btn-add" style="width:100%;margin-bottom:0" onclick="toggleAddExForm()">+ Ajouter un exercice</button>
+      <div style="display:flex;gap:10px;margin-bottom:0">
+      <button id="addExToggleBtn" class="btn-add" style="flex:1" onclick="toggleAddExForm()">+ Ajouter un exercice</button>
+      <button class="btn-ghost" onclick="startFreeSession()" title="Séance libre sans routine" style="white-space:nowrap">⚡ Libre</button>
+    </div>
       <div id="addExForm" style="display:none;margin-top:12px">
         <div class="form-row">
           <div style="position:relative;flex:1">
@@ -698,6 +713,7 @@
     } else {
       document.getElementById('loginScreen').style.display = 'flex';
     }
+    document.getElementById('loadingScreen').style.display = 'none';
   })();
 
   // ── Data helpers ──
@@ -1032,6 +1048,24 @@
   }
 
   // ── Exercises ──
+  function startFreeSession() {
+    if (exercises.length && !confirm('Démarrer une nouvelle séance libre ? La séance en cours sera perdue.')) return;
+    exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    document.getElementById('sessionNotes').value = '';
+    // Auto-start timer
+    timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
+    timerRunning = true;
+    const btn = document.getElementById('timerBtn');
+    if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
+    renderExercises(); renderRoutinePicker();
+    // Open add exercise form
+    document.getElementById('addExForm').style.display = 'block';
+    document.getElementById('addExToggleBtn').textContent = '✕ Fermer';
+    showToast('Séance libre démarrée ⚡');
+    setTimeout(() => document.getElementById('exName')?.focus(), 100);
+  }
+
   function toggleAddExForm() {
     const form = document.getElementById('addExForm');
     const btn = document.getElementById('addExToggleBtn');
@@ -1077,8 +1111,11 @@
 
           return `<div class="set-row">
             <div class="set-n">${si+1}</div>
-            <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)"/>
-            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)"/>
+            <div style="position:relative">
+              <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+              ${s.w && checkNewPR(ex.name, parseFloat(s.w)) && parseFloat(s.w) > 0 ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:10px;pointer-events:none">🏆</span>' : ''}
+            </div>
+            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
             <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${si})">${s.done?'✓':''}</button>
             <button onclick="delSet(${ei},${si})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
@@ -1498,7 +1535,8 @@
         ondragstart="onRoutineDragStart(event,${ri})"
         ondragover="onRoutineDragOver(event)"
         ondrop="onRoutineDrop(event,${ri})"
-        ondragend="onRoutineDragEnd(event)">
+        ondragend="onRoutineDragEnd(event)"
+        ontouchstart="onRoutineTouchStart(event,${ri})">
         <div class="rc-head">
           <div style="display:flex;align-items:center;gap:6px">
             <span class="rc-drag-handle" title="Déplacer">⠿</span>
@@ -1520,8 +1558,12 @@
     }).join('');
   }
 
-  // ── Drag & drop routines ──
+  // ── Drag & drop routines (desktop + mobile touch) ──
   let dragSrcRi = null;
+  let touchDragRi = null;
+  let touchDragEl = null;
+  let touchClone = null;
+
   function onRoutineDragStart(e, ri) {
     dragSrcRi = ri;
     e.currentTarget.classList.add('dragging');
@@ -1534,21 +1576,66 @@
   async function onRoutineDrop(e, targetRi) {
     e.preventDefault();
     if (dragSrcRi === null || dragSrcRi === targetRi) return;
-    const moved = routines.splice(dragSrcRi, 1)[0];
-    routines.splice(targetRi, 0, moved);
+    await reorderRoutines(dragSrcRi, targetRi);
     dragSrcRi = null;
-    renderRoutinesList(); renderRoutinePicker();
-    // Save new order to Supabase
-    showSyncBadge('Sauvegarde...');
-    await sbSave('routines', routines);
-    showSyncBadge('✓ Sync', true);
   }
   function onRoutineDragEnd(e) {
     e.currentTarget.classList.remove('dragging');
     dragSrcRi = null;
   }
+
+  async function reorderRoutines(fromRi, toRi) {
+    const moved = routines.splice(fromRi, 1)[0];
+    routines.splice(toRi, 0, moved);
+    renderRoutinesList(); renderRoutinePicker();
+    showSyncBadge('Sauvegarde...');
+    await sbSave('routines', routines);
+    showSyncBadge('✓ Sync', true);
+  }
+
+  // Touch support
+  function onRoutineTouchStart(e, ri) {
+    if (!e.target.closest('.rc-drag-handle')) return;
+    e.preventDefault();
+    touchDragRi = ri;
+    touchDragEl = e.currentTarget;
+    touchDragEl.classList.add('dragging');
+    const t = e.touches[0];
+    touchClone = touchDragEl.cloneNode(true);
+    touchClone.style.cssText = `position:fixed;left:${t.clientX-20}px;top:${t.clientY-20}px;width:${touchDragEl.offsetWidth}px;opacity:0.85;z-index:9999;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.18);border-radius:8px;`;
+    document.body.appendChild(touchClone);
+  }
+  function onRoutineTouchMove(e) {
+    if (touchDragRi === null || !touchClone) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - 20) + 'px';
+    touchClone.style.top = (t.clientY - 20) + 'px';
+  }
+  async function onRoutineTouchEnd(e) {
+    if (touchDragRi === null) return;
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    if (touchDragEl) touchDragEl.classList.remove('dragging');
+    const t = e.changedTouches[0];
+    const els = document.elementsFromPoint(t.clientX, t.clientY);
+    const target = els.find(el => el.closest('.routine-card') && el.closest('.routine-card') !== touchDragEl);
+    if (target) {
+      const cards = [...document.querySelectorAll('.routine-card')];
+      const targetCard = target.closest('.routine-card');
+      const targetRi = cards.indexOf(targetCard);
+      if (targetRi !== -1 && targetRi !== touchDragRi) {
+        await reorderRoutines(touchDragRi, targetRi);
+      }
+    }
+    touchDragRi = null; touchDragEl = null;
+  }
+
+  document.addEventListener('touchmove', e => { if (touchDragRi !== null) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchend', onRoutineTouchEnd);
   async function deleteRoutine(ri) {
-    const r = routines[ri]; routines.splice(ri,1);
+    const r = routines[ri];
+    if (!confirm(`Supprimer "${r.name}" ?`)) return;
+    routines.splice(ri,1);
     showSyncBadge('Suppression...');
     await sbDelete('routines', r.id);
     showSyncBadge('✓ Sync', true);
@@ -1698,7 +1785,14 @@
   function renderHistory() {
     const el=document.getElementById('historyList');
     if(!sessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Aucune séance</div><div class="empty-sub">Commence et sauvegarde ta première séance.</div></div>`;return;}
-    el.innerHTML=sessions.map(s=>{
+    const hq = (document.getElementById('historySearch')?.value||'').trim().toLowerCase();
+    const filteredSessions = hq ? sessions.filter(s =>
+      s.exercises.some(e=>e.name.toLowerCase().includes(hq)) ||
+      (s.routineName||'').toLowerCase().includes(hq) ||
+      (s.muscles||[]).some(m=>m.toLowerCase().includes(hq))
+    ) : sessions;
+    if(!filteredSessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${hq?'Aucun résultat':'Aucune séance'}</div></div>`;return;}
+    el.innerHTML=filteredSessions.map(s=>{
       const d=new Date(s.date),dateStr=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}),dur=s.duration>0?fmt(s.duration):'—';
       const isOpen = openHistoryIds.has(s.id);
       const detail = isOpen ? `<div class="h-detail open">
@@ -1711,13 +1805,35 @@
         </div>`).join('')}
         ${s.notes?`<div class="h-note" style="margin-top:8px">${s.notes}</div>`:''}
       </div>` : '';
-      return `<div class="h-card" onclick="toggleHistory(${s.id})">
-        <div class="h-top"><div class="h-date">${dateStr}</div><div style="display:flex;align-items:center;gap:8px"><div class="h-dur">${dur}</div><span style="font-size:11px;color:var(--muted)">${isOpen?'▲':'▼'}</span></div></div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length||s.routineName?'8px':'0'}">${s.routineName?`<span class="h-routine-tag">📌 ${s.routineName}</span>`:''}${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
-        <div class="h-exs">${s.exercises.map(e=>e.name).join(' · ')||'—'}</div>
+      return `<div class="h-card">
+        <div class="h-top" onclick="toggleHistory(${s.id})" style="cursor:pointer">
+          <div class="h-date">${dateStr}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="h-dur">${dur}</div>
+            <span style="font-size:11px;color:var(--muted)">${isOpen?'▲':'▼'}</span>
+            <button onclick="event.stopPropagation();deleteSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;" title="Supprimer">🗑</button>
+          </div>
+        </div>
+        <div onclick="toggleHistory(${s.id})" style="cursor:pointer">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length||s.routineName?'8px':'0'}">${s.routineName?`<span class="h-routine-tag">📌 ${s.routineName}</span>`:''}${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
+          <div class="h-exs">${s.exercises.map(e=>e.name).join(' · ')||'—'}</div>
+        </div>
         ${detail}
       </div>`;
     }).join('');
+  }
+
+  async function deleteSession(id) {
+    if (!confirm('Supprimer cette séance ?')) return;
+    const idx = sessions.findIndex(s => s.id === id);
+    if (idx === -1) return;
+    sessions.splice(idx, 1);
+    openHistoryIds.delete(id);
+    showSyncBadge('Suppression...');
+    await sbDelete('sessions', id);
+    showSyncBadge('✓ Sync', true);
+    renderHistory();
+    showToast('Séance supprimée');
   }
 
   function fmt(s){const m=Math.floor(s/60);return m>0?`${m} min`:`${s}s`;}
