@@ -365,71 +365,98 @@
 
   <!-- ══ SESSION ══ -->
   <div class="section active" id="tab-session">
-    <div class="label">Charger une routine</div>
-    <div id="routinePickerList" style="margin-bottom:4px"></div>
-    <div class="section-divider"></div>
-    <div class="section-divider"></div>
-    <div class="label">Durée de séance</div>
-    <div class="timer-card">
-      <div>
-        <div class="timer-display" id="timerDisplay">00:00</div>
-        <div class="timer-sub">En cours</div>
+
+    <!-- Bloc routines -->
+    <div id="sessionRoutineBlock">
+      <div class="label">Charger une routine</div>
+      <div id="routinePickerList" style="margin-bottom:4px"></div>
+      <div class="section-divider"></div>
+    </div>
+
+    <!-- Séance libre -->
+    <div id="freeSessionBlock">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="label" style="margin:0">Séance libre</div>
+        <div id="freeSessionRoutineTag" style="font-size:11px;color:var(--accent);font-family:'Geist Mono',monospace;"></div>
       </div>
-      <div class="timer-controls">
-        <button class="btn-sm" id="timerBtn" onclick="toggleTimer()">▶</button>
-        <button class="btn-sm" onclick="resetTimer()">↺</button>
+
+      <div class="label" style="font-size:9px;margin-bottom:8px">Durée</div>
+      <div class="timer-card">
+        <div>
+          <div class="timer-display" id="timerDisplay">00:00</div>
+          <div class="timer-sub">En cours</div>
+        </div>
+        <div class="timer-controls">
+          <button class="btn-sm" id="timerBtn" onclick="toggleTimer()">▶</button>
+          <button class="btn-sm" onclick="resetTimer()">↺</button>
+        </div>
       </div>
-    </div>
-    <div class="label">Groupes musculaires</div>
-    <div class="muscle-wrap" id="muscleWrap">
-      <div class="chip" onclick="this.classList.toggle('on')">Pectoraux</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Dos</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Épaules</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Biceps</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Triceps</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Jambes</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Abdos</div>
-      <div class="chip" onclick="this.classList.toggle('on')">Fessiers</div>
-    </div>
-    <div class="label">Exercices</div>
-    <div class="exercise-list" id="exerciseList"></div>
-    <div class="add-form">
-      <div style="display:flex;gap:10px;margin-bottom:0">
-      <button id="addExToggleBtn" class="btn-add" style="flex:1" onclick="toggleAddExForm()">+ Ajouter un exercice</button>
-      <button class="btn-ghost" onclick="startFreeSession()" title="Séance libre sans routine" style="white-space:nowrap">⚡ Libre</button>
-    </div>
-      <div id="addExForm" style="display:none;margin-top:12px">
-        <div class="form-row">
-          <div style="position:relative;flex:1">
-            <input class="inp" id="exName" placeholder="Nom de l'exercice" type="text" oninput="filterAddSuggestions()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
-            <div class="ex-suggestions ex-add-suggestions" id="exAddSuggestions"></div>
+
+      <div class="label">Groupes musculaires</div>
+      <div class="muscle-wrap" id="muscleWrap">
+        <div class="chip" onclick="this.classList.toggle('on')">Pectoraux</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Dos</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Épaules</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Biceps</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Triceps</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Jambes</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Abdos</div>
+        <div class="chip" onclick="this.classList.toggle('on')">Fessiers</div>
+      </div>
+
+      <div class="label">Exercices</div>
+      <div class="exercise-list" id="exerciseList"></div>
+
+      <div class="add-form">
+        <button id="addExToggleBtn" class="btn-add" style="width:100%" onclick="toggleAddExForm()">+ Ajouter un exercice</button>
+        <div id="addExForm" style="display:none;margin-top:12px">
+          <div class="form-row">
+            <div style="position:relative;flex:1">
+              <input class="inp" id="exName" placeholder="Nom de l'exercice" type="text" oninput="filterAddSuggestions()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+              <div class="ex-suggestions ex-add-suggestions" id="exAddSuggestions"></div>
+            </div>
+            <select class="inp" id="exMuscle">
+              <option value="">Muscle</option>
+              <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+              <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+              <option>Abdos</option><option>Fessiers</option><option>Autre</option>
+            </select>
           </div>
-          <select class="inp" id="exMuscle">
-            <option value="">Muscle</option>
-            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
-            <option>Biceps</option><option>Triceps</option><option>Jambes</option>
-            <option>Abdos</option><option>Fessiers</option><option>Autre</option>
-          </select>
+          <div class="form-row" style="margin-top:8px">
+            <select class="inp" id="exRest" onchange="document.getElementById('exRestCustom').style.display=this.value==='custom'?'block':'none'">
+              <option value="60">Repos 1 min</option>
+              <option value="90" selected>Repos 1 min 30</option>
+              <option value="120">Repos 2 min</option>
+              <option value="180">Repos 3 min</option>
+              <option value="0">Sans repos</option>
+              <option value="custom">Personnalisé...</option>
+            </select>
+            <input class="inp" id="exRestCustom" type="number" placeholder="Sec." style="max-width:80px;display:none;" min="5" max="600"/>
+          </div>
+          <button class="btn-add" style="width:100%;margin-top:8px" onclick="addExercise()">+ Ajouter</button>
         </div>
-        <div class="form-row" style="margin-top:8px">
-          <select class="inp" id="exRest" onchange="document.getElementById('exRestCustom').style.display=this.value==='custom'?'block':'none'">
-            <option value="60">Repos 1 min</option>
-            <option value="90" selected>Repos 1 min 30</option>
-            <option value="120">Repos 2 min</option>
-            <option value="180">Repos 3 min</option>
-            <option value="0">Sans repos</option>
-            <option value="custom">Personnalisé...</option>
-          </select>
-          <input class="inp" id="exRestCustom" type="number" placeholder="Sec." style="max-width:80px;display:none;" min="5" max="600"/>
-        </div>
-        <button class="btn-add" style="width:100%;margin-top:8px" onclick="addExercise()">+ Ajouter</button>
+      </div>
+
+      <div class="label">Ressenti & notes</div>
+      <textarea class="notes-area" id="sessionNotes" placeholder="Comment tu te sens aujourd'hui ?"></textarea>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="save-btn" onclick="saveSession()">Terminer la séance</button>
+        <button onclick="abandonSession()" style="background:none;border:1px solid #ddd;border-radius:4px;padding:10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;width:100%;">Annuler la séance</button>
       </div>
     </div>
-    <div class="label">Ressenti & notes</div>
-    <textarea class="notes-area" id="sessionNotes" placeholder="Comment tu te sens aujourd'hui ?"></textarea>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="save-btn" onclick="saveSession()">Sauvegarder la séance</button>
-      <button onclick="abandonSession()" style="background:none;border:1px solid #ddd;border-radius:4px;padding:10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;width:100%;">Supprimer la séance</button>
+  </div>
+
+  <!-- ══ SAVE AS ROUTINE MODAL ══ -->
+  <div id="saveRoutineModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:800;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeSaveRoutineModal()">
+    <div style="background:var(--surface);border-radius:12px 12px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.15)">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:6px">Sauvegarder en routine ?</div>
+      <div style="font-size:11px;color:var(--muted2);margin-bottom:20px">Tu peux enregistrer cette séance comme routine pour la réutiliser.</div>
+      <input class="inp" id="saveRoutineName" placeholder="Nom de la routine (ex: Push A, Legs…)" style="width:100%;box-sizing:border-box;margin-bottom:16px"/>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn-add" style="width:100%" onclick="saveSessionAndRoutine()">💾 Sauvegarder séance + créer routine</button>
+        <button class="save-btn" onclick="saveSessionOnly()" style="background:var(--warm);color:var(--text);border:1px solid var(--border2)">Sauvegarder uniquement la séance</button>
+        <button onclick="closeSaveRoutineModal()" style="background:none;border:none;color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px">Annuler</button>
+      </div>
     </div>
   </div>
 
@@ -540,7 +567,18 @@
 
   <!-- ══ HISTORY ══ -->
   <div class="section" id="tab-history">
-    <div class="label" style="margin-bottom:18px">Séances passées</div>
+    <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
+      <input class="pr-search-inp" id="historySearch" placeholder="Rechercher par exercice ou routine…" oninput="renderHistory()" autocomplete="off"/>
+      <div style="display:flex;gap:8px">
+        <input class="pr-search-inp" id="historyDateSearch" type="date" style="flex:1" onchange="renderHistory()" title="Filtrer par date"/>
+        <select class="pr-search-inp" id="historyMuscleSearch" style="flex:1" onchange="renderHistory()">
+          <option value="">Tous les muscles</option>
+          <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+          <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+          <option>Abdos</option><option>Fessiers</option>
+        </select>
+      </div>
+    </div>
     <div class="h-list" id="historyList"></div>
   </div>
 
@@ -996,6 +1034,8 @@
   // ── Routine Picker ──
   function renderRoutinePicker() {
     const el = document.getElementById('routinePickerList');
+    const tag = document.getElementById('freeSessionRoutineTag');
+    if (tag) { const r = loadedRoutineId ? routines.find(r=>r.id===loadedRoutineId) : null; tag.textContent = r ? `📌 ${r.name}` : ''; }
     if (!routines.length) { el.innerHTML = `<div class="no-routine-hint">Aucune routine créée.<br><span onclick="switchTab('routines')">Créer ma première routine →</span></div>`; return; }
     el.innerHTML = routines.map(r => {
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
@@ -1053,6 +1093,7 @@
     exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
     document.getElementById('sessionNotes').value = '';
+    document.getElementById('freeSessionRoutineTag').textContent = '';
     // Auto-start timer
     timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
     timerRunning = true;
@@ -1211,10 +1252,25 @@
   function getSelectedMuscles() { return [...document.querySelectorAll('.chip.on')].map(c=>c.textContent); }
 
   // ── Save session ──
-  async function saveSession() {
+  function saveSession() {
     if (!exercises.length) { showToast('Ajoute au moins un exercice'); return; }
+    // If session came from a routine, skip the "save as routine" modal
+    if (loadedRoutineId) { saveSessionOnly(); return; }
+    // Free session — propose saving as routine
+    const modal = document.getElementById('saveRoutineModal');
+    modal.style.display = 'flex';
+    // Pre-fill name if muscles selected
+    const muscles = getSelectedMuscles();
+    if (muscles.length) document.getElementById('saveRoutineName').placeholder = muscles.join(' · ');
+  }
+
+  function closeSaveRoutineModal() {
+    document.getElementById('saveRoutineModal').style.display = 'none';
+  }
+
+  async function _persistSession(routineName) {
     const routine = loadedRoutineId ? routines.find(r=>r.id===loadedRoutineId) : null;
-    const newSession = { id: Date.now(), date: new Date().toISOString(), duration: timerSec, muscles: getSelectedMuscles(), exercises: JSON.parse(JSON.stringify(exercises)), notes: document.getElementById('sessionNotes').value.trim(), routineName: routine?routine.name:null };
+    const newSession = { id: Date.now(), date: new Date().toISOString(), duration: timerSec, muscles: getSelectedMuscles(), exercises: JSON.parse(JSON.stringify(exercises)), notes: document.getElementById('sessionNotes').value.trim(), routineName: routineName || (routine?routine.name:null) };
     sessions.unshift(newSession);
     showSyncBadge('Sauvegarde...');
     await sbSave('sessions', [newSession]);
@@ -1223,7 +1279,28 @@
     clearDraft();
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
     document.getElementById('sessionNotes').value='';
-    renderExercises(); renderRoutinePicker(); showToast('Séance sauvegardée ✓');
+    renderExercises(); renderRoutinePicker();
+  }
+
+  async function saveSessionOnly() {
+    closeSaveRoutineModal();
+    await _persistSession(null);
+    showToast('Séance sauvegardée ✓');
+  }
+
+  async function saveSessionAndRoutine() {
+    const name = document.getElementById('saveRoutineName').value.trim();
+    if (!name) { showToast('Donne un nom à la routine'); return; }
+    closeSaveRoutineModal();
+    // Build routine from current exercises
+    const newRoutine = { id: Date.now(), name, exercises: exercises.map(ex => ({ name: ex.name, muscle: ex.muscle||'', sets: ex.sets.length||3, restTime: ex.restTime||90 })) };
+    routines.push(newRoutine);
+    routines.sort((a,b)=>{ const g=n=>{const m=(n||'').match(/J(\d+)/i);return m?parseInt(m[1]):999;}; return g(a.name)-g(b.name); });
+    showSyncBadge('Sauvegarde...');
+    await sbSave('routines', [newRoutine]);
+    await _persistSession(name);
+    showToast(`Séance sauvegardée + routine "${name}" créée ✓`);
+    renderRoutinesList(); renderRoutinePicker();
   }
 
   // ── Routines ──
@@ -1786,12 +1863,15 @@
     const el=document.getElementById('historyList');
     if(!sessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Aucune séance</div><div class="empty-sub">Commence et sauvegarde ta première séance.</div></div>`;return;}
     const hq = (document.getElementById('historySearch')?.value||'').trim().toLowerCase();
-    const filteredSessions = hq ? sessions.filter(s =>
-      s.exercises.some(e=>e.name.toLowerCase().includes(hq)) ||
-      (s.routineName||'').toLowerCase().includes(hq) ||
-      (s.muscles||[]).some(m=>m.toLowerCase().includes(hq))
-    ) : sessions;
-    if(!filteredSessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${hq?'Aucun résultat':'Aucune séance'}</div></div>`;return;}
+    const dateQ = document.getElementById('historyDateSearch')?.value||'';
+    const muscleQ = document.getElementById('historyMuscleSearch')?.value||'';
+    const filteredSessions = sessions.filter(s => {
+      if (hq && !s.exercises.some(e=>e.name.toLowerCase().includes(hq)) && !(s.routineName||'').toLowerCase().includes(hq)) return false;
+      if (dateQ && !s.date.startsWith(dateQ)) return false;
+      if (muscleQ && !(s.muscles||[]).some(m=>m===muscleQ)) return false;
+      return true;
+    });
+    if(!filteredSessions.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Aucun résultat</div></div>`;return;}
     el.innerHTML=filteredSessions.map(s=>{
       const d=new Date(s.date),dateStr=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}),dur=s.duration>0?fmt(s.duration):'—';
       const isOpen = openHistoryIds.has(s.id);
@@ -1800,7 +1880,7 @@
           <div class="h-detail-ex-name">${ex.name}${ex.muscle?` <span style="font-size:11px;color:var(--muted)">${ex.muscle}</span>`:''}</div>
           ${ex.sets.map((set,i) => {
             const w = set.w||set.weight||'—'; const r = set.r||set.reps||'—';
-            return `<div class="h-detail-set ${set.done?'done':''}">Série ${i+1} · ${w}kg × ${r} reps${set.done?' ✓':''}</div>`;
+            return `<div class="h-detail-set ${set.done?'done':''}">Série ${i+1} · ${w} kg × ${r} reps${set.done?' ✓':''}</div>`;
           }).join('')}
         </div>`).join('')}
         ${s.notes?`<div class="h-note" style="margin-top:8px">${s.notes}</div>`:''}
@@ -1814,10 +1894,7 @@
             <button onclick="event.stopPropagation();deleteSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;" title="Supprimer">🗑</button>
           </div>
         </div>
-        <div onclick="toggleHistory(${s.id})" style="cursor:pointer">
-          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length||s.routineName?'8px':'0'}">${s.routineName?`<span class="h-routine-tag">📌 ${s.routineName}</span>`:''}${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
-          <div class="h-exs">${s.exercises.map(e=>e.name).join(' · ')||'—'}</div>
-        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length||s.routineName?'6px':'0'}">${s.routineName?`<span class="h-routine-tag">📌 ${s.routineName}</span>`:''}${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
         ${detail}
       </div>`;
     }).join('');
