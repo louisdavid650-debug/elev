@@ -23,6 +23,24 @@
     --muted2: #9a948e;
     --warm: #f0ebe5;
   }
+  html.dark {
+    --bg: #141412;
+    --surface: #1e1c1a;
+    --border: #2a2825;
+    --border2: #3a3632;
+    --accent: #4a8c5c;
+    --accent-light: rgba(74,140,92,0.12);
+    --accent2: #e05c4b;
+    --gold: #c9962a;
+    --gold-light: rgba(201,150,42,0.1);
+    --text: #f0ece6;
+    --muted: #7a756e;
+    --muted2: #4a4540;
+    --warm: #1a1816;
+  }
+  html.dark body { background: var(--bg); color: var(--text); }
+  html.dark .bottom-nav { background: rgba(20,20,18,0.97); }
+  html.dark input, html.dark textarea { color-scheme: dark; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Geist Mono', monospace; min-height: 100vh; font-weight: 400; }
@@ -486,6 +504,7 @@
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
+        <button onclick="toggleDark()" id="darkToggleBtn" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.2s;" title="Mode sombre">☽ Nuit</button>
         <div style="display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="netStatusLabel">
           <span id="syncDot" class="sync-dot"></span>
         </div>
@@ -2755,6 +2774,23 @@
   }
 
 
+
+
+  // ── Dark mode ──
+  function toggleDark() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('elev_dark', isDark ? '1' : '0');
+    const btn = document.getElementById('darkToggleBtn');
+    if (btn) btn.textContent = isDark ? '☀ Jour' : '☽ Nuit';
+  }
+  function initDark() {
+    const saved = localStorage.getItem('elev_dark');
+    if (saved === '1') {
+      document.documentElement.classList.add('dark');
+      const btn = document.getElementById('darkToggleBtn');
+      if (btn) btn.textContent = '☀ Jour';
+    }
+  }
 
   // ── Supersets ──
   let _ssPendingEi = -1;
