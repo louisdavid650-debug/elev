@@ -449,6 +449,14 @@
   .freq-legend-item { display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
+<script>
+  // Apply dark mode immediately to prevent flash
+  (function() {
+    if (localStorage.getItem('elev_dark') === '1') {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+</script>
 </head>
 <body>
 
@@ -2864,10 +2872,13 @@
   }
   function initDark() {
     const saved = localStorage.getItem('elev_dark');
+    const btn = document.getElementById('darkToggleBtn');
     if (saved === '1') {
       document.documentElement.classList.add('dark');
-      const btn = document.getElementById('darkToggleBtn');
       if (btn) btn.textContent = '☀ Jour';
+    } else {
+      document.documentElement.classList.remove('dark');
+      if (btn) btn.textContent = '☽ Nuit';
     }
   }
 
