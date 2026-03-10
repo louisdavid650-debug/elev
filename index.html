@@ -362,12 +362,21 @@
   .recap-ex-name { font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--text);margin-bottom:4px; }
   .recap-ex-sets { font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;line-height:1.8; }
   .recap-close { width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:14px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:20px; }
+  /* ── Offline indicator ── */
+  .offline-banner { position:fixed;top:0;left:0;right:0;z-index:999;background:#b85c2a;color:#fff;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:6px;transform:translateY(-100%);transition:transform 0.3s ease; }
+  .offline-banner.show { transform:translateY(0); }
+  .sync-dot { display:inline-block;width:6px;height:6px;border-radius:50%;background:#aaa;margin-left:6px;vertical-align:middle;transition:background 0.3s; }
+  .sync-dot.online { background:#4caf50; }
+  .sync-dot.offline { background:#e57373;animation:pulse 1.5s infinite; }
+  .sync-dot.syncing { background:#ffa726;animation:pulse 0.6s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 </head>
 <body>
 
 <!-- ══ LOADING SCREEN ══ -->
+<div class="offline-banner" id="offlineBanner">⚡ Mode hors-ligne — tes données seront synchronisées à la reconnexion</div>
 <div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="168" height="48">
     <defs><style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&amp;display=swap');</style></defs>
@@ -427,7 +436,12 @@
         <div class="header-date" id="headerDate"></div>
         <div class="header-date" id="headerTime" style="margin-top:2px"></div>
       </div>
-      <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-top:4px;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
+        <div style="display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="netStatusLabel">
+          <span id="syncDot" class="sync-dot"></span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -840,29 +854,157 @@
     document.getElementById('loadingScreen').style.display = 'none';
   })();
 
+  // ── Offline queue ──
+  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights' };
+  const QUEUE_KEY = 'elev_offline_queue';
+
+  function isOnline() { return navigator.onLine; }
+
+  function getQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
+  function setQueue(q) { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+
+  function queueOp(op) {
+    const q = getQueue();
+    // Remove duplicate (same table + id) to avoid double-sync
+    const filtered = q.filter(o => !(o.type === op.type && o.table === op.table && o.id === op.id));
+    filtered.push(op);
+    setQueue(filtered);
+  }
+
+  async function flushQueue() {
+    if (!accessToken || !isOnline()) return;
+    const q = getQueue();
+    if (!q.length) return;
+    setDot('syncing');
+    let failed = [];
+    for (const op of q) {
+      try {
+        if (op.type === 'save') {
+          const rows = op.records.map(r => ({ id: String(r.id), user_id: currentUser.id, data: r }));
+          const res = await supaFetch('/rest/v1/' + op.table, {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates' },
+            body: JSON.stringify(rows)
+          });
+          if (!res.ok) failed.push(op);
+        } else if (op.type === 'delete') {
+          await supaFetch('/rest/v1/' + op.table + '?id=eq.' + String(op.id) + '&user_id=eq.' + currentUser.id, { method: 'DELETE' });
+        }
+      } catch { failed.push(op); }
+    }
+    setQueue(failed);
+    if (!failed.length) {
+      setDot('online');
+      if (q.length > 0) showToast('✓ ' + q.length + ' opération' + (q.length>1?'s':'') + ' synchronisée' + (q.length>1?'s':''));
+    } else {
+      setDot('offline');
+    }
+  }
+
+  function setDot(state) {
+    const dot = document.getElementById('syncDot');
+    if (dot) { dot.className = 'sync-dot ' + state; }
+  }
+
   // ── Data helpers ──
   async function sbLoad(table) {
     if (!accessToken) return [];
-    const data = await supaFetch('/rest/v1/' + table + '?select=*&user_id=eq.' + currentUser.id, { returnData: true });
-    if (!Array.isArray(data)) { console.error('sbLoad error:', data); return []; }
-    return data.map(row => row.data);
+    // Try network first
+    if (isOnline()) {
+      try {
+        const data = await supaFetch('/rest/v1/' + table + '?select=*&user_id=eq.' + currentUser.id, { returnData: true });
+        if (Array.isArray(data)) {
+          const result = data.map(row => row.data);
+          // Update cache
+          if (CACHE_KEYS[table]) localStorage.setItem(CACHE_KEYS[table], JSON.stringify(result));
+          return result;
+        }
+      } catch(e) { console.warn('sbLoad network fail, using cache', e); }
+    }
+    // Fallback to cache
+    try {
+      const cached = localStorage.getItem(CACHE_KEYS[table]);
+      if (cached) { showToast('Mode hors-ligne — données locales'); return JSON.parse(cached); }
+    } catch {}
+    return [];
   }
 
   async function sbSave(table, records) {
     if (!accessToken) return;
-    const rows = records.map(r => ({ id: String(r.id), user_id: currentUser.id, data: r }));
-    const res = await supaFetch('/rest/v1/' + table, {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify(rows)
-    });
-    if (!res.ok) { const t = await res.text(); console.error('sbSave error:', t); }
+    // Always update cache immediately
+    if (CACHE_KEYS[table]) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEYS[table]) || '[]');
+        records.forEach(r => {
+          const idx = cached.findIndex(c => String(c.id) === String(r.id));
+          if (idx >= 0) cached[idx] = r; else cached.push(r);
+        });
+        localStorage.setItem(CACHE_KEYS[table], JSON.stringify(cached));
+      } catch {}
+    }
+    if (!isOnline()) {
+      queueOp({ type: 'save', table, records, id: records[0]?.id });
+      setDot('offline');
+      showSyncBadge('Hors-ligne', false);
+      return;
+    }
+    try {
+      const rows = records.map(r => ({ id: String(r.id), user_id: currentUser.id, data: r }));
+      const res = await supaFetch('/rest/v1/' + table, {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify(rows)
+      });
+      if (!res.ok) {
+        const t = await res.text(); console.error('sbSave error:', t);
+        queueOp({ type: 'save', table, records, id: records[0]?.id });
+      }
+    } catch {
+      queueOp({ type: 'save', table, records, id: records[0]?.id });
+      setDot('offline');
+    }
   }
 
   async function sbDelete(table, id) {
     if (!accessToken) return;
-    await supaFetch('/rest/v1/' + table + '?id=eq.' + String(id) + '&user_id=eq.' + currentUser.id, { method: 'DELETE' });
+    // Update cache immediately
+    if (CACHE_KEYS[table]) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEYS[table]) || '[]');
+        const filtered = cached.filter(c => String(c.id) !== String(id));
+        localStorage.setItem(CACHE_KEYS[table], JSON.stringify(filtered));
+      } catch {}
+    }
+    if (!isOnline()) {
+      queueOp({ type: 'delete', table, id });
+      setDot('offline');
+      return;
+    }
+    try {
+      await supaFetch('/rest/v1/' + table + '?id=eq.' + String(id) + '&user_id=eq.' + currentUser.id, { method: 'DELETE' });
+    } catch {
+      queueOp({ type: 'delete', table, id });
+      setDot('offline');
+    }
   }
+
+  // ── Network listeners ──
+  window.addEventListener('online', async () => {
+    document.getElementById('offlineBanner').classList.remove('show');
+    setDot('syncing');
+    await flushQueue();
+    showSyncBadge('✓ Sync', true);
+  });
+  window.addEventListener('offline', () => {
+    document.getElementById('offlineBanner').classList.add('show');
+    setDot('offline');
+    showSyncBadge('Hors-ligne', false);
+  });
+  // Init dot state
+  document.addEventListener('DOMContentLoaded', () => {
+    setDot(isOnline() ? 'online' : 'offline');
+    if (!isOnline()) document.getElementById('offlineBanner').classList.add('show');
+  });
 
   async function loadAllData() {
     showSyncBadge('Chargement...');
