@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Élev — Gym Tracker</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23f7f5f2%22/><text x=%2250%22 y=%2272%22 font-family=%22Georgia,serif%22 font-size=%2252%22 font-weight=%22300%22 fill=%22%231a1a1a%22 text-anchor=%22middle%22 letter-spacing=%222%22>E</text></svg>"><rect width=%22120%22 height=%22120%22 rx=%2222%22 fill=%22%23f5f0e8%22/><rect x=%2232%22 y=%2228%22 width=%228%22 height=%2264%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2228%22 width=%2252%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2256%22 width=%2240%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2284%22 width=%2252%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/></svg>"><rect width=%22120%22 height=%22120%22 rx=%2222%22 fill=%22%232d5a3d%22/><rect x=%2226%22 y=%2274%22 width=%2216%22 height=%2222%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2252%22 y=%2255%22 width=%2216%22 height=%2241%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2278%22 y=%2236%22 width=%2216%22 height=%2260%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2226%22 y=%2226%22 width=%2268%22 height=%229%22 rx=%223%22 fill=%22%23f7f5f2%22/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23f7f5f2%22/><text x=%2250%22 y=%2272%22 font-family=%22Georgia,serif%22 font-size=%2252%22 font-weight=%22300%22 fill=%22%231a1a1a%22 text-anchor=%22middle%22>E</text></svg>"><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23f7f5f2%22/><text x=%2250%22 y=%2272%22 font-family=%22Georgia,serif%22 font-size=%2252%22 font-weight=%22300%22 fill=%22%231a1a1a%22 text-anchor=%22middle%22 letter-spacing=%222%22>E</text></svg>"><rect width=%22120%22 height=%22120%22 rx=%2222%22 fill=%22%23f5f0e8%22/><rect x=%2232%22 y=%2228%22 width=%228%22 height=%2264%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2228%22 width=%2252%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2256%22 width=%2240%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/><rect x=%2232%22 y=%2284%22 width=%2252%22 height=%228%22 rx=%222%22 fill=%22%23b8960c%22/></svg>"><rect width=%22120%22 height=%22120%22 rx=%2222%22 fill=%22%232d5a3d%22/><rect x=%2226%22 y=%2274%22 width=%2216%22 height=%2222%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2252%22 y=%2255%22 width=%2216%22 height=%2241%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2278%22 y=%2236%22 width=%2216%22 height=%2260%22 rx=%223%22 fill=%22%23f7f5f2%22/><rect x=%2226%22 y=%2226%22 width=%2268%22 height=%229%22 rx=%223%22 fill=%22%23f7f5f2%22/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
@@ -291,7 +291,7 @@
   .empty-sub { font-size: 11px; line-height: 1.8; }
 
   /* Toast */
-  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: var(--bg); padding: 10px 22px; border-radius: 2px; font-size: 11px; letter-spacing: 1.5px; opacity: 0; transition: all 0.25s ease; z-index: 300; pointer-events: none; white-space: nowrap; }
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--text); color: var(--bg); padding: 10px 22px; border-radius: 20px; font-size: 11px; letter-spacing: 1px; opacity: 0; transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index: 300; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* Bottom nav */
@@ -324,7 +324,7 @@
 </style>
 
 <!-- ══ LOGIN SCREEN ══ -->
-<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:32px;">
+<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:32px;overflow:hidden;">
   <div style="width:100%;max-width:340px;">
     <div style="margin-bottom:28px">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="140" height="40">
@@ -1037,9 +1037,14 @@
       if (draft.restWasActive && draft.restRemaining > 0) {
         const elapsed = Math.floor((Date.now() - draft.savedAt) / 1000);
         const remaining = draft.restRemaining - elapsed;
-        if (remaining > 0) {
-          startRest(remaining);
-        }
+        if (remaining > 0) startRest(remaining);
+      }
+      // Restore free session block visibility
+      const block = document.getElementById('freeSessionBlock');
+      const btn = document.getElementById('freeSessionToggleBtn');
+      if (block && exercises.length) {
+        block.style.display = 'block';
+        if (btn) btn.textContent = '✕ Annuler la séance';
       }
       const ago = Math.round((Date.now() - draft.savedAt) / 60000);
       showToast(`Session restaurée (il y a ${ago < 1 ? "moins d'1 min" : ago + " min"})`);
@@ -1194,6 +1199,11 @@
     document.getElementById('addExToggleBtn').textContent = '+ Ajouter un exercice';
     renderExercises();
     autosaveDraft();
+    // Scroll to new exercise
+    setTimeout(() => {
+      const cards = document.querySelectorAll('.ex-card');
+      if (cards.length) cards[cards.length-1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
   }
   function renderExercises() {
     const el = document.getElementById('exerciseList');
@@ -2038,7 +2048,9 @@
     if(!sessions.length){grid.innerHTML='';prEl.innerHTML='<div style="padding:12px 0;font-size:11px;color:var(--muted2)">Aucun record encore.</div>';topEl.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Pas encore de données</div><div class="empty-sub">Tes statistiques apparaîtront après ta première séance.</div></div>`;renderProgSelector();return;}
     const n=sessions.length,totalSets=sessions.reduce((a,s)=>a+s.exercises.reduce((b,e)=>b+e.sets.length,0),0),avgDur=Math.round(sessions.reduce((a,s)=>a+s.duration,0)/n);
     const allMuscles=sessions.flatMap(s=>s.muscles||[]),topMuscle=allMuscles.length?[...allMuscles.reduce((m,v)=>m.set(v,(m.get(v)||0)+1),new Map())].sort((a,b)=>b[1]-a[1])[0][0]:'—';
-    grid.innerHTML=`<div class="stat-box"><div class="stat-val">${n}</div><div class="stat-lbl">Séances</div></div><div class="stat-box"><div class="stat-val">${totalSets}</div><div class="stat-lbl">Séries</div></div><div class="stat-box"><div class="stat-val">${fmt(avgDur)}</div><div class="stat-lbl">Durée moy.</div></div><div class="stat-box"><div class="stat-val" style="font-size:18px;padding-top:10px">${topMuscle}</div><div class="stat-lbl">Muscle favori</div></div>`;
+    let streak2=0;const chk=new Date();
+    while(true){const key=chk.toDateString();if(sessions.some(s=>new Date(s.date).toDateString()===key)){streak2++;chk.setDate(chk.getDate()-1);}else break;}
+    grid.innerHTML=`<div class="stat-box"><div class="stat-val">${n}</div><div class="stat-lbl">Séances</div></div><div class="stat-box"><div class="stat-val">${totalSets}</div><div class="stat-lbl">Séries</div></div><div class="stat-box"><div class="stat-val">${fmt(avgDur)}</div><div class="stat-lbl">Durée moy.</div></div><div class="stat-box"><div class="stat-val">${streak2}</div><div class="stat-lbl">Streak 🔥</div></div>`;
     const exNames=[...new Set(sessions.flatMap(s=>s.exercises.map(e=>e.name)))];
     const prQuery = (document.getElementById('prSearch')?.value||'').trim().toLowerCase();
     const allPrs=exNames.map(name=>{let maxW=0,maxDate=null;sessions.forEach(s=>{const ex=s.exercises.find(e=>e.name===name);if(ex)ex.sets.forEach(set=>{const w=parseFloat(set.w||set.weight||0);if(w>maxW){maxW=w;maxDate=s.date;}});});return{name,weight:maxW,date:maxDate};}).filter(p=>p.weight>0).sort((a,b)=>b.weight-a.weight);
@@ -2050,7 +2062,15 @@
     topEl.innerHTML=sorted.map(([name,count])=>`<div class="top-row"><div class="top-info"><div class="top-name">${name}</div><div class="top-cnt">${count}×</div></div><div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div></div>`).join('');
   }
 
-  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('show');
+    void t.offsetWidth; // force reflow for re-animation
+    t.classList.add('show');
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  }
 </script>
 </body>
 </html>
