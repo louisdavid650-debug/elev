@@ -393,6 +393,21 @@
   .weekly-compare { font-size:10px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace; }
   .weekly-compare.up { color:#4caf50; }
   .weekly-compare.down { color:#e57373; }
+
+  /* ── Supersets ── */
+  .ex-card.ss-card { border-left: 2px solid var(--accent); }
+  .ss-badge { font-family:'Geist Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--accent-light); border:1px solid rgba(45,90,61,0.2); border-radius:10px; padding:1px 6px; margin-left:4px; }
+  .ss-connector { text-align:center; padding:2px 0; margin:-4px 0; position:relative; }
+  .ss-connector::before { content:''; position:absolute; left:10px; top:50%; bottom:0; width:2px; background:var(--accent); opacity:0.3; }
+  .ss-connector-label { font-family:'Geist Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--bg); position:relative; padding:0 6px; }
+  /* Superset picker modal */
+  .ss-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:600;display:flex;align-items:flex-end;justify-content:center; }
+  .ss-sheet { background:var(--surface);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:460px; }
+  .ss-sheet-title { font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);margin-bottom:4px; }
+  .ss-sheet-sub { font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:18px; }
+  .ss-ex-option { padding:12px 16px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);transition:all 0.15s; }
+  .ss-ex-option:hover { border-color:var(--accent);background:var(--accent-light); }
+  .ss-cancel { width:100%;background:none;border:none;color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:12px;margin-top:4px; }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 </head>
@@ -1493,7 +1508,11 @@
     el.innerHTML = exercises.map((ex, ei) => {
       const lastSets = getLastSessionData(ex.name);
       const pr = getPR(ex.name);
-      return `<div class="ex-card" id="excard-${ei}"
+      const _ssPartnerIdx = ex.supersetWith !== undefined ? exercises.findIndex(e => e.id === ex.supersetWith) : -1;
+      const _isInSS = ex.supersetWith !== undefined && _ssPartnerIdx >= 0;
+      const _ssFirstOfPair = _isInSS && ei < _ssPartnerIdx;
+      const _connector = _ssFirstOfPair ? '<div class="ss-connector"><span class="ss-connector-label">⇄ superset</span></div>' : '';
+      return _connector + `<div class="ex-card ${_isInSS ? 'ss-card' : ''}" id="excard-${ei}"
         ondragover="onExDragOver(event)"
         ondragend="onExDragEnd(event)"
         ondrop="onExDrop(event,${ei})">
@@ -1505,10 +1524,14 @@
               ontouchstart="onExTouchStart(event,${ei})"
               ontouchmove="onExTouchMove(event,${ei})"
               ontouchend="onExTouchEnd(event,${ei})">⠿</span>
-            <div><div class="ex-name">${ex.name}</div>
-            <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">🏆 PR ${pr.weight}kg</span>`:''}</div></div>
+            <div><div class="ex-name">${ex.name}${_isInSS ? '<span class="ss-badge">SS</span>' : ''}</div>
+            <div class="ex-meta">${ex.muscle?'<span class="ex-muscle-tag">'+ex.muscle+'</span>':''}${pr?'<span class="ex-pr-badge">🏆 PR '+pr.weight+'kg</span>':''}</div></div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center"><button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button><button class="ex-del" onclick="delEx(${ei})">✕</button></div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:11px;letter-spacing:0.5px;font-family:'Geist Mono',monospace;" onclick="openSSPicker(${ei})" title="Superset">⇄</button>
+            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button>
+            <button class="ex-del" onclick="delEx(${ei})">✕</button>
+          </div></div>
         <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:8px">Dernière</div><div>✓</div></div>
         ${ex.sets.map((s,si)=>{
           const prev=lastSets&&lastSets[si]?lastSets[si]:null;
@@ -1631,7 +1654,25 @@
     autosaveDraft();
     if (f==='w'&&v) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);if(navigator.vibrate)navigator.vibrate([80,40,120]);} }
   }
-  function tick(ei,si) { exercises[ei].sets[si].done=!exercises[ei].sets[si].done; if(exercises[ei].sets[si].done){ const exRest = exercises[ei].restTime; startRest(exRest !== undefined ? exRest : restDur); } renderExercises(); autosaveDraft(); }
+  function tick(ei,si) {
+    exercises[ei].sets[si].done = !exercises[ei].sets[si].done;
+    if (exercises[ei].sets[si].done) {
+      const ex = exercises[ei];
+      // Superset: only start rest after BOTH exercises' set is done
+      if (ex.supersetWith !== undefined) {
+        const partnerIdx = exercises.findIndex(e => e.id === ex.supersetWith);
+        const partnerSetDone = partnerIdx >= 0 && exercises[partnerIdx].sets[si] && exercises[partnerIdx].sets[si].done;
+        if (partnerSetDone) {
+          const restTime = Math.max(ex.restTime || restDur, exercises[partnerIdx].restTime || restDur);
+          startRest(restTime);
+        }
+        // else wait for partner set
+      } else {
+        startRest(ex.restTime !== undefined ? ex.restTime : restDur);
+      }
+    }
+    renderExercises(); autosaveDraft();
+  }
   function getSelectedMuscles() { return [...document.querySelectorAll('.chip.on')].map(c=>c.textContent); }
 
   // ── Save session ──
@@ -2710,6 +2751,56 @@
   }
 
 
+
+  // ── Supersets ──
+  let _ssPendingEi = -1;
+
+  function openSSPicker(ei) {
+    _ssPendingEi = ei;
+    const ex = exercises[ei];
+    // If already in superset — offer to unlink
+    if (ex.supersetWith !== undefined) {
+      if (confirm('Supprimer ce superset ?')) {
+        const partnerIdx = exercises.findIndex(e => e.id === ex.supersetWith);
+        if (partnerIdx >= 0) delete exercises[partnerIdx].supersetWith;
+        delete ex.supersetWith;
+        renderExercises(); autosaveDraft();
+      }
+      return;
+    }
+    // Show picker with other exercises
+    const options = exercises
+      .map((e, i) => ({ e, i }))
+      .filter(({ i }) => i !== ei && exercises[i].supersetWith === undefined);
+    if (!options.length) { showToast('Ajoute un autre exercice pour créer un superset'); return; }
+    document.getElementById('ssExOptions').innerHTML = options.map(({ e, i }) =>
+      '<div class="ss-ex-option" onclick="linkSuperset(' + i + ')">' + e.name + (e.muscle ? ' <span style="font-size:12px;color:var(--muted)">· ' + e.muscle + '</span>' : '') + '</div>'
+    ).join('');
+    document.getElementById('ssModal').style.display = 'flex';
+  }
+
+  function closeSSPicker() {
+    document.getElementById('ssModal').style.display = 'none';
+    _ssPendingEi = -1;
+  }
+
+  function linkSuperset(partnerEi) {
+    const ei = _ssPendingEi;
+    if (ei < 0) return;
+    exercises[ei].supersetWith = exercises[partnerEi].id;
+    exercises[partnerEi].supersetWith = exercises[ei].id;
+    closeSSPicker();
+    // Move partner right after current if not adjacent
+    const minIdx = Math.min(ei, partnerEi);
+    const maxIdx = Math.max(ei, partnerEi);
+    if (maxIdx - minIdx > 1) {
+      const partner = exercises.splice(maxIdx, 1)[0];
+      exercises.splice(minIdx + 1, 0, partner);
+    }
+    renderExercises(); autosaveDraft();
+    showToast('Superset créé ⇄');
+  }
+
   // ── Notes par exercice ──
   function toggleExNote(ei) {
     const area = document.getElementById('ex-note-' + ei) || document.querySelector(`#excard-${ei} .ex-note-area`);
@@ -2841,6 +2932,16 @@
     <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Exercices</div>
     <div id="recapExercises"></div>
     <button class="recap-close" onclick="closeRecap()">Fermer</button>
+  </div>
+</div>
+
+<!-- ══ SUPERSET MODAL ══ -->
+<div class="ss-modal" id="ssModal" style="display:none" onclick="if(event.target===this)closeSSPicker()">
+  <div class="ss-sheet">
+    <div class="ss-sheet-title">Lier en superset</div>
+    <div class="ss-sheet-sub">Choisir l'exercice partenaire</div>
+    <div id="ssExOptions"></div>
+    <button class="ss-cancel" onclick="closeSSPicker()">Annuler</button>
   </div>
 </div>
 </body>
