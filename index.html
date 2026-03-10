@@ -576,6 +576,8 @@
     </div>
   </div>
 
+  </div>
+
   <!-- ══ ROUTINES ══ -->
   <div class="section" id="tab-routines">
     <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une routine</button>
@@ -1051,15 +1053,14 @@
   }
 
   function abandonSession() {
-    if (!exercises.length) return;
-    if (!confirm('Supprimer la séance en cours ?')) return;
+    if (!confirm('Annuler la séance en cours ?')) return;
     exercises = []; loadedRoutineId = null; resetTimer(); skipRest();
     clearDraft();
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
     document.getElementById('sessionNotes').value = '';
     hideSessionContent();
     renderExercises(); renderRoutinePicker();
-    showToast('Séance supprimée');
+    showToast('Séance annulée');
   }
 
   function clearDraft() {
@@ -2432,23 +2433,24 @@
     });
     if (newPRs.length) {
       document.getElementById('recapPRs').style.display = 'block';
-      document.getElementById('recapPRList').innerHTML = newPRs.map(p =>
-        `<div class="recap-pr-row">🏆 ${p.name} — ${p.weight} kg</div>`).join('');
+      document.getElementById('recapPRList').innerHTML = newPRs.map(function(p) {
+        return '<div class="recap-pr-row">🏆 ' + p.name + ' — ' + p.weight + ' kg</div>';
+      }).join('');
       if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
     } else {
       document.getElementById('recapPRs').style.display = 'none';
     }
 
     // Exercices
-    document.getElementById('recapExercises').innerHTML = sessionData.exercises.map(ex => `
-      <div class="recap-ex">
-        <div class="recap-ex-name">${ex.name}${ex.muscle ? ` <span style="font-size:11px;color:var(--muted)">${ex.muscle}</span>` : ''}</div>
-        <div class="recap-ex-sets">${ex.sets.map((s, i) => {
-          const w = s.w||s.weight||'—'; const r = s.r||s.reps||'—';
-          return `Série ${i+1} · ${w}kg × ${r} reps`;
-        }).join('  ·  ')}</div>
-        ${ex.note ? `<div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--muted);margin-top:4px">${ex.note}</div>` : ''}
-      </div>`).join('');
+    document.getElementById('recapExercises').innerHTML = sessionData.exercises.map(function(ex) {
+      const muscleBadge = ex.muscle ? ' <span style="font-size:11px;color:var(--muted)">' + ex.muscle + '</span>' : '';
+      const setsHtml = ex.sets.map(function(s, i) {
+        const w = s.w||s.weight||'—'; const r = s.r||s.reps||'—';
+        return 'Série ' + (i+1) + ' · ' + w + 'kg × ' + r + ' reps';
+      }).join('  ·  ');
+      const noteHtml = ex.note ? '<div style="font-family:Cormorant Garamond,serif;font-style:italic;font-size:13px;color:var(--muted);margin-top:4px">' + ex.note + '</div>' : '';
+      return '<div class="recap-ex"><div class="recap-ex-name">' + ex.name + muscleBadge + '</div><div class="recap-ex-sets">' + setsHtml + '</div>' + noteHtml + '</div>';
+    }).join('');
 
     document.getElementById('recapOverlay').classList.add('show');
   }
