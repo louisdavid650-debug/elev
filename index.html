@@ -560,22 +560,34 @@
   });
 
   // ── Supabase helpers ──
+  async function getUser() {
+    if (currentUser) return currentUser;
+    const { data: { session } } = await db.auth.getSession();
+    if (session?.user) { currentUser = session.user; return currentUser; }
+    return null;
+  }
+
   async function sbLoad(table) {
-    if (!currentUser) return [];
-    const { data, error } = await db.from(table).select('*').eq('user_id', currentUser.id);
-    if (error) { console.error(error); return []; }
+    const user = await getUser();
+    if (!user) { console.log('sbLoad: no user'); return []; }
+    const { data, error } = await db.from(table).select('*').eq('user_id', user.id);
+    if (error) { console.error('sbLoad error:', error); return []; }
     return data.map(row => row.data);
   }
 
   async function sbSave(table, records) {
-    if (!currentUser) return;
-    const rows = records.map(r => ({ id: String(r.id), user_id: currentUser.id, data: r }));
-    await db.from(table).upsert(rows, { onConflict: 'id' });
+    const user = await getUser();
+    if (!user) { console.log('sbSave: no user'); return; }
+    console.log('sbSave:', table, records.length, 'records for', user.email);
+    const rows = records.map(r => ({ id: String(r.id), user_id: user.id, data: r }));
+    const { error } = await db.from(table).upsert(rows, { onConflict: 'id' });
+    if (error) console.error('sbSave error:', error);
   }
 
   async function sbDelete(table, id) {
-    if (!currentUser) return;
-    await db.from(table).delete().eq('id', String(id)).eq('user_id', currentUser.id);
+    const user = await getUser();
+    if (!user) return;
+    await db.from(table).delete().eq('id', String(id)).eq('user_id', user.id);
   }
 
   async function loadAllData() {
