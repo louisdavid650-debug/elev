@@ -357,17 +357,19 @@
 
 <div class="app">
   <header>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="52" height="15" style="display:block">
-        <defs><style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&amp;display=swap');</style></defs>
-        <text x="140" y="58" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="#1a1a1a" text-anchor="middle" letter-spacing="18">ÉLEV</text>
-        <line x1="50" y1="68" x2="230" y2="68" stroke="#1a1a1a" stroke-width="0.6" opacity="0.4"/>
-      </svg>
-      <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;" title="Déconnexion">Déconnexion</button>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="52" height="15" style="display:block;margin-bottom:6px">
+          <defs><style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&amp;display=swap');</style></defs>
+          <text x="0" y="62" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="#1a1a1a" text-anchor="start" letter-spacing="14">ÉLEV</text>
+          <line x1="0" y1="71" x2="185" y2="71" stroke="#1a1a1a" stroke-width="0.6" opacity="0.4"/>
+        </svg>
+        <div class="header-title" id="headerTitle">Bonne session</div>
+        <div class="header-date" id="headerDate"></div>
+        <div class="header-date" id="headerTime" style="margin-top:2px"></div>
+      </div>
+      <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-top:4px;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
     </div>
-    <div class="header-title" id="headerTitle">Bonne session</div>
-    <div class="header-date" id="headerDate"></div>
-    <div class="header-date" id="headerTime" style="margin-top:2px"></div>
   </header>
 
   <div style="height:2px;background:transparent;overflow:hidden;">
@@ -1850,7 +1852,9 @@
 
   function drawWeightChart() {
     const canvas=document.getElementById('weightChart'), wrap=document.getElementById('weightChartWrap');
-    const data=bodyWeights.slice(-30);
+    // 30 derniers jours calendaires
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 29); cutoff.setHours(0,0,0,0);
+    const data = bodyWeights.filter(d => new Date(d.date) >= cutoff);
     if(data.length<2){canvas.style.display='none';return;} canvas.style.display='block';
     const dpr=window.devicePixelRatio||1, W=wrap.clientWidth-32, H=140;
     canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
