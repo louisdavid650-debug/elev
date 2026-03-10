@@ -1113,7 +1113,6 @@
         <div class="rpc-arrow">${isLoaded?'✓':'→'}</div></div>`;
     }).join('');
   }
-  let _blockWasOpenBeforeConfirm = false;
   function loadRoutine(id) {
     const routine = routines.find(r => r.id === id);
     if (!routine) return;
@@ -1122,9 +1121,6 @@
       loadedRoutineId = null; exercises = [];
       renderExercises(); renderRoutinePicker(); showToast('Routine retirée'); return;
     }
-    // Remember block state before showing modal
-    const block = document.getElementById('freeSessionBlock');
-    _blockWasOpenBeforeConfirm = block && block.style.display !== 'none';
     // Show confirm modal
     document.getElementById('routineConfirmName').textContent = routine.name;
     document.getElementById('routineConfirmExs').textContent = routine.exercises.length + ' exercice' + (routine.exercises.length > 1 ? 's' : '') + ' · ' + [...new Set(routine.exercises.map(e=>e.muscle).filter(Boolean))].join(', ');
@@ -1136,7 +1132,8 @@
     const id = parseInt(document.getElementById('routineConfirmModal').dataset.pendingId);
     const routine = routines.find(r => r.id === id);
     if (!routine) return;
-    closeRoutineConfirm();
+    // Hide modal directly — do NOT call closeRoutineConfirm (which resets block state)
+    document.getElementById('routineConfirmModal').style.display = 'none';
     loadedRoutineId = id;
     exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
     const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
@@ -1161,13 +1158,8 @@
 
   function closeRoutineConfirm() {
     document.getElementById('routineConfirmModal').style.display = 'none';
-    // Restore block to its state before modal was opened
-    const block = document.getElementById('freeSessionBlock');
-    const btn = document.getElementById('freeSessionToggleBtn');
-    if (block && !_blockWasOpenBeforeConfirm) {
-      block.style.display = 'none';
-      if (btn) btn.textContent = 'Démarrer une séance libre';
-    }
+    // Cancel — never open the free session block
+    // (block state is unchanged)
   }
 
   // ── Exercises ──
@@ -1253,17 +1245,18 @@
     el.innerHTML = exercises.map((ex, ei) => {
       const lastSets = getLastSessionData(ex.name);
       const pr = getPR(ex.name);
-      return `<div class="ex-card" id="excard-${ei}" draggable="true"
-        ondragstart="onExDragStart(event,${ei})"
+      return `<div class="ex-card" id="excard-${ei}"
         ondragover="onExDragOver(event)"
         ondragend="onExDragEnd(event)"
-        ondrop="onExDrop(event,${ei})"
-        ontouchstart="onExTouchStart(event,${ei})"
-        ontouchmove="onExTouchMove(event,${ei})"
-        ontouchend="onExTouchEnd(event,${ei})">
+        ondrop="onExDrop(event,${ei})">
         <div class="ex-head">
           <div style="display:flex;align-items:center;gap:4px">
-            <span class="ex-drag-handle" title="Déplacer">⠿</span>
+            <span class="ex-drag-handle" title="Déplacer"
+              onmousedown="armExDrag(${ei})"
+              onmouseup="disarmExDrag(${ei})"
+              ontouchstart="onExTouchStart(event,${ei})"
+              ontouchmove="onExTouchMove(event,${ei})"
+              ontouchend="onExTouchEnd(event,${ei})">⠿</span>
             <div><div class="ex-name">${ex.name}</div>
             <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">🏆 PR ${pr.weight}kg</span>`:''}</div></div>
           </div>
@@ -2273,14 +2266,19 @@
   // ── Drag & drop exercises in session ──
   let exDragSrc = null;
   // ── Drag desktop exercises ──
-  function enableExDrag(ei) {
+  function armExDrag(ei) {
     const card = document.getElementById('excard-' + ei);
-    if (card) {
-      card.setAttribute('draggable', 'true');
-      card.ondragstart = function(e) { onExDragStart(e, ei); };
-    }
+    if (!card) return;
+    card.setAttribute('draggable', 'true');
+    card.ondragstart = function(e) { onExDragStart(e, ei); };
+    // Auto-disarm after drag ends
+    card.addEventListener('dragend', function onEnd() {
+      card.setAttribute('draggable', 'false');
+      card.ondragstart = null;
+      card.removeEventListener('dragend', onEnd);
+    });
   }
-  function disableExDrag(ei) {
+  function disarmExDrag(ei) {
     const card = document.getElementById('excard-' + ei);
     if (card) { card.setAttribute('draggable', 'false'); card.ondragstart = null; }
   }
