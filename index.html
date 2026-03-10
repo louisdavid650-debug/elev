@@ -38,6 +38,8 @@
     --muted2: #4a4540;
     --warm: #1a1816;
   }
+  html.dark header svg text { fill: var(--text); }
+  html.dark header svg line { stroke: var(--text); }
   html.dark body { background: var(--bg); color: var(--text); }
   html.dark .bottom-nav { background: rgba(20,20,18,0.97); }
   html.dark input, html.dark textarea { color-scheme: dark; }
@@ -47,7 +49,8 @@
   .app { max-width: 460px; margin: 0 auto; padding-bottom: 100px; }
 
   /* Header */
-  header { padding: 36px 28px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(247,245,242,0.96); backdrop-filter: blur(12px); z-index: 100; }
+  header { padding: 36px 28px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(247,245,242,0.96); backdrop-filter: blur(12px); z-index: 100; transition: background 0.3s; }
+  html.dark header { background: rgba(20,20,18,0.97); }
   .logo { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-weight: 400; letter-spacing: 6px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
   .header-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 400; letter-spacing: -0.5px; color: var(--text); line-height: 1.1; }
   .header-date { font-size: 10px; color: var(--muted2); letter-spacing: 2px; text-transform: uppercase; margin-top: 5px; }
@@ -426,6 +429,24 @@
   .ss-ex-option { padding:12px 16px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);transition:all 0.15s; }
   .ss-ex-option:hover { border-color:var(--accent);background:var(--accent-light); }
   .ss-cancel { width:100%;background:none;border:none;color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:12px;margin-top:4px; }
+
+  /* ── Fréquence musculaire ── */
+  .freq-card { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:22px; }
+  .freq-row { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
+  .freq-row:last-child { margin-bottom:0; }
+  .freq-muscle { font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);width:80px;flex-shrink:0; }
+  .freq-track { flex:1;height:6px;background:var(--warm);border-radius:3px;overflow:hidden; }
+  .freq-fill { height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s ease; }
+  .freq-fill.low { background:var(--muted2); }
+  .freq-fill.ok { background:var(--accent); }
+  .freq-fill.high { background:var(--gold); }
+  .freq-count { font-family:'Geist Mono',monospace;font-size:9px;color:var(--muted);width:28px;text-align:right;flex-shrink:0; }
+  .freq-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+  .freq-dot.low { background:var(--muted2); }
+  .freq-dot.ok { background:var(--accent); }
+  .freq-dot.high { background:var(--gold); }
+  .freq-legend { display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap; }
+  .freq-legend-item { display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 </head>
@@ -778,6 +799,16 @@
       </div>
       <canvas id="progChart" height="140"></canvas>
       <div id="progEmpty" style="display:none;text-align:center;padding:20px 0;font-size:11px;color:var(--muted2)">Aucune donnée pour cet exercice.</div>
+    </div>
+
+    <div class="label">Fréquence musculaire</div>
+    <div class="freq-card" id="freqCard">
+      <div class="freq-legend">
+        <div class="freq-legend-item"><div class="freq-dot low"></div>Peu travaillé</div>
+        <div class="freq-legend-item"><div class="freq-dot ok"></div>Optimal</div>
+        <div class="freq-legend-item"><div class="freq-dot high"></div>Intensif</div>
+      </div>
+      <div id="freqRows"></div>
     </div>
 
     <div class="label">Records personnels</div>
@@ -1163,7 +1194,7 @@
     document.querySelector(`.nav-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById('bnav-' + tab).classList.add('active');
     if (tab === 'history') renderHistory();
-    if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
+    if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); renderFrequency(); }
     if (tab === 'routines') renderRoutinesList();
     if (tab === 'poids') renderWeightTab();
   }
@@ -2545,11 +2576,51 @@
     const prs = prQuery ? allPrs.filter(p=>p.name.toLowerCase().includes(prQuery)) : allPrs.slice(0,3);
     prEl.innerHTML=prs.length?prs.map(p=>`<div class="pr-row"><div><div class="pr-ex">${p.name}</div><div class="pr-date">${new Date(p.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div></div><div class="pr-val">🏆 ${p.weight} kg</div></div>`).join(''):'<div style="padding:12px 0;font-size:11px;color:var(--muted2)">Aucun résultat.</div>';
     renderProgSelector();
+    renderFrequency();
     const exCount={};sessions.forEach(s=>s.exercises.forEach(e=>{exCount[e.name]=(exCount[e.name]||0)+1;}));
     const sorted=Object.entries(exCount).sort((a,b)=>b[1]-a[1]).slice(0,6),max=sorted[0]?.[1]||1;
     topEl.innerHTML=sorted.map(([name,count])=>`<div class="top-row"><div class="top-info"><div class="top-name">${name}</div><div class="top-cnt">${count}×</div></div><div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div></div>`).join('');
   }
 
+
+
+  // ── Fréquence musculaire ──
+  function renderFrequency() {
+    const el = document.getElementById('freqRows');
+    if (!el) return;
+    if (!sessions.length) { el.innerHTML = '<div style="font-size:11px;color:var(--muted2);padding:8px 0">Aucune donnée.</div>'; return; }
+
+    // Last 4 weeks
+    const now = new Date();
+    const fourWeeksAgo = new Date(now - 28 * 86400000);
+    const recent = sessions.filter(s => new Date(s.date) >= fourWeeksAgo);
+
+    // Count per muscle group
+    const counts = {};
+    recent.forEach(s => {
+      const muscles = new Set();
+      s.exercises.forEach(e => { if (e.muscle) muscles.add(e.muscle); });
+      muscles.forEach(m => { counts[m] = (counts[m] || 0) + 1; });
+    });
+
+    if (!Object.keys(counts).length) { el.innerHTML = '<div style="font-size:11px;color:var(--muted2);padding:8px 0">Pas encore de données musculaires sur 4 semaines.</div>'; return; }
+
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    const max = sorted[0][1];
+
+    el.innerHTML = sorted.map(([muscle, count]) => {
+      const pct = Math.round(count / max * 100);
+      // 1-2x = low, 3-5x = ok, 6+ = high
+      const level = count <= 2 ? 'low' : count <= 5 ? 'ok' : 'high';
+      const label = count <= 2 ? 'Peu travaillé' : count <= 5 ? 'Optimal' : 'Intensif';
+      return '<div class="freq-row">' +
+        '<div class="freq-muscle">' + muscle + '</div>' +
+        '<div class="freq-track"><div class="freq-fill ' + level + '" style="width:' + pct + '%"></div></div>' +
+        '<div class="freq-count">' + count + '×</div>' +
+        '<div class="freq-dot ' + level + '" title="' + label + '"></div>' +
+      '</div>';
+    }).join('');
+  }
 
   // ── Swipe to delete (history) ──
   let swipeSessions = {}, swipeThreshold = 72;
