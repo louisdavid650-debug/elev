@@ -860,7 +860,7 @@
       renderExercises();
       renderRoutinePicker();
       const ago = Math.round((Date.now() - draft.savedAt) / 60000);
-      showToast(`Session restaurée (il y a ${ago < 1 ? 'moins d'1 min' : ago + ' min'})`);
+      showToast(`Session restaurée (il y a ${ago < 1 ? "moins d'1 min" : ago + " min"})`);
       return true;
     } catch(e) { return false; }
   }
