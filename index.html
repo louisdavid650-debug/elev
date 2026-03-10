@@ -93,7 +93,7 @@
   .ex-del { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 2px; transition: all 0.15s; }
   .ex-del:hover { color: var(--accent2); background: #fdf0ef; }
   .sets-head { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px; gap: 6px; padding: 8px 16px 4px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
-  .set-row { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px; gap: 6px; padding: 4px 16px; align-items: center; }
+  .set-row { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px 20px; gap: 6px; padding: 4px 16px; align-items: center; }
   .set-n { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--muted2); text-align: center; }
   .set-inp { background: var(--warm); border: 1px solid var(--border); border-radius: 2px; padding: 6px 4px; color: var(--text); font-family: 'Geist Mono', monospace; font-size: 13px; text-align: center; width: 100%; transition: border-color 0.15s; -moz-appearance: textfield; }
   .set-inp::-webkit-outer-spin-button, .set-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
@@ -832,20 +832,27 @@
   function playBeep() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const beep = (freq, start, dur) => {
+      const beep = (freq, start, dur, vol=0.4) => {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
         o.frequency.value = freq;
         o.type = 'sine';
-        g.gain.setValueAtTime(0.4, ctx.currentTime + start);
+        g.gain.setValueAtTime(vol, ctx.currentTime + start);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
         o.start(ctx.currentTime + start);
         o.stop(ctx.currentTime + start + dur + 0.05);
       };
+      // 3 waves over 3 seconds
       beep(880, 0, 0.15);
       beep(880, 0.2, 0.15);
-      beep(1100, 0.4, 0.25);
+      beep(1100, 0.4, 0.3, 0.5);
+      beep(880, 1.0, 0.15);
+      beep(880, 1.2, 0.15);
+      beep(1100, 1.4, 0.3, 0.5);
+      beep(880, 2.0, 0.15);
+      beep(880, 2.2, 0.15);
+      beep(1100, 2.4, 0.4, 0.6);
     } catch(e) {}
   }
   function updateRestDisplay() { const m = String(Math.floor(restRemaining/60)).padStart(2,'0'), s = String(restRemaining%60).padStart(2,'0'); document.getElementById('restDisplay').textContent = `${m}:${s}`; }
@@ -1026,6 +1033,7 @@
             <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)"/>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
             <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${si})">${s.done?'✓':''}</button>
+            <button onclick="delSet(${ei},${si})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
           </div>`;
         }).join('')}
         <button class="add-set" onclick="addSet(${ei})">+ série</button></div>`;
@@ -1108,6 +1116,7 @@
 
   function delEx(ei) { exercises.splice(ei,1); renderExercises(); autosaveDraft(); }
   function addSet(ei) { exercises[ei].sets.push({w:'',r:'',done:false}); renderExercises(); autosaveDraft(); }
+  function delSet(ei, si) { if (exercises[ei].sets.length <= 1) { showToast('Minimum 1 série'); return; } exercises[ei].sets.splice(si, 1); renderExercises(); autosaveDraft(); }
   function upd(ei,si,f,v) {
     exercises[ei].sets[si][f]=v;
     autosaveDraft();
