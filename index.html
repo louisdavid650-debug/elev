@@ -180,6 +180,28 @@
   .weight-hist-del { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 11px; padding: 2px 4px; transition: color 0.15s; }
   .weight-hist-del:hover { color: var(--accent2); }
 
+  /* Exercise replace modal */
+  .ex-replace-modal { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:flex-end;justify-content:center; }
+  .ex-replace-sheet { background:#fff;border-radius:18px 18px 0 0;padding:28px 22px 36px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,.12); }
+  .ex-replace-title { font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:16px;color:var(--ink); }
+  .ex-search-wrap { position:relative;margin-bottom:8px; }
+  .ex-search-inp { width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:15px;box-sizing:border-box;outline:none; }
+  .ex-search-inp:focus { border-color:var(--accent); }
+  .ex-suggestions { position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0ddd8;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:10;box-shadow:0 4px 16px rgba(0,0,0,.1); }
+  .ex-suggestion { padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid #f5f3f0;display:flex;justify-content:space-between;align-items:center; }
+  .ex-suggestion:hover { background:#f7f5f2; }
+  .ex-suggestion:last-child { border-bottom:none; }
+  .ex-sug-muscle { font-size:11px;color:var(--muted);background:#f0ece6;padding:2px 7px;border-radius:20px; }
+  .ex-replace-actions { display:flex;gap:10px;margin-top:16px; }
+  .ex-replace-confirm { flex:1;background:var(--accent);color:#fff;border:none;padding:12px;border-radius:10px;font-size:15px;cursor:pointer; }
+  .ex-replace-cancel { background:#f0ece6;color:var(--ink);border:none;padding:12px 18px;border-radius:10px;font-size:15px;cursor:pointer; }
+  .ex-muscle-sel { width:100%;padding:9px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;margin-bottom:0;box-sizing:border-box;margin-top:8px; }
+
+  /* Autocomplete on add form */
+  .add-form { position:relative; }
+  .ex-add-suggestions { position:absolute;left:0;right:0;background:#fff;border:1px solid #e0ddd8;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:20;box-shadow:0 4px 16px rgba(0,0,0,.1);display:none; }
+  .ex-add-suggestions.show { display:block; }
+
   /* Progression chart (exercise) */
   .prog-selector { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .prog-ex-btn { background: var(--surface); border: 1px solid var(--border2); border-radius: 2px; padding: 5px 12px; font-size: 10px; letter-spacing: 0.5px; color: var(--muted); cursor: pointer; transition: all 0.15s; }
@@ -351,7 +373,10 @@
     <div class="add-form">
       <div class="label">Ajouter un exercice</div>
       <div class="form-row">
-        <input class="inp" id="exName" placeholder="Nom de l'exercice" type="text"/>
+        <div style="position:relative;flex:1">
+          <input class="inp" id="exName" placeholder="Nom de l'exercice" type="text" oninput="filterAddSuggestions()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+          <div class="ex-suggestions ex-add-suggestions" id="exAddSuggestions"></div>
+        </div>
         <select class="inp" id="exMuscle">
           <option value="">Muscle</option>
           <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
@@ -364,6 +389,27 @@
     <div class="label">Ressenti & notes</div>
     <textarea class="notes-area" id="sessionNotes" placeholder="Comment tu te sens aujourd'hui ?"></textarea>
     <button class="save-btn" onclick="saveSession()">Sauvegarder la séance</button>
+  </div>
+
+  <!-- ══ EXERCISE REPLACE MODAL ══ -->
+  <div class="ex-replace-modal" id="exReplaceModal" style="display:none" onclick="if(event.target===this)closeReplaceModal()">
+    <div class="ex-replace-sheet">
+      <div class="ex-replace-title">Remplacer l'exercice</div>
+      <div class="ex-search-wrap">
+        <input class="ex-search-inp" id="exReplaceSearch" placeholder="Rechercher ou saisir un exercice…" oninput="filterReplaceSuggestions()" autocomplete="off"/>
+        <div class="ex-suggestions" id="exReplaceSuggestions"></div>
+      </div>
+      <select class="ex-muscle-sel" id="exReplaceMuscle">
+        <option value="">Muscle (optionnel)</option>
+        <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+        <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+        <option>Abdos</option><option>Fessiers</option><option>Autre</option>
+      </select>
+      <div class="ex-replace-actions">
+        <button class="ex-replace-cancel" onclick="closeReplaceModal()">Annuler</button>
+        <button class="ex-replace-confirm" onclick="confirmReplaceEx()">Remplacer</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══ ROUTINES ══ -->
@@ -777,7 +823,7 @@
       return `<div class="ex-card" id="excard-${ei}">
         <div class="ex-head"><div><div class="ex-name">${ex.name}</div>
         <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">PR ${pr.weight}kg</span>`:''}</div></div>
-        <button class="ex-del" onclick="delEx(${ei})">✕</button></div>
+        <div style="display:flex;gap:8px;align-items:center"><button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button><button class="ex-del" onclick="delEx(${ei})">✕</button></div></div>
         <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:8px">Dernière</div><div>✓</div></div>
         ${ex.sets.map((s,si)=>{
           const prev=lastSets&&lastSets[si]?lastSets[si]:null;
@@ -795,6 +841,81 @@
         <button class="add-set" onclick="addSet(${ei})">+ série</button></div>`;
     }).join('');
   }
+  // ── Known exercises (from sessions + routines) ──
+  function getKnownExercises() {
+    const map = {};
+    sessions.forEach(s => s.exercises.forEach(e => {
+      if (e.name) map[e.name.toLowerCase()] = { name: e.name, muscle: e.muscle || '' };
+    }));
+    routines.forEach(r => r.exercises.forEach(e => {
+      if (e.name && !map[e.name.toLowerCase()]) map[e.name.toLowerCase()] = { name: e.name, muscle: e.muscle || '' };
+    }));
+    return Object.values(map).sort((a,b) => a.name.localeCompare(b.name));
+  }
+
+  // ── Add form autocomplete ──
+  function filterAddSuggestions() {
+    const q = document.getElementById('exName').value.trim().toLowerCase();
+    const box = document.getElementById('exAddSuggestions');
+    if (!q) { box.classList.remove('show'); return; }
+    const matches = getKnownExercises().filter(e => e.name.toLowerCase().includes(q)).slice(0, 8);
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onclick="selectAddSuggestion('${e.name.replace(/'/g,"\'")}','${e.muscle.replace(/'/g,"\'")}')">
+      <span>${e.name}</span>${e.muscle?`<span class="ex-sug-muscle">${e.muscle}</span>`:''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+  function selectAddSuggestion(name, muscle) {
+    document.getElementById('exName').value = name;
+    if (muscle) document.getElementById('exMuscle').value = muscle;
+    document.getElementById('exAddSuggestions').classList.remove('show');
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.add-form')) document.getElementById('exAddSuggestions')?.classList.remove('show');
+    if (!e.target.closest('.ex-search-wrap')) document.getElementById('exReplaceSuggestions') && (document.getElementById('exReplaceSuggestions').innerHTML = '');
+  });
+
+  // ── Replace modal ──
+  let replaceTargetIdx = null;
+  function openReplaceModal(ei) {
+    replaceTargetIdx = ei;
+    document.getElementById('exReplaceSearch').value = exercises[ei].name;
+    document.getElementById('exReplaceMuscle').value = exercises[ei].muscle || '';
+    document.getElementById('exReplaceSuggestions').innerHTML = '';
+    filterReplaceSuggestions();
+    document.getElementById('exReplaceModal').style.display = 'flex';
+  }
+  function closeReplaceModal() {
+    document.getElementById('exReplaceModal').style.display = 'none';
+    replaceTargetIdx = null;
+  }
+  function filterReplaceSuggestions() {
+    const q = document.getElementById('exReplaceSearch').value.trim().toLowerCase();
+    const box = document.getElementById('exReplaceSuggestions');
+    const all = getKnownExercises();
+    const matches = q ? all.filter(e => e.name.toLowerCase().includes(q)).slice(0,10) : all.slice(0,10);
+    if (!matches.length) { box.innerHTML = ''; return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onclick="selectReplaceSuggestion('${e.name.replace(/'/g,"\'")}','${e.muscle.replace(/'/g,"\'")}')">
+      <span>${e.name}</span>${e.muscle?`<span class="ex-sug-muscle">${e.muscle}</span>`:''}
+    </div>`).join('');
+  }
+  function selectReplaceSuggestion(name, muscle) {
+    document.getElementById('exReplaceSearch').value = name;
+    if (muscle) document.getElementById('exReplaceMuscle').value = muscle;
+    document.getElementById('exReplaceSuggestions').innerHTML = '';
+  }
+  function confirmReplaceEx() {
+    if (replaceTargetIdx === null) return;
+    const newName = document.getElementById('exReplaceSearch').value.trim();
+    if (!newName) { return; }
+    const newMuscle = document.getElementById('exReplaceMuscle').value;
+    exercises[replaceTargetIdx].name = newName;
+    exercises[replaceTargetIdx].muscle = newMuscle;
+    closeReplaceModal();
+    renderExercises();
+    showToast(`Exercice remplacé par "${newName}"`);
+  }
+
   function delEx(ei) { exercises.splice(ei,1); renderExercises(); }
   function addSet(ei) { exercises[ei].sets.push({w:'',r:'',done:false}); renderExercises(); }
   function upd(ei,si,f,v) {
