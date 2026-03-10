@@ -313,6 +313,14 @@
       <div class="rest-opt" data-val="120" onclick="setRestDur(120,this)">2 min</div>
       <div class="rest-opt" data-val="180" onclick="setRestDur(180,this)">3 min</div>
       <div class="rest-opt" data-val="0" onclick="setRestDur(0,this)">Désactivé</div>
+      <div class="rest-opt" data-val="custom" onclick="setRestDur('custom',this)">Perso.</div>
+    </div>
+    <div id="customRestWrap" style="display:none;margin-bottom:22px;">
+      <div class="label" style="margin-bottom:8px">Durée personnalisée</div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input class="inp" id="customRestInput" type="number" placeholder="Secondes (ex: 75)" min="5" max="600" style="max-width:200px;" oninput="applyCustomRest(this.value)"/>
+        <span style="font-size:11px;color:var(--muted2)">secondes</span>
+      </div>
     </div>
     <div class="section-divider"></div>
     <div class="label">Durée de séance</div>
@@ -373,8 +381,17 @@
         </select>
       </div>
       <div class="form-row" style="margin-bottom:12px">
-        <input class="inp" id="rExSets" placeholder="Nb séries (ex: 4)" type="number" style="max-width:160px"/>
-        <button class="btn-ghost" onclick="addRoutineEx()">+ Exercice</button>
+        <input class="inp" id="rExSets" placeholder="Nb séries (ex: 4)" type="number" style="max-width:110px"/>
+        <select class="inp" id="rExRest" style="max-width:145px" onchange="toggleCustomRest(this)">
+          <option value="60">Repos 1 min</option>
+          <option value="90" selected>Repos 1 min 30</option>
+          <option value="120">Repos 2 min</option>
+          <option value="180">Repos 3 min</option>
+          <option value="0">Pas de repos</option>
+          <option value="custom">Personnalisé...</option>
+        </select>
+        <input class="inp" id="rExRestCustom" type="number" placeholder="Sec." style="max-width:70px;display:none;" min="5" max="600"/>
+        <button class="btn-ghost" onclick="addRoutineEx()">+</button>
       </div>
       <button class="btn-add" onclick="saveRoutine()">Enregistrer la routine</button>
     </div>
@@ -614,10 +631,26 @@
   function updateTimer() { const m = String(Math.floor(timerSec/60)).padStart(2,'0'), s = String(timerSec%60).padStart(2,'0'); document.getElementById('timerDisplay').textContent = `${m}:${s}`; }
 
   // ── Rest Timer ──
-  function setRestDur(val, el) { restDur = val; document.querySelectorAll('.rest-opt').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); }
-  function startRest() {
-    if (restDur === 0) return;
-    clearInterval(restInterval); restRemaining = restDur; updateRestDisplay();
+  function setRestDur(val, el) {
+    document.querySelectorAll('.rest-opt').forEach(o => o.classList.remove('sel')); el.classList.add('sel');
+    if (val === 'custom') {
+      document.getElementById('customRestWrap').style.display = 'block';
+      const v = parseInt(document.getElementById('customRestInput').value);
+      if (v > 0) restDur = v;
+    } else {
+      document.getElementById('customRestWrap').style.display = 'none';
+      restDur = val;
+    }
+  }
+  function applyCustomRest(val) { const v = parseInt(val); if (v >= 5) restDur = v; }
+  function toggleCustomRest(sel) {
+    const wrap = document.getElementById('rExRestCustom');
+    wrap.style.display = sel.value === 'custom' ? 'block' : 'none';
+  }
+  function startRest(dur) {
+    const d = (dur !== undefined ? dur : restDur);
+    if (d === 0) return;
+    clearInterval(restInterval); restRemaining = d; updateRestDisplay();
     document.getElementById('restOverlay').classList.add('show');
     restInterval = setInterval(() => {
       restRemaining--;
@@ -663,7 +696,7 @@
     if (!routine) return;
     if (loadedRoutineId === id) { loadedRoutineId = null; exercises = []; renderExercises(); renderRoutinePicker(); showToast('Routine retirée'); return; }
     loadedRoutineId = id;
-    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
+    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
     const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
     document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
     renderExercises(); renderRoutinePicker(); showToast(`"${routine.name}" chargée`);
@@ -711,7 +744,7 @@
     exercises[ei].sets[si][f]=v;
     if (f==='w'&&v) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);} }
   }
-  function tick(ei,si) { exercises[ei].sets[si].done=!exercises[ei].sets[si].done; if(exercises[ei].sets[si].done)startRest(); renderExercises(); }
+  function tick(ei,si) { exercises[ei].sets[si].done=!exercises[ei].sets[si].done; if(exercises[ei].sets[si].done){ const exRest = exercises[ei].restTime; startRest(exRest !== undefined ? exRest : restDur); } renderExercises(); }
   function getSelectedMuscles() { return [...document.querySelectorAll('.chip.on')].map(c=>c.textContent); }
 
   // ── Save session ──
@@ -733,13 +766,15 @@
   function addRoutineEx() {
     const name = document.getElementById('rExName').value.trim();
     if (!name) { showToast('Entre un nom'); return; }
-    draftRoutineExs.push({ name, muscle: document.getElementById('rExMuscle').value, sets: parseInt(document.getElementById('rExSets').value)||3 });
-    document.getElementById('rExName').value=''; document.getElementById('rExMuscle').value=''; document.getElementById('rExSets').value='';
+    const restSel = document.getElementById('rExRest');
+    const restVal = restSel.value === 'custom' ? parseInt(document.getElementById('rExRestCustom').value)||90 : parseInt(restSel.value);
+    draftRoutineExs.push({ name, muscle: document.getElementById('rExMuscle').value, sets: parseInt(document.getElementById('rExSets').value)||3, restTime: restVal });
+    document.getElementById('rExName').value=''; document.getElementById('rExMuscle').value=''; document.getElementById('rExSets').value=''; restSel.value='90'; document.getElementById('rExRestCustom').style.display='none'; document.getElementById('rExRestCustom').value='';
     renderDraftRoutineExs();
   }
   function renderDraftRoutineExs() {
     document.getElementById('routineExList').innerHTML = draftRoutineExs.map((ex,i)=>`
-      <div class="routine-ex-item"><div><div class="routine-ex-item-name">${ex.name}</div><div class="routine-ex-item-tag">${ex.muscle||'—'} · ${ex.sets} série${ex.sets>1?'s':''}</div></div>
+      <div class="routine-ex-item"><div><div class="routine-ex-item-name">${ex.name}</div><div class="routine-ex-item-tag">${ex.muscle||'—'} · ${ex.sets} série${ex.sets>1?'s':''} · repos ${ex.restTime?ex.restTime+'s':'—'}</div></div>
       <button class="routine-ex-del" onclick="delDraftEx(${i})">✕</button></div>`).join('');
   }
   function delDraftEx(i) { draftRoutineExs.splice(i,1); renderDraftRoutineExs(); }
@@ -765,7 +800,7 @@
         <div class="rc-head"><div><div class="rc-name">${r.name}</div><div class="rc-meta">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div></div>
         <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">Supprimer</button></div>
         ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
-        <div class="rc-exs-list">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''}</div></div>`).join('')}</div>
+        <div class="rc-exs-list">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
       </div>`;
     }).join('');
   }
