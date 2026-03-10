@@ -1299,13 +1299,29 @@
     el.innerHTML = routines.map(r => {
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isLoaded = loadedRoutineId === r.id;
-      return `<div class="routine-pick-card ${isLoaded?'loaded':''}" ontouchend="event.preventDefault();loadRoutine(${r.id})" onclick="loadRoutine(${r.id})">
+      return `<div class="routine-pick-card ${isLoaded?'loaded':''}" ontouchstart="_rpcTouchStart(event)" ontouchend="_rpcTouchEnd(event,${r.id})" onclick="loadRoutine(${r.id})">
         <div><div class="rpc-name">${r.name}</div><div class="rpc-exs">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
         ${muscles.length?`<div class="rpc-muscles">${muscles.map(m=>`<span class="rpc-chip">${m}</span>`).join('')}</div>`:''}</div>
         <div class="rpc-arrow">${isLoaded?'✓':'→'}</div></div>`;
     }).join('');
   }
   let _lastLoadRoutineTime = 0;
+
+  // ── Routine pick card — scroll vs tap detection ──
+  let _rpcStartY = 0, _rpcStartX = 0;
+  function _rpcTouchStart(e) {
+    _rpcStartY = e.touches[0].clientY;
+    _rpcStartX = e.touches[0].clientX;
+  }
+  function _rpcTouchEnd(e, id) {
+    const dy = Math.abs(e.changedTouches[0].clientY - _rpcStartY);
+    const dx = Math.abs(e.changedTouches[0].clientX - _rpcStartX);
+    // If moved more than 8px — it's a scroll, ignore
+    if (dy > 8 || dx > 8) return;
+    e.preventDefault();
+    loadRoutine(id);
+  }
+
   function loadRoutine(id) {
     _lastLoadRoutineTime = Date.now();
     const routine = routines.find(r => r.id === id);
