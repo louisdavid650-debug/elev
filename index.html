@@ -408,6 +408,10 @@
         <div class="weight-unit">kg</div>
         <div class="weight-delta" id="weightDelta" style="display:none"></div>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <input type="date" id="weightDate" class="inp" style="flex:1;margin-right:10px;"/>
+        <div id="weightTime" style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted);white-space:nowrap;"></div>
+      </div>
       <div class="weight-input-row">
         <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
         <button class="weight-save" onclick="logWeight()">Logger</button>
@@ -871,10 +875,10 @@
     if (!currentUser) { showToast('Non connecté — recharge la page'); return; }
     const val = parseFloat(document.getElementById('weightInput').value);
     if (!val||val<20||val>300) { showToast('Poids invalide'); return; }
-    const today = new Date().toISOString().split('T')[0];
-    const existing = bodyWeights.find(w=>w.date===today);
-    if (existing) { await sbDelete('body_weights', existing.id); bodyWeights=bodyWeights.filter(w=>w.date!==today); }
-    const entry = { id: Date.now(), date: today, kg: val };
+    const selectedDate = document.getElementById('weightDate').value || new Date().toISOString().split('T')[0];
+    const existing = bodyWeights.find(w=>w.date===selectedDate);
+    if (existing) { await sbDelete('body_weights', existing.id); bodyWeights=bodyWeights.filter(w=>w.date!==selectedDate); }
+    const entry = { id: Date.now(), date: selectedDate, kg: val };
     bodyWeights.push(entry); bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));
     showSyncBadge('Sauvegarde...');
     await sbSave('body_weights', [entry]);
@@ -883,7 +887,22 @@
     showToast('Poids enregistré ✓'); renderWeightTab();
   }
 
+  function updateWeightClock() {
+    const el = document.getElementById('weightTime');
+    if (!el) return;
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    el.textContent = h + ':' + m;
+  }
+  setInterval(updateWeightClock, 10000);
+
   function renderWeightTab() {
+    // Set default date to today
+    const dateEl = document.getElementById('weightDate');
+    if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+    // Update clock
+    updateWeightClock();
     const currentEl=document.getElementById('weightCurrent'), deltaEl=document.getElementById('weightDelta');
     if (bodyWeights.length) {
       const last=bodyWeights[bodyWeights.length-1]; currentEl.textContent=last.kg;
