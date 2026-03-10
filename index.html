@@ -138,6 +138,8 @@
   .rc-drag-handle:active { cursor: grabbing; }
   .routine-card { transition: opacity 0.15s; }
   .routine-card.dragging { opacity: 0.4; }
+  .rc-inline-edit { border-top: 1px solid var(--border); padding: 16px; background: var(--warm); display: none; }
+  .rc-inline-edit.open { display: block; }
   .rc-exs-list { display: none; }
   .rc-exs-list.open { display: block; }
   .rc-toggle-btn { background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 6px;transition:transform 0.2s; }
@@ -441,8 +443,9 @@
 
   <!-- ══ ROUTINES ══ -->
   <div class="section" id="tab-routines">
-    <div class="create-routine-form">
-      <div class="label" style="margin-bottom:14px">Créer une routine</div>
+    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une routine</button>
+    <div class="create-routine-form" id="createRoutineForm" style="display:none">
+      <div class="label" style="margin-bottom:14px">Nouvelle routine</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
       <div id="routineExList" class="routine-ex-list"></div>
       <div class="form-row">
@@ -1223,6 +1226,14 @@
   }
 
   function delDraftEx(i) { draftRoutineExs.splice(i,1); renderDraftRoutineExs(); }
+  function toggleCreateRoutineForm() {
+    const form = document.getElementById('createRoutineForm');
+    const btn = document.getElementById('createRoutineToggleBtn');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? '+ Créer une routine' : '✕ Fermer';
+  }
+
   // ── Routine form autocomplete ──
   function filterRoutineExSuggestions() {
     const q = document.getElementById('rExName').value.trim().toLowerCase();
@@ -1244,26 +1255,165 @@
   // ── Edit routine ──
   let editingRoutineId = null;
 
+  function toggleInlineEdit(ri) {
+    const r = routines[ri];
+    if (inlineEditRoutineId === r.id) {
+      inlineEditRoutineId = null;
+      editingRoutineId = null;
+      draftRoutineExs = [];
+      renderRoutinesList();
+      return;
+    }
+    inlineEditRoutineId = r.id;
+    editRoutine(ri);
+  }
+
   function editRoutine(ri) {
     const r = routines[ri];
     editingRoutineId = r.id;
-    document.getElementById('routineName').value = r.name;
+    inlineEditRoutineId = r.id;
     draftRoutineExs = r.exercises.map(e => ({...e}));
-    renderDraftRoutineExs();
-    document.getElementById('saveRoutineBtn').textContent = '💾 Sauvegarder les modifications';
-    document.getElementById('cancelEditRoutineBtn').style.display = 'block';
-    // Scroll to form
-    document.getElementById('routineName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    showToast(`Modification de "${r.name}"`);
+    renderRoutinesList();
+    renderInlineEditForm(r.id);
+  }
+
+  function renderInlineEditForm(routineId) {
+    const el = document.getElementById('inlineEdit-' + routineId);
+    if (!el) return;
+    const r = routines.find(r => r.id === routineId);
+    if (!r) return;
+    el.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div class="label" style="margin-bottom:6px">Nom</div>
+        <input class="inp" id="inlineRoutineName-${routineId}" value="${r.name.replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box"/>
+      </div>
+      <div class="label" style="margin-bottom:8px">Exercices</div>
+      <div id="inlineDraftExList-${routineId}"></div>
+      <div style="margin-bottom:12px">
+        <div class="form-row">
+          <div style="position:relative;flex:1">
+            <input class="inp" id="inlineRExName-${routineId}" placeholder="Exercice" type="text"
+              oninput="filterInlineExSug('${routineId}', this.value)" autocomplete="off" style="width:100%;box-sizing:border-box"/>
+            <div class="ex-suggestions ex-add-suggestions" id="inlineRExSug-${routineId}"></div>
+          </div>
+          <select class="inp" id="inlineRExMuscle-${routineId}">
+            <option value="">Muscle</option>
+            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+            <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+            <option>Abdos</option><option>Fessiers</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin-top:8px">
+          <input class="inp" id="inlineRExSets-${routineId}" placeholder="Séries" type="number" style="max-width:80px"/>
+          <select class="inp" id="inlineRExRest-${routineId}" onchange="document.getElementById('inlineRExRestCustom-${routineId}').style.display=this.value==='custom'?'block':'none'">
+            <option value="60">1 min</option><option value="90" selected>1m30</option>
+            <option value="120">2 min</option><option value="180">3 min</option>
+            <option value="0">Sans</option><option value="custom">Perso.</option>
+          </select>
+          <input class="inp" id="inlineRExRestCustom-${routineId}" type="number" placeholder="Sec." style="max-width:70px;display:none" min="5" max="600"/>
+          <button class="btn-ghost" onclick="addInlineRoutineEx('${routineId}')">+</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-add" onclick="saveInlineRoutine('${routineId}')" style="flex:1">💾 Sauvegarder</button>
+        <button class="btn-ghost" onclick="toggleInlineEdit(${routines.findIndex(r=>r.id===routineId)})">Annuler</button>
+      </div>
+    `;
+    renderInlineDraftExs(routineId);
+  }
+
+  function renderInlineDraftExs(routineId) {
+    const el = document.getElementById('inlineDraftExList-' + routineId);
+    if (!el) return;
+    el.innerHTML = draftRoutineExs.map((ex, i) => `
+      <div class="routine-ex-edit-row">
+        <div class="routine-ex-edit-top">
+          <div class="rex-name-wrap">
+            <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
+              oninput="draftRoutineExs[${i}].name=this.value"
+              autocomplete="off"/>
+          </div>
+          <button class="routine-ex-del" onclick="draftRoutineExs.splice(${i},1);renderInlineDraftExs('${routineId}')" style="font-size:14px;padding:4px 8px;">✕</button>
+        </div>
+        <div class="routine-ex-edit-bot">
+          <select class="rex-inp" style="flex:1" onchange="draftRoutineExs[${i}].muscle=this.value">
+            <option value="">Muscle</option>
+            ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Jambes','Abdos','Fessiers','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
+          </select>
+          <input class="rex-inp" type="number" style="width:60px;text-align:center" value="${ex.sets}" min="1" max="10"
+            oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3"/>
+          <select class="rex-inp" style="width:100px" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
+            ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans'],['custom','Perso.']].map(([v,l])=>`<option value="${v}" ${v!=='custom'&&parseInt(ex.restTime)===parseInt(v)?'selected':v==='custom'&&![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'selected':''}>${l}</option>`).join('')}
+          </select>
+          <input class="rex-inp" type="number" placeholder="Sec." min="5" max="600"
+            id="inlineDraftRest-${routineId}-${i}"
+            style="width:60px;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'}"
+            value="${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?ex.restTime:''}"
+            oninput="draftRoutineExs[${i}].restTime=parseInt(this.value)||90"/>
+        </div>
+      </div>`).join('');
+  }
+
+  function onInlineDraftRestChange(routineId, i, sel) {
+    const inp = document.getElementById(`inlineDraftRest-${routineId}-${i}`);
+    if (sel.value === 'custom') { if(inp){inp.style.display='block';inp.focus();} }
+    else { if(inp) inp.style.display='none'; draftRoutineExs[i].restTime = parseInt(sel.value); }
+  }
+
+  function filterInlineExSug(routineId, q) {
+    const box = document.getElementById('inlineRExSug-' + routineId);
+    if (!box) return;
+    const matches = q ? getKnownExercises().filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [];
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onmousedown="document.getElementById('inlineRExName-${routineId}').value='${e.name.replace(/'/g,"\'")}';document.getElementById('inlineRExMuscle-${routineId}').value='${e.muscle.replace(/'/g,"\'")}';document.getElementById('inlineRExSug-${routineId}').classList.remove('show')">
+      <span>${e.name}</span>${e.muscle?`<span class="ex-sug-muscle">${e.muscle}</span>`:''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+
+  function addInlineRoutineEx(routineId) {
+    const name = document.getElementById('inlineRExName-' + routineId)?.value.trim();
+    if (!name) { showToast('Entre un nom'); return; }
+    const muscle = document.getElementById('inlineRExMuscle-' + routineId)?.value || '';
+    const sets = parseInt(document.getElementById('inlineRExSets-' + routineId)?.value) || 3;
+    const restSel = document.getElementById('inlineRExRest-' + routineId);
+    const restTime = restSel?.value === 'custom' ? (parseInt(document.getElementById('inlineRExRestCustom-' + routineId)?.value)||90) : parseInt(restSel?.value||90);
+    draftRoutineExs.push({ name, muscle, sets, restTime });
+    document.getElementById('inlineRExName-' + routineId).value = '';
+    renderInlineDraftExs(routineId);
+  }
+
+  async function saveInlineRoutine(routineId) {
+    const nameEl = document.getElementById('inlineRoutineName-' + routineId);
+    const name = nameEl?.value.trim();
+    if (!name) { showToast('Donne un nom'); return; }
+    if (!draftRoutineExs.length) { showToast('Ajoute au moins un exercice'); return; }
+    const idx = routines.findIndex(r => r.id === parseInt(routineId));
+    if (idx !== -1) {
+      routines[idx] = { ...routines[idx], name, exercises: [...draftRoutineExs] };
+      showSyncBadge('Sauvegarde...');
+      await sbSave('routines', [routines[idx]]);
+      showSyncBadge('✓ Sync', true);
+      showToast(`"${name}" mise à jour !`);
+    }
+    inlineEditRoutineId = null;
+    editingRoutineId = null;
+    draftRoutineExs = [];
+    const scrollY = window.scrollY;
+    renderRoutinesList(); renderRoutinePicker();
+    requestAnimationFrame(() => window.scrollTo({ top: scrollY }));
   }
 
   function cancelEditRoutine() {
     editingRoutineId = null;
+    inlineEditRoutineId = null;
     draftRoutineExs = [];
     document.getElementById('routineName').value = '';
     renderDraftRoutineExs();
     document.getElementById('saveRoutineBtn').textContent = 'Enregistrer la routine';
     document.getElementById('cancelEditRoutineBtn').style.display = 'none';
+    document.getElementById('createRoutineForm').style.display = 'none';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une routine';
   }
 
   async function saveRoutine() {
@@ -1295,10 +1445,13 @@
     await sbSave('routines', [newRoutine]);
     showSyncBadge('✓ Sync', true);
     draftRoutineExs=[]; document.getElementById('routineName').value='';
+    document.getElementById('createRoutineForm').style.display = 'none';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une routine';
     renderDraftRoutineExs(); renderRoutinesList(); renderRoutinePicker();
     showToast(`"${name}" créée !`);
   }
   let openRoutineIds = new Set();
+  let inlineEditRoutineId = null;
 
   function toggleRoutineExs(id) {
     if (openRoutineIds.has(id)) openRoutineIds.delete(id);
@@ -1312,6 +1465,7 @@
     el.innerHTML = routines.map((r,ri)=>{
       const muscles=[...new Set(r.exercises.map(e=>e.muscle).filter(Boolean))];
       const isOpen = openRoutineIds.has(r.id);
+      const isEditing = inlineEditRoutineId === r.id;
       return `<div class="routine-card" draggable="true" data-ri="${ri}"
         ondragstart="onRoutineDragStart(event,${ri})"
         ondragover="onRoutineDragOver(event)"
@@ -1326,13 +1480,14 @@
             </div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
-            <button class="rc-toggle-btn ${isOpen?'open':''}" onclick="toggleRoutineExs(${r.id})" title="${isOpen?'Masquer':'Voir les exercices'}">▼</button>
-            <button class="btn-ghost" onclick="editRoutine(${ri})">✏️</button>
+            <button class="rc-toggle-btn ${isOpen?'open':''}" onclick="toggleRoutineExs(${r.id})">▼</button>
+            <button class="btn-ghost ${isEditing?'active':''}" onclick="toggleInlineEdit(${ri})" title="Modifier">✏️</button>
             <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">✕</button>
           </div>
         </div>
         ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
         <div class="rc-exs-list ${isOpen?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
+        <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
     }).join('');
   }
