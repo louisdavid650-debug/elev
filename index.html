@@ -1391,6 +1391,7 @@
     document.getElementById('headerDate').textContent = nowDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     const h = nowDate.getHours();
     document.getElementById('headerTitle').textContent = h < 12 ? 'Bonne séance' : h < 18 ? 'À toi de jouer' : 'Bonne session';
+    initDark();
     renderRoutinePicker();
     renderProgramsList();
     checkWeightOnboarding();
