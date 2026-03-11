@@ -1081,51 +1081,74 @@
     setTimeout(() => el.style.display = 'none', 3000);
   }
 
-  // Check saved session on load
-  // Safety net INDEPENDANT — masque le loading dans tous les cas après 6s
-  setTimeout(() => {
-    const ls = document.getElementById('loadingScreen');
-    if (ls) ls.style.display = 'none';
-  }, 6000);
-
+  // ── Démarrage : cache d'abord, Supabase en arrière-plan ──
   (async () => {
+    const hideLoading = () => {
+      const ls = document.getElementById('loadingScreen');
+      if (ls) ls.style.display = 'none';
+    };
+
+    const saved = localStorage.getItem('seance_session');
+    if (!saved) {
+      document.getElementById('loginScreen').style.display = 'flex';
+      hideLoading();
+      return;
+    }
+
     try {
-      const saved = localStorage.getItem('seance_session');
-      if (saved) {
-        const s = JSON.parse(saved);
-        accessToken = s.access_token; currentUser = s.user;
-        document.getElementById('loginScreen').style.display = 'none';
-        // Try to refresh token
-        if (s.refresh_token) {
-          try {
-            const r = await Promise.race([
-              fetch(SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
-                method: 'POST',
-                headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh_token: s.refresh_token })
-              }),
-              new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
-            ]);
-            const rd = await r.json();
-            if (rd.access_token) {
-              accessToken = rd.access_token;
-              currentUser = rd.user;
-              localStorage.setItem('seance_session', JSON.stringify({ access_token: rd.access_token, refresh_token: rd.refresh_token, user: rd.user }));
-            }
-          } catch(e) { console.warn('Token refresh skipped:', e.message); }
-        }
-        await loadAllData();
-        initApp();
-      } else {
-        document.getElementById('loginScreen').style.display = 'flex';
+      const s = JSON.parse(saved);
+      accessToken = s.access_token;
+      currentUser = s.user;
+      document.getElementById('loginScreen').style.display = 'none';
+
+      // 1. Charger depuis le cache LOCAL immédiatement
+      const getCache = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } };
+      sessions    = getCache('elev_cache_sessions');
+      routines    = getCache('elev_cache_routines');
+      programs    = getCache('elev_cache_programs');
+      bodyWeights = getCache('elev_cache_body_weights');
+      sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
+      routines.sort((a, b) => {
+        const getDay = name => { const m = (name||'').match(/J(\d+)/i); return m ? parseInt(m[1]) : 999; };
+        return getDay(a.name) - getDay(b.name);
+      });
+      activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
+
+      // 2. Afficher l'app immédiatement avec les données du cache
+      hideLoading();
+      initApp();
+
+      // 3. Sync Supabase en arrière-plan (sans bloquer)
+      if (s.refresh_token) {
+        try {
+          const r = await Promise.race([
+            fetch(SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
+              method: 'POST',
+              headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: s.refresh_token })
+            }),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+          ]);
+          const rd = await r.json();
+          if (rd.access_token) {
+            accessToken = rd.access_token;
+            currentUser = rd.user;
+            localStorage.setItem('seance_session', JSON.stringify({ access_token: rd.access_token, refresh_token: rd.refresh_token, user: rd.user }));
+          }
+        } catch(e) { console.warn('Token refresh skipped:', e.message); }
       }
+      // Sync silencieuse des données fraîches
+      loadAllData().then(() => {
+        renderCurrentTab();
+      }).catch(e => console.warn('Background sync failed:', e));
+
     } catch(e) {
       console.warn('Init error:', e);
       localStorage.removeItem('seance_session');
       document.getElementById('loginScreen').style.display = 'flex';
+      hideLoading();
     }
-
-    document.getElementById('loadingScreen').style.display = 'none';
   })();
 
   // ── Offline queue ──
@@ -1367,6 +1390,16 @@
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
     if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); loadUserProfileFromSupabase().then(() => checkWeightOnboarding()); }); }
+  }
+
+  function renderCurrentTab() {
+    const active = document.querySelector('.section.active');
+    if (!active) return;
+    const tab = active.id.replace('tab-', '');
+    if (tab === 'history') renderHistory();
+    if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
+    if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
+    if (tab === 'poids') { checkWeightOnboarding(); }
   }
 
   // ── Session Timer ──
