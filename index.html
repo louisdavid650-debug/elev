@@ -1692,11 +1692,14 @@
     updateRestDisplay();
     document.getElementById('restOverlay').classList.add('show');
     // Envoie le timer au Service Worker pour notif si écran verrouillé
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'START_REST_TIMER',
-        payload: { seconds: d, exName: exName || '' }
-      });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        const sw = reg.active;
+        if (sw) sw.postMessage({
+          type: 'START_REST_TIMER',
+          payload: { seconds: d, exName: exName || '' }
+        });
+      }).catch(() => {});
     }
 
     restInterval = setInterval(() => {
@@ -1709,8 +1712,8 @@
         if (navigator.vibrate) navigator.vibrate([200,100,200]);
         playBeep();
         // Annule le timer SW (on a géré nous-même)
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_REST_TIMER' });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => { reg.active?.postMessage({ type: 'CANCEL_REST_TIMER' }); }).catch(()=>{});
         }
       }
     }, 1000);
