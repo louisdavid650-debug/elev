@@ -1463,6 +1463,10 @@
     checkWeightOnboarding();
     // Restore any in-progress session
     restoreDraft();
+    // Charger le profil depuis Supabase en arrière-plan et rafraîchir si nécessaire
+    loadUserProfileFromSupabase().then(profile => {
+      if (profile) checkWeightOnboarding();
+    }).catch(() => {});
   }
 
   // ── Tabs ──
@@ -1484,7 +1488,14 @@
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
-    if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); checkWeightOnboarding(); }); }
+    if (tab === 'poids') {
+      sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); });
+      if (!getUserProfile()) {
+        loadUserProfileFromSupabase().then(p => checkWeightOnboarding()).catch(() => checkWeightOnboarding());
+      } else {
+        checkWeightOnboarding();
+      }
+    }
   }
 
   function renderCurrentTab() {
