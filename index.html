@@ -1353,6 +1353,21 @@
   }
 
   // ── Network listeners ──
+  // ── Correction timer quand l'app revient au premier plan ──
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && timerRunning && timerStartedAt) {
+      // Recalculer le vrai temps écoulé depuis le démarrage
+      timerSec = Math.floor((Date.now() - timerStartedAt) / 1000);
+      updateTimer();
+    }
+    if (document.visibilityState === 'hidden') {
+      // Sauvegarder le draft avec timestamp exact
+      saveDraft();
+    }
+  });
+
+  window.addEventListener('pagehide', () => { saveDraft(); });
+
   window.addEventListener('online', async () => {
     document.getElementById('offlineBanner').classList.remove('show');
     setDot('syncing');
@@ -1409,6 +1424,7 @@
   // ── State ──
   let exercises = [];
   let timerSec = 0, timerRunning = false, timerInterval = null;
+  let timerStartedAt = null; // timestamp Date.now() quand le timer a démarré
   let sessions = [], routines = [], bodyWeights = [];
   let draftRoutineExs = [];
   let loadedRoutineId = null;
@@ -1466,10 +1482,16 @@
   // ── Session Timer ──
   function toggleTimer() {
     const btn = document.getElementById('timerBtn');
-    if (timerRunning) { clearInterval(timerInterval); timerRunning = false; btn.textContent = '▶'; btn.classList.remove('active'); }
-    else { timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000); timerRunning = true; btn.textContent = '⏸'; btn.classList.add('active'); }
+    if (timerRunning) {
+      clearInterval(timerInterval); timerRunning = false; timerStartedAt = null;
+      btn.textContent = '▶'; btn.classList.remove('active');
+    } else {
+      timerStartedAt = Date.now() - timerSec * 1000;
+      timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
+      timerRunning = true; btn.textContent = '⏸'; btn.classList.add('active');
+    }
   }
-  function resetTimer() { clearInterval(timerInterval); timerRunning = false; timerSec = 0; updateTimer(); document.getElementById('timerBtn').textContent = '▶'; document.getElementById('timerBtn').classList.remove('active'); }
+  function resetTimer() { clearInterval(timerInterval); timerRunning = false; timerSec = 0; timerStartedAt = null; updateTimer(); document.getElementById('timerBtn').textContent = '▶'; document.getElementById('timerBtn').classList.remove('active'); }
   function updateTimer() { const m = String(Math.floor(timerSec/60)).padStart(2,'0'), s = String(timerSec%60).padStart(2,'0'); document.getElementById('timerDisplay').textContent = `${m}:${s}`; }
 
   // ── Rest Timer ──
@@ -1623,6 +1645,7 @@
       updateTimer();
       // Auto-restart timer if it was running
       if (draft.timerWasRunning) {
+        timerStartedAt = Date.now() - timerSec * 1000;
         timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
         timerRunning = true;
         const btn = document.getElementById('timerBtn');
@@ -1784,6 +1807,7 @@
     document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
     // Auto-start timer
     if (!timerRunning) {
+      timerStartedAt = Date.now();
       timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
       timerRunning = true;
       const btn = document.getElementById('timerBtn');
@@ -1827,6 +1851,7 @@
     } else {
       showSessionContent();
       if (!timerRunning) {
+        timerStartedAt = Date.now();
         timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
         timerRunning = true;
         const timerBtn = document.getElementById('timerBtn');
@@ -1843,6 +1868,7 @@
     document.getElementById('sessionNotes').value = '';
     document.getElementById('freeSessionRoutineTag').textContent = '';
     // Auto-start timer
+    timerStartedAt = Date.now();
     timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
     timerRunning = true;
     const btn = document.getElementById('timerBtn');
