@@ -4094,16 +4094,18 @@
     // Back
     document.getElementById('fobBackBtn').style.display = _fobStep > 0 ? 'block' : 'none';
 
-    // Skip
-    document.getElementById('fobSkipBtn').style.display = step.optional ? 'block' : 'none';
-    document.getElementById('fobNextBtn').style.display = step.optional ? 'none' : 'block';
+    // Boutons nav
+    const isLast = _fobStep === total - 1;
     if (step.optional) {
+      // Étape optionnelle : deux boutons — Enregistrer (valide) + Passer (skip)
       document.getElementById('fobNextBtn').style.display = 'block';
-      document.getElementById('fobNextBtn').textContent = 'Enregistrer →';
-    } else if (_fobStep === total - 1) {
-      document.getElementById('fobNextBtn').textContent = "C'est parti 🚀";
+      document.getElementById('fobNextBtn').textContent = isLast ? "C'est parti 🚀" : 'Enregistrer →';
+      document.getElementById('fobSkipBtn').style.display = 'block';
+      document.getElementById('fobSkipBtn').textContent = 'Passer cette étape →';
     } else {
-      document.getElementById('fobNextBtn').textContent = 'Suivant →';
+      document.getElementById('fobSkipBtn').style.display = 'none';
+      document.getElementById('fobNextBtn').style.display = 'block';
+      document.getElementById('fobNextBtn').textContent = isLast ? "C'est parti 🚀" : 'Suivant →';
     }
 
     // Input area
@@ -4156,8 +4158,14 @@
       if (val) _fobData[step.key] = val.charAt(0).toUpperCase() + val.slice(1);
     } else {
       const rawVal = document.getElementById('fobInp')?.value;
-      if (rawVal === '' || rawVal === null || rawVal === undefined) {
-        if (step.optional) { _fobStep++; if (_fobStep < FOB_STEPS.length) { fobRender(); } else { await fobFinish(); } return; }
+      const isEmpty = rawVal === '' || rawVal === null || rawVal === undefined;
+      if (isEmpty) {
+        if (step.optional) {
+          // Champ vide + optionnel → on avance sans valeur
+          _fobStep++;
+          if (_fobStep < FOB_STEPS.length) fobRender(); else await fobFinish();
+          return;
+        }
         showToast('Entre une valeur'); return;
       }
       const val = parseFloat(rawVal);
@@ -4167,6 +4175,7 @@
       _fobData[step.key] = val;
     }
 
+    // Avancer ou terminer
     if (_fobStep < FOB_STEPS.length - 1) {
       _fobStep++;
       fobRender();
@@ -4207,6 +4216,8 @@
       }
     }
     document.getElementById('fobOverlay').style.display = 'none';
+    switchTab('home');
+    renderHome();
     // Marquer le daily greeting comme vu aujourd'hui (évite double popup)
     localStorage.setItem('elev_daily_greeting', new Date().toISOString().split('T')[0]);
     showToast(`Bienvenue ${profile.firstName || ''} 🎉`);
