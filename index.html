@@ -763,7 +763,10 @@
 
     <!-- History -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div class="label" style="margin:0">Historique</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="label" style="margin:0">Historique</div>
+        <button onclick="sbLoad('body_weights').then(d=>{bodyWeights=d;bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));renderWeightTab();showToast('Données rechargées ✓')})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 4px;" title="Recharger depuis le serveur">↻</button>
+      </div>
       <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:140px;font-size:11px;padding:5px 8px" onchange="renderWeightTab()" title="Filtrer par mois"/>
     </div>
     <div class="weight-hist-list" id="weightHistList"></div>
@@ -1212,7 +1215,7 @@
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); renderFrequency(); }
     if (tab === 'routines') renderRoutinesList();
-    if (tab === 'poids') renderWeightTab();
+    if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); renderWeightTab(); }); }
   }
 
   // ── Session Timer ──
