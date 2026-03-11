@@ -1802,7 +1802,18 @@
     // Hide modal directly — do NOT call closeRoutineConfirm (which resets block state)
     document.getElementById('routineConfirmModal').style.display = 'none';
     loadedRoutineId = id;
-    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, repsTarget: ex.repsTarget || '', sets: Array.from({length: Array.isArray(ex.sets) ? ex.sets.length : (parseInt(ex.sets)||3)},()=>({w:'',r:'',done:false})) }));
+    exercises = routine.exercises.map(ex => {
+      const nSets = Array.isArray(ex.sets) ? ex.sets.length : (parseInt(ex.sets) || parseInt(ex.sets) || 3);
+      const restTime = ex.restTime ?? ex.rest ?? 90;
+      return {
+        id: Date.now() + Math.random(),
+        name: ex.name,
+        muscle: ex.muscle || '',
+        restTime,
+        repsTarget: ex.repsTarget || (ex.reps ? String(ex.reps) : ''),
+        sets: Array.from({ length: nSets }, () => ({ w: '', r: '', done: false }))
+      };
+    });
     const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
     document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
     // Auto-start timer
