@@ -497,11 +497,11 @@
 
 <!-- ══ LOADING SCREEN ══ -->
 <div class="offline-banner" id="offlineBanner">⚡ Mode hors-ligne — tes données seront synchronisées à la reconnexion</div>
-<div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+<div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="168" height="48">
     <defs><style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&amp;display=swap');</style></defs>
-    <text x="140" y="58" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="#1a1a1a" text-anchor="middle" letter-spacing="18">ÉLEV</text>
-    <line x1="50" y1="68" x2="230" y2="68" stroke="#1a1a1a" stroke-width="0.6" opacity="0.4"/>
+    <text x="140" y="58" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="currentColor" text-anchor="middle" letter-spacing="18">ÉLEV</text>
+    <line x1="50" y1="68" x2="230" y2="68" stroke="currentColor" stroke-width="0.6" opacity="0.4"/>
   </svg>
   <div style="width:32px;height:2px;background:var(--border2);border-radius:2px;overflow:hidden;">
     <div style="height:100%;background:var(--accent);animation:loadBar 1.2s ease-in-out infinite;"></div>
@@ -1322,7 +1322,9 @@
     renderRoutinePicker();
     renderProgramsList();
     // Charger le profil depuis Supabase puis vérifier l'onboarding
-    loadUserProfileFromSupabase().then(() => checkWeightOnboarding());
+    // Timeout de 3s max pour le chargement du profil — évite le blocage si Supabase lent
+    const profileTimeout = new Promise(resolve => setTimeout(resolve, 3000));
+    Promise.race([loadUserProfileFromSupabase(), profileTimeout]).then(() => checkWeightOnboarding());
     // Restore any in-progress session
     restoreDraft();
   }
@@ -2939,7 +2941,7 @@
   }
 
   async function loadUserProfileFromSupabase() {
-    if (!accessToken || !isOnline() || !currentUser) return;
+    if (!accessToken || !isOnline() || !currentUser) return null;
     try {
       const res = await supaFetch('/rest/v1/profiles?select=*&user_id=eq.' + currentUser.id, { returnData: true });
       if (Array.isArray(res) && res.length > 0) {
@@ -2947,7 +2949,10 @@
         localStorage.setItem(ONBOARDING_KEY, JSON.stringify(profile));
         return profile;
       }
-    } catch(e) { console.warn('profile load failed', e); }
+    } catch(e) {
+      // Table profiles n'existe pas encore ou erreur réseau — silencieux
+      console.warn('profile load skipped:', e);
+    }
     return null;
   }
 
