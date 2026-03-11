@@ -3,6 +3,7 @@ const SW_VERSION = 'elev-sw-v2';
 
 self.addEventListener('install', e => {
   console.log('[SW] Install', SW_VERSION);
+  clearRestTimer(); // Annule tout timer de l'ancienne instance
   self.skipWaiting();
 });
 
