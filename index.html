@@ -2899,11 +2899,21 @@
   const ONBOARDING_KEY = 'elev_user_profile';
 
   const ONBOARDING_STEPS = [
-    { key: 'age',          question: 'Quel est ton âge ?',            hint: 'EN ANNÉES',        placeholder: '25',    type: 'number', unit: 'ans',  min: 10, max: 100 },
-    { key: 'height',       question: 'Quelle est ta taille ?',        hint: 'EN CENTIMÈTRES',   placeholder: '175',   type: 'number', unit: 'cm',   min: 100, max: 250 },
-    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: '80',    type: 'number', unit: 'kg',   min: 20, max: 300 },
-    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: '72',    type: 'number', unit: 'kg',   min: 20, max: 300 },
+    { key: 'age',          question: 'Quel est ton âge ?',             hint: 'EN ANNÉES',        placeholder: '25',  type: 'number', unit: 'ans', min: 10,  max: 100 },
+    { key: 'height',       question: 'Quelle est ta taille ?',         hint: 'EN CENTIMÈTRES',   placeholder: '175', type: 'number', unit: 'cm',  min: 100, max: 250 },
+    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: '80',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
+    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: '72',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
+    { key: 'goal',         question: 'Quel est ton objectif ?',        hint: 'CHOISIS TON MODE', placeholder: null,  type: 'choice',
+      choices: [
+        { value: 'seche',     label: 'Sèche',          icon: '🔥', desc: 'Perdre de la masse grasse' },
+        { value: 'maintien',  label: 'Maintien',        icon: '⚖️', desc: 'Garder ton poids actuel' },
+        { value: 'prise',     label: 'Prise de masse',  icon: '💪', desc: 'Gagner du muscle et du poids' },
+      ]
+    },
   ];
+
+  // Steps affichés uniquement lors de la création (âge + taille = une seule fois)
+  const EDIT_PROFILE_STEPS = ['startWeight', 'targetWeight', 'goal'];
 
   let _onboardingStep = 0;
   let _onboardingData = {};
@@ -2917,20 +2927,32 @@
   }
 
   function resetOnboarding() {
-    localStorage.removeItem(ONBOARDING_KEY);
+    // Keep age & height — only re-ask mutable fields
+    const profile = getUserProfile() || {};
     _onboardingStep = 0;
-    _onboardingData = {};
+    _onboardingData = { age: profile.age, height: profile.height };
+    _onboardingEditMode = true;
     showWeightOnboarding();
   }
+  let _onboardingEditMode = false;
 
   function showWeightOnboarding() {
     document.getElementById('weightOnboarding').style.display = 'block';
     document.getElementById('weightMain').style.display = 'none';
+    _onboardingStep = 0;
+    if (!_onboardingEditMode) _onboardingData = {};
     renderOnboardingStep();
   }
 
+  function getActiveSteps() {
+    if (_onboardingEditMode) {
+      return ONBOARDING_STEPS.filter(s => EDIT_PROFILE_STEPS.includes(s.key));
+    }
+    return ONBOARDING_STEPS;
+  }
+
   function renderOnboardingStep() {
-    const steps = ONBOARDING_STEPS;
+    const steps = getActiveSteps();
     const step = steps[_onboardingStep];
 
     // Dots
@@ -2939,42 +2961,76 @@
       `<div class="onboarding-dot ${i === _onboardingStep ? 'active' : ''}"></div>`
     ).join('');
 
-    // Step content
     const container = document.getElementById('onboardingSteps');
     const isLast = _onboardingStep === steps.length - 1;
+    const btnLabel = isLast ? (_onboardingEditMode ? 'Sauvegarder ✓' : 'Commencer →') : 'Suivant →';
+
+    let inputHtml = '';
+    if (step.type === 'choice') {
+      const current = _onboardingData[step.key] || '';
+      inputHtml = `<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">` +
+        step.choices.map(ch => `
+          <button onclick="selectOnboardingChoice('${step.key}','${ch.value}')"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:8px;cursor:pointer;transition:all 0.15s;
+              background:${current===ch.value?'var(--accent)':'var(--surface)'};
+              border:2px solid ${current===ch.value?'var(--accent)':'var(--border)'};
+              color:${current===ch.value?'#fff':'var(--text)'}">
+            <span style="font-size:22px">${ch.icon}</span>
+            <div style="text-align:left">
+              <div style="font-family:Geist Mono,monospace;font-size:11px;letter-spacing:1px;font-weight:500">${ch.label}</div>
+              <div style="font-size:10px;opacity:0.7;margin-top:2px">${ch.desc}</div>
+            </div>
+          </button>`).join('') +
+        `</div>`;
+    } else {
+      inputHtml = `<input class="onboarding-inp" id="onboardingInp" type="${step.type}"
+        placeholder="${step.placeholder}"
+        value="${_onboardingData[step.key] || ''}"
+        min="${step.min}" max="${step.max}"
+        onkeydown="if(event.key==='Enter')nextOnboardingStep()"/>`;
+    }
+
     container.innerHTML = `
       <div class="onboarding-step active">
         <div class="onboarding-question">${step.question}</div>
         <div class="onboarding-hint">${step.hint}</div>
-        <input class="onboarding-inp" id="onboardingInp" type="${step.type}"
-          placeholder="${step.placeholder}"
-          value="${_onboardingData[step.key] || ''}"
-          min="${step.min}" max="${step.max}"
-          onkeydown="if(event.key==='Enter')nextOnboardingStep()"/>
-        <button class="onboarding-btn" onclick="nextOnboardingStep()">
-          ${isLast ? 'Commencer →' : 'Suivant →'}
-        </button>
+        ${inputHtml}
+        <button class="onboarding-btn" id="onboardingNextBtn" onclick="nextOnboardingStep()">${btnLabel}</button>
         ${_onboardingStep > 0 ? `<button class="onboarding-back" onclick="prevOnboardingStep()">← Retour</button>` : ''}
       </div>
     `;
-    setTimeout(() => document.getElementById('onboardingInp')?.focus(), 100);
+    if (step.type !== 'choice') setTimeout(() => document.getElementById('onboardingInp')?.focus(), 100);
+  }
+
+  function selectOnboardingChoice(key, value) {
+    _onboardingData[key] = value;
+    renderOnboardingStep(); // re-render to highlight selection
   }
 
   function nextOnboardingStep() {
-    const step = ONBOARDING_STEPS[_onboardingStep];
-    const val = parseFloat(document.getElementById('onboardingInp')?.value);
-    if (!val || val < step.min || val > step.max) {
-      showToast(`Valeur invalide (${step.min}–${step.max})`);
-      return;
-    }
-    _onboardingData[step.key] = val;
+    const steps = getActiveSteps();
+    const step = steps[_onboardingStep];
 
-    if (_onboardingStep < ONBOARDING_STEPS.length - 1) {
+    if (step.type === 'choice') {
+      if (!_onboardingData[step.key]) { showToast('Choisis une option'); return; }
+    } else {
+      const val = parseFloat(document.getElementById('onboardingInp')?.value);
+      if (!val || val < step.min || val > step.max) {
+        showToast(`Valeur invalide (${step.min}–${step.max})`);
+        return;
+      }
+      _onboardingData[step.key] = val;
+    }
+
+    if (_onboardingStep < steps.length - 1) {
       _onboardingStep++;
       renderOnboardingStep();
     } else {
-      // Done — save and show main
-      saveUserProfile(_onboardingData);
+      // Done — merge with existing profile (preserve age/height if edit mode)
+      const existing = getUserProfile() || {};
+      const merged = { ...existing, ..._onboardingData };
+      saveUserProfile(merged);
+      _onboardingEditMode = false;
       document.getElementById('weightOnboarding').style.display = 'none';
       document.getElementById('weightMain').style.display = 'block';
       renderWeightTab();
@@ -3021,11 +3077,14 @@
     document.getElementById('goalMsg').textContent = msg;
 
     // Details
+    const goalLabels = { seche: '🔥 Sèche', maintien: '⚖️ Maintien', prise: '💪 Prise de masse' };
+    const goalBadge = profile.goal ? `<div class="goal-detail" style="grid-column:1/-1"><span style="color:var(--accent);font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px">${goalLabels[profile.goal] || ''}</span></div>` : '';
     document.getElementById('goalDetails').innerHTML =
       `<div class="goal-detail">Départ <span>${startWeight} kg</span></div>` +
       `<div class="goal-detail">Actuel <span>${last} kg</span></div>` +
       `<div class="goal-detail">Cible <span>${targetWeight} kg</span></div>` +
-      `<div class="goal-detail">Restant <span>${remaining} kg</span></div>`;
+      `<div class="goal-detail">Restant <span>${remaining} kg</span></div>` +
+      goalBadge;
   }
 
   function checkWeightOnboarding() {
