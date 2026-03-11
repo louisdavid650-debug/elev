@@ -1798,7 +1798,8 @@
 
   function confirmLoadRoutine() {
     const id = parseInt(document.getElementById('routineConfirmModal').dataset.pendingId);
-    const routine = routines.find(r => r.id === id);
+    const routine = routines.find(r => r.id === id) || routines.find(r => String(r.id) === String(id));
+    console.log('confirmLoadRoutine id:', id, 'routine:', routine, 'routines ids:', routines.map(r=>r.id));
     if (!routine) return;
     // Hide modal directly — do NOT call closeRoutineConfirm (which resets block state)
     document.getElementById('routineConfirmModal').style.display = 'none';
