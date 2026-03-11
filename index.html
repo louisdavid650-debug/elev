@@ -276,6 +276,13 @@
   .fob-choice-label { font-family: 'Cormorant Garamond', serif; font-size: 20px; }
   .fob-choice-desc { font-size: 10px; font-family: 'Geist Mono', monospace; opacity: 0.7; margin-top: 1px; }
 
+  /* ── Weight/Kcal local tabs ── */
+  .entry-tabs { display: flex; gap: 0; margin-bottom: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .entry-tab { flex: 1; padding: 11px 0; text-align: center; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; background: var(--surface); color: var(--muted); border: none; transition: all 0.18s; }
+  .entry-tab.active { background: var(--accent); color: #fff; }
+  .entry-panel { display: none; }
+  .entry-panel.active { display: block; animation: fadeUp 0.2s ease; }
+
   .onboarding-wrap { padding: 8px 0 24px; }
   .onboarding-step { display:none; }
   .onboarding-step.active { display:block; animation: fadeUp 0.25s ease; }
@@ -985,39 +992,47 @@
     <!-- Main content (shown after onboarding) -->
     <div id="weightMain" style="display:none">
 
-      <!-- ── 1. SAISIE POIDS ── -->
-      <div class="weight-entry-card">
-        <div class="weight-big-display">
-          <div class="weight-current" id="weightCurrent">—</div>
-          <div class="weight-unit">kg</div>
-          <div class="weight-delta" id="weightDelta" style="display:none"></div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <input type="date" id="weightDate" class="inp" style="width:100%;box-sizing:border-box;max-width:100%;"/>
-        </div>
-        <div class="weight-input-row">
-          <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
-          <button class="weight-save" onclick="logWeight()">Ajouter</button>
+      <!-- ── ONGLETS POIDS / CALORIES ── -->
+      <div class="entry-tabs">
+        <button class="entry-tab active" id="entryTabWeight" onclick="switchEntryTab('weight')">Poids</button>
+        <button class="entry-tab" id="entryTabKcal" onclick="switchEntryTab('kcal')">Calories</button>
+      </div>
+
+      <!-- Panel Poids -->
+      <div class="entry-panel active" id="entryPanelWeight">
+        <div class="weight-entry-card" style="border-top:none;border-radius:0 0 6px 6px;margin-top:0">
+          <div class="weight-big-display">
+            <div class="weight-current" id="weightCurrent">—</div>
+            <div class="weight-unit">kg</div>
+            <div class="weight-delta" id="weightDelta" style="display:none"></div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <input type="date" id="weightDate" class="inp" style="width:100%;box-sizing:border-box;max-width:100%;"/>
+          </div>
+          <div class="weight-input-row">
+            <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
+            <button class="weight-save" onclick="logWeight()">Ajouter</button>
+          </div>
         </div>
       </div>
 
-      <!-- ── 2. SAISIE CALORIES ── -->
-      <div style="height:1px;background:var(--border);margin:20px 0"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="label" style="margin:0">Calories</div>
-        <div id="kcalTodayBadge" style="display:none;font-size:10px;font-family:Geist Mono,monospace;letter-spacing:1px;padding:4px 10px;border-radius:20px;"></div>
-      </div>
-      <div class="weight-entry-card" style="margin-bottom:16px">
-        <div class="weight-input-row" style="margin-bottom:10px">
-          <input type="date" id="kcalDate" class="inp" style="flex:1"/>
+      <!-- Panel Calories -->
+      <div class="entry-panel" id="entryPanelKcal">
+        <div class="weight-entry-card" style="border-top:none;border-radius:0 0 6px 6px;margin-top:0">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+            <div id="kcalTodayBadge" style="display:none;font-size:10px;font-family:Geist Mono,monospace;letter-spacing:1px;padding:4px 10px;border-radius:20px;"></div>
+          </div>
+          <div class="weight-input-row" style="margin-bottom:10px">
+            <input type="date" id="kcalDate" class="inp" style="flex:1"/>
+          </div>
+          <div class="weight-input-row" style="margin-bottom:10px">
+            <input class="weight-inp" id="kcalInput" type="number" step="1" placeholder="kcal (ex: 2200)" style="flex:1"/>
+          </div>
+          <div style="margin-bottom:10px">
+            <input class="inp" id="kcalNote" type="text" placeholder="Note (optionnel)" style="width:100%;box-sizing:border-box"/>
+          </div>
+          <button class="weight-save" onclick="logKcal()" style="width:100%">Ajouter</button>
         </div>
-        <div class="weight-input-row" style="margin-bottom:10px">
-          <input class="weight-inp" id="kcalInput" type="number" step="1" placeholder="kcal (ex: 2200)" style="flex:1"/>
-        </div>
-        <div style="margin-bottom:10px">
-          <input class="inp" id="kcalNote" type="text" placeholder="Note (optionnel)" style="width:100%;box-sizing:border-box"/>
-        </div>
-        <button class="weight-save" onclick="logKcal()" style="width:100%">Ajouter</button>
       </div>
 
       <!-- ── 3. OBJECTIF ── -->
@@ -3721,7 +3736,17 @@
 
 
 
-  function toggleWeightHist() {
+  function switchEntryTab(tab) {
+    document.getElementById('entryTabWeight').classList.toggle('active', tab === 'weight');
+    document.getElementById('entryTabKcal').classList.toggle('active', tab === 'kcal');
+    document.getElementById('entryPanelWeight').classList.toggle('active', tab === 'weight');
+    document.getElementById('entryPanelKcal').classList.toggle('active', tab === 'kcal');
+    // Remettre la date à aujourd'hui si vide
+    if (tab === 'kcal' && !document.getElementById('kcalDate').value)
+      document.getElementById('kcalDate').value = new Date().toISOString().split('T')[0];
+  }
+
+    function toggleWeightHist() {
     const col = document.getElementById('weightHistCollapse');
     const arrow = document.getElementById('weightHistArrow');
     const open = col.style.display !== 'none';
