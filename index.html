@@ -1989,27 +1989,91 @@
     showToast('Programme activé ✓');
   }
 
+  function toggleInlineProgEdit(id) {
+    if (_editingProgId === id) {
+      _editingProgId = null;
+      renderProgramsList();
+      return;
+    }
+    editProgram(id);
+  }
+
   function editProgram(id) {
     const p = programs.find(x => x.id === id);
     if (!p) return;
     _editingProgId = id;
-    const form = document.getElementById('createProgForm');
-    const btn = document.getElementById('createProgToggleBtn');
-    form.style.display = 'block';
-    btn.textContent = '✕ Fermer';
-    document.getElementById('progFormName').value = p.name;
-    document.querySelectorAll('.day-btn').forEach(b => {
-      b.classList.toggle('on', p.trainingDays.some(td => td.day === parseInt(b.dataset.day)));
+    // Make sure card is open
+    openProgIds.add(id);
+    renderProgramsList();
+    // Render inline edit form
+    const el = document.getElementById('inlineProgEdit-' + id);
+    if (!el) return;
+    const dayOrder = [1,2,3,4,5,6,0];
+    el.innerHTML = `
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Modifier le programme</div>
+      <input class="inp" id="inlineProgName-${id}" value="${p.name.replace(/"/g,'&quot;')}" placeholder="Nom du programme" style="width:100%;box-sizing:border-box;margin-bottom:12px"/>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Jours d'entraînement</div>
+      <div class="day-selector" style="margin-bottom:12px">
+        ${[1,2,3,4,5,6,0].map(d => {
+          const lbls = ['D','L','M','M','J','V','S'];
+          const isOn = p.trainingDays.some(td => td.day === d);
+          return `<button class="day-btn ${isOn ? 'on' : ''}" data-day="${d}" onclick="toggleInlineDay(this,'${id}')">${lbls[d]}</button>`;
+        }).join('')}
+      </div>
+      <div id="inlineProgAssign-${id}" class="prog-session-assign"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-add" style="flex:1" onclick="saveInlineProgram('${id}')">💾 Sauvegarder</button>
+        <button class="btn-ghost" onclick="toggleInlineProgEdit(${id})">Annuler</button>
+      </div>
+    `;
+    renderInlineProgAssign(id, p);
+  }
+
+  function toggleInlineDay(btn, progId) {
+    btn.classList.toggle('on');
+    const p = programs.find(x => x.id === parseInt(progId));
+    renderInlineProgAssign(progId, p);
+  }
+
+  function renderInlineProgAssign(progId, origProg) {
+    const el = document.getElementById('inlineProgAssign-' + progId);
+    if (!el) return;
+    const selected = [...document.querySelectorAll(`#inlineProgEdit-${progId} .day-btn.on`)].map(b => parseInt(b.dataset.day));
+    if (!selected.length) { el.innerHTML = ''; return; }
+    const dayOrder = [1,2,3,4,5,6,0];
+    const sorted = dayOrder.filter(d => selected.includes(d));
+    el.innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Associer une séance (optionnel)</div>' +
+      sorted.map(d => {
+        const existing = origProg?.trainingDays.find(td => td.day === d);
+        return `<div class="prog-session-row" style="margin-bottom:6px">
+          <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
+          <select class="inp" id="inlineProgDay-${progId}-${d}" style="flex:1;font-size:12px">
+            <option value="">— Aucune séance —</option>
+            ${routines.map(r => `<option value="${r.id}" ${existing?.sessionId === r.id ? 'selected' : ''}>${r.name}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('');
+  }
+
+  async function saveInlineProgram(progId) {
+    const id = parseInt(progId);
+    const nameEl = document.getElementById('inlineProgName-' + progId);
+    const name = nameEl?.value.trim() || 'Mon programme';
+    const selected = [...document.querySelectorAll(`#inlineProgEdit-${progId} .day-btn.on`)].map(b => parseInt(b.dataset.day));
+    if (!selected.length) { showToast('Sélectionne au moins un jour'); return; }
+    const dayOrder = [1,2,3,4,5,6,0];
+    const trainingDays = dayOrder.filter(d => selected.includes(d)).map(d => {
+      const sel = document.getElementById('inlineProgDay-' + progId + '-' + d);
+      return { day: d, sessionId: sel ? (parseInt(sel.value) || null) : null };
     });
-    renderProgSessionAssign();
-    // Re-apply saved session assignments
-    setTimeout(() => {
-      p.trainingDays.forEach(td => {
-        const sel = document.getElementById('progDaySession-' + td.day);
-        if (sel && td.sessionId) sel.value = td.sessionId;
-      });
-    }, 50);
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const idx = programs.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      programs[idx] = { ...programs[idx], name, trainingDays };
+      await sbSave('programs', [programs[idx]]);
+      showToast(`"${name}" mis à jour ✓`);
+    }
+    _editingProgId = null;
+    renderProgramsList();
   }
 
   let openProgIds = new Set();
@@ -2028,6 +2092,7 @@
       const isActive = p.id === activeProgId;
       const isOpen = openProgIds.has(p.id);
       const dayLabels = p.trainingDays.map(td => DAY_FULL[td.day].substring(0,3)).join(' · ');
+      const isEditing = _editingProgId === p.id;
       return `<div class="prog-card ${isActive ? 'active-prog' : ''}">
         <div class="prog-head" onclick="toggleProgCard(${p.id})">
           <div>
@@ -2051,9 +2116,10 @@
           }).join('')}
           <div style="display:flex;gap:8px;margin-top:14px">
             ${!isActive ? `<button class="btn-add" style="flex:1" onclick="event.stopPropagation();setActiveProgram(${p.id})">✓ Activer</button>` : '<div style="flex:1;text-align:center;font-size:10px;color:var(--accent);font-family:Geist Mono,monospace;letter-spacing:1px;padding:8px">Programme actif</div>'}
-            <button class="btn-ghost" onclick="event.stopPropagation();editProgram(${p.id})">✏️</button>
+            <button class="btn-ghost ${isEditing ? 'active' : ''}" onclick="event.stopPropagation();toggleInlineProgEdit(${p.id})">✏️</button>
             <button class="btn-ghost danger" onclick="event.stopPropagation();deleteProgram(${p.id})">✕</button>
           </div>
+          <div id="inlineProgEdit-${p.id}" style="display:${isEditing ? 'block' : 'none'};border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
         </div>
       </div>`;
     }).join('');
