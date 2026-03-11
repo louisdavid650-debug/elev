@@ -850,7 +850,7 @@
 
     <!-- Dernière séance -->
     <div class="home-section-title">Dernière séance</div>
-    <div id="homeLastSession" class="home-last-session" onclick="switchTab('history')">
+    <div id="homeLastSession" class="home-last-session" onclick="switchTab('stats')">
       <div class="home-last-title" id="homeLastName">—</div>
       <div class="home-last-meta" id="homeLastMeta"></div>
       <div class="home-last-exercises" id="homeLastExercises"></div>
@@ -1179,27 +1179,36 @@
     </div>
   </div>
 
-  <!-- ══ HISTORY ══ -->
-  <div class="section" id="tab-history">
-    <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
-      <input class="pr-search-inp" id="historySearch" placeholder="Rechercher par exercice ou routine…" oninput="renderHistory()" autocomplete="off"/>
-      <div style="display:flex;gap:8px">
-        <input class="pr-search-inp" id="historyDateSearch" type="date" style="flex:1" onchange="renderHistory()" title="Filtrer par date"/>
-        <select class="pr-search-inp" id="historyMuscleSearch" style="flex:1" onchange="renderHistory()">
-          <option value="">Tous les muscles</option>
-          <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
-          <option>Biceps</option><option>Triceps</option><option>Jambes</option>
-          <option>Abdos</option><option>Fessiers</option>
-        </select>
-      </div>
-    </div>
-    <div class="h-list" id="historyList"></div>
-  </div>
+
 
   <!-- ══ STATS ══ -->
   <div class="section" id="tab-stats">
     <div class="label">Cette semaine</div>
     <div class="weekly-card" id="weeklyCard"></div>
+
+    <!-- ── Historique déroulant ── -->
+    <div style="height:1px;background:var(--border);margin:16px 0 12px"></div>
+    <div onclick="toggleStatsHistory()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0;margin-bottom:0;user-select:none">
+      <div class="label" style="margin:0">Historique des séances</div>
+      <span id="statsHistArrow" style="font-size:13px;color:var(--muted);transition:transform 0.25s">▾</span>
+    </div>
+    <div id="statsHistCollapse" style="display:none;margin-top:12px">
+      <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px">
+        <input class="pr-search-inp" id="historySearch" placeholder="Rechercher par exercice ou routine…" oninput="renderHistory()" autocomplete="off"/>
+        <div style="display:flex;gap:8px">
+          <input class="pr-search-inp" id="historyDateSearch" type="date" style="flex:1" onchange="renderHistory()" title="Filtrer par date"/>
+          <select class="pr-search-inp" id="historyMuscleSearch" style="flex:1" onchange="renderHistory()">
+            <option value="">Tous les muscles</option>
+            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+            <option>Biceps</option><option>Triceps</option><option>Jambes</option>
+            <option>Abdos</option><option>Fessiers</option>
+          </select>
+        </div>
+      </div>
+      <div class="h-list" id="historyList"></div>
+    </div>
+    <div style="height:1px;background:var(--border);margin:12px 0 16px"></div>
+
     <div class="label">Calendrier</div>
     <div class="calendar-wrap">
       <div class="cal-header">
@@ -1324,13 +1333,7 @@
     </svg>
     <span class="bn-label">Poids</span>
   </button>
-  <button class="bn-btn" id="bnav-history" onclick="switchTab('history')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
-      <path d="M12 8v4l3 3"/>
-      <path d="M3.05 11a9 9 0 1 0 .5-4M3 4v4h4"/>
-    </svg>
-    <span class="bn-label">Hist.</span>
-  </button>
+
   <button class="bn-btn" id="bnav-stats" onclick="switchTab('stats')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -1856,7 +1859,7 @@
   }
 
   // ── Tabs ──
-  const TAB_TITLES = { home: 'Accueil', session: 'Séances', history: 'Historique', stats: 'Stats', routines: 'Programmes', poids: 'Poids' };
+  const TAB_TITLES = { home: 'Accueil', session: 'Séances', stats: 'Stats', routines: 'Programmes', poids: 'Poids' };
   function switchTab(tab) {
     document.title = 'Élev | ' + (TAB_TITLES[tab] || tab);
     localStorage.setItem('elev_last_tab', tab);
@@ -1874,7 +1877,6 @@
     document.getElementById('tab-' + tab).classList.add('active');
     document.getElementById('bnav-' + tab).classList.add('active');
     if (tab === 'home') renderHome();
-    if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
     if (tab === 'poids') {
@@ -1894,7 +1896,6 @@
     const tab = active.id.replace('tab-', '');
     if (tab === 'session') { renderRoutinePicker(); }
     if (tab === 'home') renderHome();
-    if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
     if (tab === 'poids') { checkWeightOnboarding(); }
@@ -3828,7 +3829,16 @@
       document.getElementById('kcalDate').value = new Date().toISOString().split('T')[0];
   }
 
-  function switchHistTab(tab) {
+  function toggleStatsHistory() {
+    const col = document.getElementById('statsHistCollapse');
+    const arrow = document.getElementById('statsHistArrow');
+    const open = col.style.display === 'none';
+    col.style.display = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+    if (open) renderHistory();
+  }
+
+    function switchHistTab(tab) {
     document.getElementById('histTabWeight').classList.toggle('active', tab === 'weight');
     document.getElementById('histTabKcal').classList.toggle('active', tab === 'kcal');
     document.getElementById('histPanelWeight').classList.toggle('active', tab === 'weight');
