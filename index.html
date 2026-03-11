@@ -4335,23 +4335,33 @@
     let nextRoutine = null;
     let nextDayLabel = '';
     if (activeProgram?.trainingDays?.length) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayJs = new Date().getDay(); // 0=Dim, 1=Lun...
+      const now = new Date();
+      const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      const todayJs = now.getDay(); // 0=Dim, 1=Lun...
       const DAY_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-      // A-t-on déjà fait une séance aujourd'hui ?
-      const doneToday = sessions.some(s => s.date === todayStr);
+      // Séance faite aujourd'hui ? — comparaison locale (les dates peuvent être ISO complet ou YYYY-MM-DD)
+      const doneToday = sessions.some(s => {
+        const d = s.date ? s.date.slice(0,10) : '';
+        return d === todayStr;
+      });
+      // Trouver la séance assignée à aujourd'hui dans le programme
+      const todayAssigned = activeProgram.trainingDays.find(td => td.day === todayJs && td.sessionId);
       // Garder uniquement les jours avec une séance assignée, triés
       const sortedDays = [...activeProgram.trainingDays].filter(td => td.sessionId).sort((a, b) => a.day - b.day);
-      // Construire une liste ordonnée de 0→6 en wrappant, à partir du bon point de départ
-      // Si séance déjà faite aujourd'hui → on commence demain, sinon aujourd'hui
-      const startDay = doneToday ? (todayJs + 1) % 7 : todayJs;
-      // Réordonner la liste pour commencer à startDay (ex: si startDay=4, ordre = 4,5,6,0,1,2,3)
-      const reordered = [
-        ...sortedDays.filter(td => td.day >= startDay),
-        ...sortedDays.filter(td => td.day < startDay)
-      ];
-      // Premier élément = prochain jour d'entraînement (jours de repos naturellement sautés)
-      const found = reordered[0] || null;
+      let found = null;
+      if (!doneToday && todayAssigned) {
+        // Séance prévue aujourd'hui et pas encore faite → afficher celle d'aujourd'hui
+        found = todayAssigned;
+      } else {
+        // Séance déjà faite (ou pas de séance aujourd'hui) → chercher le prochain jour d'entraînement
+        // Réordonner en commençant strictement après aujourd'hui
+        const reordered = [
+          ...sortedDays.filter(td => td.day > todayJs),
+          ...sortedDays.filter(td => td.day < todayJs),
+          ...sortedDays.filter(td => td.day === todayJs) // aujourd'hui en dernier si rien d'autre
+        ];
+        found = reordered[0] || null;
+      }
       if (found) {
         nextRoutine = routines.find(r => r.id === found.sessionId);
         const delta = ((found.day - todayJs) + 7) % 7;
