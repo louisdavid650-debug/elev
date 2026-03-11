@@ -221,6 +221,32 @@
 
   /* ── Poids du corps ── */
   .weight-entry-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px; margin-bottom: 20px; }
+
+  /* ── Onboarding ── */
+  .onboarding-wrap { padding: 8px 0 24px; }
+  .onboarding-step { display:none; }
+  .onboarding-step.active { display:block; animation: fadeUp 0.25s ease; }
+  .onboarding-question { font-family: Cormorant Garamond, serif; font-size: 26px; font-weight: 400; color: var(--text); margin-bottom: 6px; line-height: 1.2; }
+  .onboarding-hint { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; font-family: Geist Mono, monospace; }
+  .onboarding-inp { background: var(--surface); border: none; border-bottom: 2px solid var(--border2); border-radius: 0; padding: 10px 4px; font-family: Cormorant Garamond, serif; font-size: 32px; color: var(--text); width: 100%; outline: none; margin-bottom: 24px; text-align: center; }
+  .onboarding-inp:focus { border-bottom-color: var(--accent); }
+  .onboarding-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 4px; font-family: Geist Mono, monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; }
+  .onboarding-back { background: none; border: none; color: var(--muted); font-size: 11px; font-family: Geist Mono, monospace; cursor: pointer; margin-top: 12px; width: 100%; text-align: center; }
+  .onboarding-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; }
+  .onboarding-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); transition: background 0.2s; }
+  .onboarding-dot.active { background: var(--accent); }
+
+  /* ── Goal progress ── */
+  .goal-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; margin-bottom: 16px; }
+  .goal-pct-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 8px; }
+  .goal-pct-val { font-family: Cormorant Garamond, serif; font-size: 36px; font-weight: 400; color: var(--accent); line-height: 1; }
+  .goal-pct-lbl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: Geist Mono, monospace; margin-bottom: 4px; }
+  .goal-track { width: 100%; height: 6px; background: var(--warm); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+  .goal-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.6s ease; }
+  .goal-msg { font-size: 11px; color: var(--muted); font-family: Geist Mono, monospace; letter-spacing: 0.5px; }
+  .goal-details { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  .goal-detail { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted2); font-family: Geist Mono, monospace; }
+  .goal-detail span { color: var(--text); font-size: 11px; }
   .weight-big-display { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
   .weight-current { font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 400; letter-spacing: -2px; color: var(--text); line-height: 1; }
   .weight-unit { font-size: 14px; color: var(--muted); }
@@ -778,37 +804,64 @@
 
   <!-- ══ POIDS DU CORPS ══ -->
   <div class="section" id="tab-poids">
-    <!-- Entry -->
-    <div class="weight-entry-card">
-      <div class="weight-big-display">
-        <div class="weight-current" id="weightCurrent">—</div>
-        <div class="weight-unit">kg</div>
-        <div class="weight-delta" id="weightDelta" style="display:none"></div>
-      </div>
-      <div style="margin-bottom:12px;">
-        <input type="date" id="weightDate" class="inp" style="width:100%;"/>
-      </div>
-      <div class="weight-input-row">
-        <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
-        <button class="weight-save" onclick="logWeight()">Ajouter</button>
-      </div>
+
+    <!-- Onboarding -->
+    <div id="weightOnboarding" style="display:none">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:Geist Mono,monospace;margin-bottom:28px;margin-top:8px">Élev · Poids</div>
+      <div class="onboarding-dots" id="onboardingDots"></div>
+      <div class="onboarding-wrap" id="onboardingSteps"></div>
     </div>
 
-    <!-- Chart -->
-    <div class="chart-wrap" id="weightChartWrap">
-      <div class="chart-title">Évolution du poids</div>
-      <canvas id="weightChart" height="140"></canvas>
-    </div>
-
-    <!-- History -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="label" style="margin:0">Historique</div>
-        <button onclick="sbLoad('body_weights').then(d=>{bodyWeights=d;bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));renderWeightTab();showToast('Données rechargées ✓')})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 4px;" title="Recharger depuis le serveur">↻</button>
+    <!-- Main content (shown after onboarding) -->
+    <div id="weightMain" style="display:none">
+      <!-- Goal banner -->
+      <div class="goal-banner" id="goalBanner" style="display:none">
+        <div class="goal-pct-row">
+          <div>
+            <div class="goal-pct-lbl">Objectif</div>
+            <div class="goal-pct-val" id="goalPct">0%</div>
+          </div>
+          <div style="text-align:right">
+            <div class="goal-msg" id="goalMsg"></div>
+            <button onclick="resetOnboarding()" style="background:none;border:none;color:var(--muted2);font-size:9px;font-family:Geist Mono,monospace;cursor:pointer;letter-spacing:1px;margin-top:4px">Modifier ✏</button>
+          </div>
+        </div>
+        <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
+        <div class="goal-details" id="goalDetails"></div>
       </div>
-      <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:140px;font-size:11px;padding:5px 8px" onchange="renderWeightTab()" title="Filtrer par mois"/>
+
+      <!-- Entry -->
+      <div class="weight-entry-card">
+        <div class="weight-big-display">
+          <div class="weight-current" id="weightCurrent">—</div>
+          <div class="weight-unit">kg</div>
+          <div class="weight-delta" id="weightDelta" style="display:none"></div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <input type="date" id="weightDate" class="inp" style="width:100%;"/>
+        </div>
+        <div class="weight-input-row">
+          <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
+          <button class="weight-save" onclick="logWeight()">Ajouter</button>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-wrap" id="weightChartWrap">
+        <div class="chart-title">Évolution du poids</div>
+        <canvas id="weightChart" height="140"></canvas>
+      </div>
+
+      <!-- History -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="label" style="margin:0">Historique</div>
+          <button onclick="sbLoad('body_weights').then(d=>{bodyWeights=d;bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));renderWeightTab();showToast('Données rechargées ✓')})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 4px;" title="Recharger depuis le serveur">↻</button>
+        </div>
+        <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:140px;font-size:11px;padding:5px 8px" onchange="renderWeightTab()" title="Filtrer par mois"/>
+      </div>
+      <div class="weight-hist-list" id="weightHistList"></div>
     </div>
-    <div class="weight-hist-list" id="weightHistList"></div>
   </div>
 
   <!-- ══ HISTORY ══ -->
@@ -1268,7 +1321,7 @@
     document.getElementById('headerTitle').textContent = h < 12 ? 'Bonne séance' : h < 18 ? 'À toi de jouer' : 'Bonne session';
     renderRoutinePicker();
     renderProgramsList();
-    renderWeightTab();
+    checkWeightOnboarding();
     // Restore any in-progress session
     restoreDraft();
   }
@@ -1292,7 +1345,7 @@
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
-    if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); renderWeightTab(); }); }
+    if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); checkWeightOnboarding(); }); }
   }
 
   // ── Session Timer ──
@@ -2020,7 +2073,7 @@
 
   function addExToNewSess(day) {
     const name = document.getElementById('newSessExName-' + day)?.value.trim();
-    if (!name) { showToast('Donne un nom à l\'exercice'); return; }
+    if (!name) { showToast("Donne un nom à l'exercice"); return; }
     const muscle = document.getElementById('newSessExMuscle-' + day)?.value || '';
     const sets = parseInt(document.getElementById('newSessExSets-' + day)?.value) || 3;
     const rest = parseInt(document.getElementById('newSessExRest-' + day)?.value) || 90;
@@ -2214,7 +2267,7 @@
 
   function addExToInlineNewSess(progId, day) {
     const name = document.getElementById(`inlineNewSessExName-${progId}-${day}`)?.value.trim();
-    if (!name) { showToast('Donne un nom à l\'exercice'); return; }
+    if (!name) { showToast("Donne un nom à l'exercice"); return; }
     const muscle = document.getElementById(`inlineNewSessExMuscle-${progId}-${day}`)?.value || '';
     const sets = parseInt(document.getElementById(`inlineNewSessExSets-${progId}-${day}`)?.value) || 3;
     const rest = parseInt(document.getElementById(`inlineNewSessExRest-${progId}-${day}`)?.value) || 90;
@@ -2842,12 +2895,158 @@
   setInterval(updateWeightClock, 10000);
   updateWeightClock();
 
+  // ── Onboarding poids ──
+  const ONBOARDING_KEY = 'elev_user_profile';
+
+  const ONBOARDING_STEPS = [
+    { key: 'age',          question: 'Quel est ton âge ?',            hint: 'EN ANNÉES',        placeholder: '25',    type: 'number', unit: 'ans',  min: 10, max: 100 },
+    { key: 'height',       question: 'Quelle est ta taille ?',        hint: 'EN CENTIMÈTRES',   placeholder: '175',   type: 'number', unit: 'cm',   min: 100, max: 250 },
+    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: '80',    type: 'number', unit: 'kg',   min: 20, max: 300 },
+    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: '72',    type: 'number', unit: 'kg',   min: 20, max: 300 },
+  ];
+
+  let _onboardingStep = 0;
+  let _onboardingData = {};
+
+  function getUserProfile() {
+    try { return JSON.parse(localStorage.getItem(ONBOARDING_KEY)) || null; } catch { return null; }
+  }
+
+  function saveUserProfile(data) {
+    localStorage.setItem(ONBOARDING_KEY, JSON.stringify(data));
+  }
+
+  function resetOnboarding() {
+    localStorage.removeItem(ONBOARDING_KEY);
+    _onboardingStep = 0;
+    _onboardingData = {};
+    showWeightOnboarding();
+  }
+
+  function showWeightOnboarding() {
+    document.getElementById('weightOnboarding').style.display = 'block';
+    document.getElementById('weightMain').style.display = 'none';
+    renderOnboardingStep();
+  }
+
+  function renderOnboardingStep() {
+    const steps = ONBOARDING_STEPS;
+    const step = steps[_onboardingStep];
+
+    // Dots
+    const dots = document.getElementById('onboardingDots');
+    dots.innerHTML = steps.map((_, i) =>
+      `<div class="onboarding-dot ${i === _onboardingStep ? 'active' : ''}"></div>`
+    ).join('');
+
+    // Step content
+    const container = document.getElementById('onboardingSteps');
+    const isLast = _onboardingStep === steps.length - 1;
+    container.innerHTML = `
+      <div class="onboarding-step active">
+        <div class="onboarding-question">${step.question}</div>
+        <div class="onboarding-hint">${step.hint}</div>
+        <input class="onboarding-inp" id="onboardingInp" type="${step.type}"
+          placeholder="${step.placeholder}"
+          value="${_onboardingData[step.key] || ''}"
+          min="${step.min}" max="${step.max}"
+          onkeydown="if(event.key==='Enter')nextOnboardingStep()"/>
+        <button class="onboarding-btn" onclick="nextOnboardingStep()">
+          ${isLast ? 'Commencer →' : 'Suivant →'}
+        </button>
+        ${_onboardingStep > 0 ? `<button class="onboarding-back" onclick="prevOnboardingStep()">← Retour</button>` : ''}
+      </div>
+    `;
+    setTimeout(() => document.getElementById('onboardingInp')?.focus(), 100);
+  }
+
+  function nextOnboardingStep() {
+    const step = ONBOARDING_STEPS[_onboardingStep];
+    const val = parseFloat(document.getElementById('onboardingInp')?.value);
+    if (!val || val < step.min || val > step.max) {
+      showToast(`Valeur invalide (${step.min}–${step.max})`);
+      return;
+    }
+    _onboardingData[step.key] = val;
+
+    if (_onboardingStep < ONBOARDING_STEPS.length - 1) {
+      _onboardingStep++;
+      renderOnboardingStep();
+    } else {
+      // Done — save and show main
+      saveUserProfile(_onboardingData);
+      document.getElementById('weightOnboarding').style.display = 'none';
+      document.getElementById('weightMain').style.display = 'block';
+      renderWeightTab();
+      showToast('Profil enregistré ✓');
+    }
+  }
+
+  function prevOnboardingStep() {
+    if (_onboardingStep > 0) {
+      _onboardingStep--;
+      renderOnboardingStep();
+    }
+  }
+
+  function renderGoalBanner() {
+    const profile = getUserProfile();
+    const banner = document.getElementById('goalBanner');
+    if (!profile || !banner) return;
+
+    const { startWeight, targetWeight } = profile;
+    const last = bodyWeights.length ? bodyWeights[bodyWeights.length - 1].kg : startWeight;
+    const totalDelta = Math.abs(targetWeight - startWeight);
+    if (totalDelta === 0) { banner.style.display = 'none'; return; }
+
+    const isLoss = targetWeight < startWeight;
+    const progress = isLoss
+      ? (startWeight - last) / (startWeight - targetWeight)
+      : (last - startWeight) / (targetWeight - startWeight);
+    const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+    const remaining = Math.abs(last - targetWeight).toFixed(1);
+
+    banner.style.display = 'block';
+    document.getElementById('goalPct').textContent = pct + '%';
+    document.getElementById('goalFill').style.width = pct + '%';
+
+    // Motivational message
+    let msg = '';
+    if (pct >= 100) msg = '🎯 Objectif atteint !';
+    else if (pct >= 75) msg = '💪 Presque là, continue !';
+    else if (pct >= 50) msg = '🔥 À mi-chemin, super boulot !';
+    else if (pct >= 25) msg = '📈 Bon départ, keep going !';
+    else if (pct > 0)   msg = "🚀 C'est parti, on y croit !";
+    else                msg = '💡 ' + (isLoss ? 'Objectif : perdre ' : 'Objectif : prendre ') + totalDelta + ' kg';
+    document.getElementById('goalMsg').textContent = msg;
+
+    // Details
+    document.getElementById('goalDetails').innerHTML =
+      `<div class="goal-detail">Départ <span>${startWeight} kg</span></div>` +
+      `<div class="goal-detail">Actuel <span>${last} kg</span></div>` +
+      `<div class="goal-detail">Cible <span>${targetWeight} kg</span></div>` +
+      `<div class="goal-detail">Restant <span>${remaining} kg</span></div>`;
+  }
+
+  function checkWeightOnboarding() {
+    const profile = getUserProfile();
+    if (!profile) {
+      showWeightOnboarding();
+    } else {
+      document.getElementById('weightOnboarding').style.display = 'none';
+      document.getElementById('weightMain').style.display = 'block';
+      renderWeightTab();
+    }
+  }
+
   function renderWeightTab() {
     // Set default date to today
     const dateEl = document.getElementById('weightDate');
     if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
     // Update clock
     updateWeightClock();
+    // Goal banner
+    renderGoalBanner();
     const currentEl=document.getElementById('weightCurrent'), deltaEl=document.getElementById('weightDelta');
     if (bodyWeights.length) {
       const last=bodyWeights[bodyWeights.length-1]; currentEl.textContent=last.kg;
