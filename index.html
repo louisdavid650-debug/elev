@@ -605,7 +605,7 @@
   </div>
   <nav class="nav" id="mainNav">
     <div class="nav-indicator" id="navIndicator"></div>
-    <button class="nav-btn active" onclick="switchTab('session')">Session</button>
+    <button class="nav-btn active" onclick="switchTab('session')">Séances</button>
     <button class="nav-btn" onclick="switchTab('routines')">Programmes</button>
     <button class="nav-btn" onclick="switchTab('poids')">Poids</button>
     <button class="nav-btn" onclick="switchTab('history')">Historique</button>
@@ -1047,7 +1047,7 @@
       <rect x="3" y="3" width="18" height="18" rx="3"/>
       <polygon points="10,8 10,16 17,12" fill="currentColor" stroke="none"/>
     </svg>
-    <span class="bn-label">Session</span>
+    <span class="bn-label">Séances</span>
   </button>
   <button class="bn-btn" id="bnav-routines" onclick="switchTab('routines')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
@@ -1541,6 +1541,12 @@
     checkWeightOnboarding();
     // Restore any in-progress session
     restoreDraft();
+    // Restaurer le dernier onglet visité, sauf si séance en cours
+    const lastTab = localStorage.getItem('elev_last_tab');
+    const hasDraft = !!localStorage.getItem('seance_draft');
+    if (lastTab && lastTab !== 'session' && !hasDraft) {
+      switchTab(lastTab);
+    }
     // Charger le profil depuis Supabase en arrière-plan et rafraîchir si nécessaire
     loadUserProfileFromSupabase().then(profile => {
       if (profile) checkWeightOnboarding();
@@ -1548,9 +1554,10 @@
   }
 
   // ── Tabs ──
-  const TAB_TITLES = { session: 'Séance', history: 'Historique', stats: 'Stats', routines: 'Programmes', poids: 'Poids' };
+  const TAB_TITLES = { session: 'Séances', history: 'Historique', stats: 'Stats', routines: 'Programmes', poids: 'Poids' };
   function switchTab(tab) {
     document.title = 'Élev | ' + (TAB_TITLES[tab] || tab);
+    localStorage.setItem('elev_last_tab', tab);
     // Indicateur glissant
     setTimeout(() => {
       const activeBtn = document.querySelector('.nav-btn.active');
