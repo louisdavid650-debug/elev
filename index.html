@@ -768,7 +768,8 @@
         </select>
       </div>
       <div class="form-row" style="margin-bottom:12px">
-        <input class="inp" id="rExSets" placeholder="Nb séries (ex: 4)" type="number" style="max-width:110px"/>
+        <input class="inp" id="rExSets" placeholder="Séries (ex: 4)" type="number" style="max-width:90px"/>
+        <input class="inp" id="rExReps" placeholder="Reps (ex: 8-10)" type="text" style="max-width:90px" maxlength="8"/>
         <select class="inp" id="rExRest" style="max-width:145px" onchange="toggleCustomRest(this)">
           <option value="60">Repos 1 min</option>
           <option value="90" selected>Repos 1 min 30</option>
@@ -1597,7 +1598,7 @@
     // Hide modal directly — do NOT call closeRoutineConfirm (which resets block state)
     document.getElementById('routineConfirmModal').style.display = 'none';
     loadedRoutineId = id;
-    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
+    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, repsTarget: ex.repsTarget || '', sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
     const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
     document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
     // Auto-start timer
@@ -1759,7 +1760,7 @@
               <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
               ${_histBest && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_histBest+'<br>kg</span>' : ''}
             </div>
-            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+            <input class="set-inp" type="number" placeholder="${ex.repsTarget || prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget && !s.r ? 'color:var(--accent)' : ''}"/>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
             <div style="display:flex;align-items:center;gap:4px">
               <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${si})">${s.done?'✓':''}</button>
@@ -2402,8 +2403,8 @@
     if (!name) { showToast('Entre un nom'); return; }
     const restSel = document.getElementById('rExRest');
     const restVal = restSel.value === 'custom' ? parseInt(document.getElementById('rExRestCustom').value)||90 : parseInt(restSel.value);
-    draftRoutineExs.push({ name, muscle: document.getElementById('rExMuscle').value, sets: parseInt(document.getElementById('rExSets').value)||3, restTime: restVal });
-    document.getElementById('rExName').value=''; document.getElementById('rExMuscle').value=''; document.getElementById('rExSets').value=''; restSel.value='90'; document.getElementById('rExRestCustom').style.display='none'; document.getElementById('rExRestCustom').value='';
+    draftRoutineExs.push({ name, muscle: document.getElementById('rExMuscle').value, sets: parseInt(document.getElementById('rExSets').value)||3, repsTarget: document.getElementById('rExReps').value.trim(), restTime: restVal });
+    document.getElementById('rExName').value=''; document.getElementById('rExMuscle').value=''; document.getElementById('rExSets').value=''; document.getElementById('rExReps').value=''; restSel.value='90'; document.getElementById('rExRestCustom').style.display='none'; document.getElementById('rExRestCustom').value='';
     renderDraftRoutineExs();
   }
   function renderDraftRoutineExs() {
@@ -2575,8 +2576,10 @@
             <option value="">Muscle</option>
             ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Jambes','Abdos','Fessiers','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
           </select>
-          <input class="rex-inp" type="number" style="width:60px;text-align:center" value="${ex.sets}" min="1" max="10"
+          <input class="rex-inp" type="number" style="width:54px;text-align:center" placeholder="Séries" value="${ex.sets}" min="1" max="10"
             oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3"/>
+          <input class="rex-inp" type="text" style="width:64px;text-align:center" placeholder="Reps cible" value="${ex.repsTarget||''}" maxlength="8"
+            oninput="draftRoutineExs[${i}].repsTarget=this.value.trim()"/>
           <select class="rex-inp" style="width:100px" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
             ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans'],['custom','Perso.']].map(([v,l])=>`<option value="${v}" ${v!=='custom'&&parseInt(ex.restTime)===parseInt(v)?'selected':v==='custom'&&![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'selected':''}>${l}</option>`).join('')}
           </select>
@@ -2722,7 +2725,7 @@
           </div>
         </div>
         ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
-        <div class="rc-exs-list ${isOpen?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
+        <div class="rc-exs-list ${isOpen?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
         <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
     }).join('');
@@ -3416,7 +3419,18 @@
     if (!editSessionData) return;
     body.innerHTML = editSessionData.exercises.map((ex, ei) => `
       <div class="edit-ex-block">
-        <div class="edit-ex-name">${ex.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--warm);border-bottom:1px solid var(--border)">
+          <input class="edit-set-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
+            style="flex:1;font-size:13px;font-weight:500;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:2px 4px"
+            onchange="editSessionData.exercises[${ei}].name=this.value"/>
+          <button onclick="delEditEx(${ei})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px" title="Supprimer l'exercice">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:22px 1fr 1fr 28px;gap:4px;padding:6px 12px 2px;border-bottom:1px solid var(--border)">
+          <div style="font-size:8px;letter-spacing:1px;color:var(--muted);text-align:center">#</div>
+          <div style="font-size:8px;letter-spacing:1px;color:var(--muted);text-align:center">KG</div>
+          <div style="font-size:8px;letter-spacing:1px;color:var(--muted);text-align:center">REPS</div>
+          <div></div>
+        </div>
         ${ex.sets.map((set, si) => `
           <div class="edit-set-row">
             <div class="edit-set-n">${si+1}</div>
@@ -3426,16 +3440,35 @@
               onchange="editSessionData.exercises[${ei}].sets[${si}].r=this.value" />
             <button class="edit-set-del" onclick="delEditSet(${ei},${si})">✕</button>
           </div>`).join('')}
-        <button onclick="addEditSet(${ei})" style="width:100%;padding:7px;background:none;border:none;border-top:1px solid var(--border);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px">+ série</button>
-      </div>`).join('');
+        <button onclick="addEditSet(${ei})" style="width:100%;padding:7px;background:none;border:none;border-top:1px solid var(--border);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px;font-family:Geist Mono,monospace">+ série</button>
+      </div>`).join('') +
+      `<button onclick="addEditEx()" style="width:100%;padding:10px;background:none;border:1px dashed var(--border2);border-radius:4px;font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:1px;font-family:Geist Mono,monospace;margin-top:4px">+ exercice</button>`;
   }
   function delEditSet(ei, si) {
     editSessionData.exercises[ei].sets.splice(si, 1);
     renderEditBody();
   }
   function addEditSet(ei) {
-    editSessionData.exercises[ei].sets.push({w:'',r:'',done:false});
+    // Copy last set values as default
+    const sets = editSessionData.exercises[ei].sets;
+    const last = sets[sets.length - 1] || {};
+    sets.push({ w: last.w || '', r: last.r || '', done: false });
     renderEditBody();
+  }
+  function delEditEx(ei) {
+    editSessionData.exercises.splice(ei, 1);
+    renderEditBody();
+  }
+  function addEditEx() {
+    editSessionData.exercises.push({ name: 'Exercice', muscle: '', sets: [{w:'',r:'',done:false}] });
+    renderEditBody();
+    // Focus the name input of the new exercise
+    setTimeout(() => {
+      const blocks = document.querySelectorAll('.edit-ex-block');
+      const last = blocks[blocks.length - 1];
+      last?.querySelector('input')?.focus();
+      last?.querySelector('input')?.select();
+    }, 50);
   }
   function closeEditSession() {
     document.getElementById('editSessionOverlay').classList.remove('show');
