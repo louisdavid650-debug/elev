@@ -1581,6 +1581,14 @@
   let calYear, calMonth;
   let selectedProgEx = null;
 
+  function cancelSWTimer() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.active?.postMessage({ type: 'CANCEL_REST_TIMER' });
+      }).catch(()=>{});
+    }
+  }
+
   function initApp() {
     // Demande permission notifications
     if ('Notification' in window && Notification.permission === 'default') {
@@ -1762,7 +1770,7 @@
         playBeep();
         // Annule le timer SW (on a géré nous-même)
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => { reg.active?.postMessage({ type: 'CANCEL_REST_TIMER' }); }).catch(()=>{});
+          cancelSWTimer();
         }
       }
     }, 1000);
