@@ -32,9 +32,9 @@
     --warm: #EDE6DC;
   }
   html.dark {
-    --bg: #12100E;
-    --surface: #1C1916;
-    --border: #2C2820;
+    --bg: #0D1014;
+    --surface: #161A1E;
+    --border: #272D33;
     --border2: #3E3830;
     --accent: #4a8c5c;
     --accent-light: rgba(74,140,92,0.12);
@@ -45,8 +45,8 @@
     --gold: #c9962a;
     --gold-light: rgba(201,150,42,0.1);
     --text: #f0ece6;
-    --muted: #7D7268;
-    --muted2: #4E4840;
+    --muted: #8C8880;
+    --muted2: #5A5550;
     --warm: #181410;
   }
   html.dark header svg text { fill: var(--text); }
@@ -117,7 +117,7 @@
   .rpc-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; }
   .rpc-exs { font-size: 9px; color: var(--muted); margin-top: 5px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Geist Mono', monospace; }
   .rpc-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-  .rpc-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 2px; font-family: 'Geist Mono', monospace; }
+  .rpc-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 22px; box-sizing: border-box; }
   .rpc-arrow { font-size: 18px; color: var(--muted); font-weight: 300; }
   .routine-pick-card:hover .rpc-arrow, .routine-pick-card.loaded .rpc-arrow { color: var(--accent); }
   .no-routine-hint { font-size: 11px; color: var(--muted2); line-height: 1.7; padding: 14px 16px; background: var(--surface); border: 1px dashed var(--border2); border-radius: 4px; text-align: center; }
@@ -429,7 +429,7 @@
   .h-date { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 400; text-transform: capitalize; }
   .h-dur { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
   .h-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
-  .h-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; font-family: 'Geist Mono', monospace; font-weight: 500; }
+  .h-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 22px; box-sizing: border-box; }
   .h-routine-tag { background: var(--warm); border: 1px solid var(--border2); color: var(--muted); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 1px; }
   .h-exs { font-size: 11px; color: var(--muted); line-height: 1.7; }
   .h-note { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.5; }
@@ -446,30 +446,42 @@
 
   /* Bottom nav */
   /* ── Home tab ── */
+  /* Système 8px : padding cards = 16px, gap = 8px ou 16px, margin sections = 24px */
   .home-greeting { margin-bottom: 24px; }
-  .home-greeting-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.1; }
-  .home-greeting-phrase { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--terra); margin-top: 4px; }
-  .home-date { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 6px; }
-  .home-cta { width: 100%; padding: 18px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; margin-bottom: 24px; transition: opacity 0.15s; }
-  .home-cta:active { opacity: 0.85; }
-  .home-snap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .home-snap-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
-  .home-snap-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 6px; }
-  .home-snap-val { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--text); line-height: 1; }
-  .home-snap-unit { font-size: 10px; color: var(--muted); margin-left: 3px; }
-  .home-snap-sub { font-size: 9px; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-top: 4px; }
-  .home-section-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 10px; }
-  .home-next-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.15s; }
+  .home-greeting-name { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--text); line-height: 1.05; }
+  .home-greeting-phrase { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: var(--terra); margin-top: 4px; opacity: 0.9; }
+  .home-date { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 8px; }
+
+  /* Dashboard bloc critique : snap + next séance groupés visuellement */
+  .home-dashboard { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+  .home-snap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .home-snap-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; }
+  .home-snap-icon { font-size: 14px; margin-bottom: 8px; line-height: 1; }
+  .home-snap-label { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 4px; }
+  .home-snap-val { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 400; color: var(--text); line-height: 1; }
+  .home-snap-unit { font-size: 11px; color: var(--muted); margin-left: 2px; vertical-align: baseline; }
+  .home-snap-sub { font-size: 9px; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 6px; min-height: 13px; }
+
+  /* Prochaine séance — fond légèrement différent pour se démarquer */
+  .home-next-card { background: var(--warm); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin: 0; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.18s; min-height: 80px; }
   .home-next-card:active { border-color: var(--accent); }
-  .home-next-name { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 400; color: var(--text); }
+  .home-next-inner { flex: 1; min-width: 0; }
+  .home-next-eyebrow { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 5px; }
+  .home-next-name { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .home-next-meta { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 4px; }
   .home-next-muscles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .home-streak { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .home-streak-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
-  .home-last-session { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; cursor: pointer; }
-  .home-last-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; margin-bottom: 4px; }
+  .home-next-arrow { color: var(--muted); font-size: 16px; padding-left: 12px; flex-shrink: 0; }
+
+  .home-cta { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; margin-bottom: 24px; transition: opacity 0.15s; }
+  .home-cta:active { opacity: 0.85; }
+
+  .home-section-title { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 8px; }
+  .home-streak { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+  .home-streak-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; }
+  .home-last-session { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 24px; cursor: pointer; }
+  .home-last-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; margin-bottom: 4px; color: var(--text); }
   .home-last-meta { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; }
-  .home-last-exercises { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .home-last-exercises { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 
   .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; background: rgba(247,245,242,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; }
   .bn-btn { flex: 1; background: none; border: none; color: var(--muted2); padding: 12px 4px 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: color 0.2s; font-family: 'Geist Mono', monospace; }
@@ -557,7 +569,7 @@
   .weekly-day.done { background:var(--accent);color:#fff;border-color:var(--accent); }
   .weekly-day.today { border-color:var(--accent);color:var(--accent); }
   .weekly-muscles { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px; }
-  .weekly-muscle-chip { background:var(--terra-light);border:1px solid var(--terra-border);border-radius:2px;padding:3px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--terra); }
+  .weekly-muscle-chip { background:var(--terra-light);border:1px solid var(--terra-border);border-radius:4px;padding:4px 8px;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--terra);font-family:'Geist Mono',monospace;line-height:1;display:inline-flex;align-items:center;height:22px;box-sizing:border-box; }
   .weekly-pr-line { font-family:Cormorant Garamond,serif;font-size:14px;color:var(--text);padding:2px 0; }
   .weekly-empty { text-align:center;padding:20px 0;font-size:13px;color:var(--muted);font-style:italic;font-family:Cormorant Garamond,serif; }
   .weekly-compare { font-size:10px;color:var(--muted);margin-top:4px;font-family:Geist Mono,monospace; }
@@ -792,6 +804,7 @@
 
   <!-- ══ HOME ══ -->
   <div class="section" id="tab-home">
+
     <!-- Greeting -->
     <div class="home-greeting">
       <div class="home-greeting-name" id="homeGreetingName">Bonjour</div>
@@ -799,41 +812,46 @@
       <div class="home-date" id="homeDate"></div>
     </div>
 
+    <!-- ── Dashboard critique : poids + calories + prochaine séance ── -->
+    <div class="home-dashboard">
+      <!-- Poids & Calories -->
+      <div class="home-snap">
+        <div class="home-snap-card" onclick="switchTab('poids')">
+          <div class="home-snap-icon">⚖️</div>
+          <div class="home-snap-label">Poids du jour</div>
+          <div>
+            <span class="home-snap-val" id="homeWeightVal">—</span>
+            <span class="home-snap-unit">kg</span>
+          </div>
+          <div class="home-snap-sub" id="homeWeightSub"></div>
+        </div>
+        <div class="home-snap-card" onclick="switchTab('poids')">
+          <div class="home-snap-icon">🔥</div>
+          <div class="home-snap-label">Calories</div>
+          <div>
+            <span class="home-snap-val" id="homeKcalVal">—</span>
+            <span class="home-snap-unit" id="homeKcalUnit"></span>
+          </div>
+          <div class="home-snap-sub" id="homeKcalSub"></div>
+        </div>
+      </div>
+
+      <!-- Prochaine séance — fond warm pour se démarquer -->
+      <div id="homeNextSession" class="home-next-card" onclick="homeLoadNextSession()">
+        <div class="home-next-inner">
+          <div class="home-next-eyebrow">Prochaine séance</div>
+          <div class="home-next-name" id="homeNextName">—</div>
+          <div class="home-next-meta" id="homeNextMeta"></div>
+          <div class="home-next-muscles" id="homeNextMuscles"></div>
+        </div>
+        <div class="home-next-arrow">→</div>
+      </div>
+    </div>
+
     <!-- CTA démarrer séance -->
     <button class="home-cta" onclick="switchTab('session')">Démarrer une séance →</button>
 
-    <!-- Snapshot poids + calories du jour -->
-    <div class="home-snap">
-      <div class="home-snap-card">
-        <div class="home-snap-label">Poids du jour</div>
-        <div>
-          <span class="home-snap-val" id="homeWeightVal">—</span>
-          <span class="home-snap-unit">kg</span>
-        </div>
-        <div class="home-snap-sub" id="homeWeightSub"></div>
-      </div>
-      <div class="home-snap-card">
-        <div class="home-snap-label">Calories</div>
-        <div>
-          <span class="home-snap-val" id="homeKcalVal">—</span>
-          <span class="home-snap-unit" id="homeKcalUnit"></span>
-        </div>
-        <div class="home-snap-sub" id="homeKcalSub"></div>
-      </div>
-    </div>
-
-    <!-- Prochaine séance -->
-    <div class="home-section-title">Prochaine séance suggérée</div>
-    <div id="homeNextSession" class="home-next-card" onclick="homeLoadNextSession()">
-      <div>
-        <div class="home-next-name" id="homeNextName">—</div>
-        <div class="home-next-meta" id="homeNextMeta"></div>
-        <div class="home-next-muscles" id="homeNextMuscles"></div>
-      </div>
-      <div style="color:var(--muted);font-size:18px">→</div>
-    </div>
-
-    <!-- Streak -->
+    <!-- Cette semaine -->
     <div class="home-section-title">Cette semaine</div>
     <div class="home-streak">
       <div class="home-streak-card">
@@ -4262,13 +4280,15 @@
     // Greeting
     const name = profile?.firstName || '';
     const h = new Date().getHours();
-    const phrases = h < 12
-      ? ["Bonne séance à toi.", "C'est parti, tu vas assurer.", "Belle journée devant toi."]
+    const phrases = h < 6
+      ? ["Le monde dort. Toi, tu bouges.", "Avant l'aube, tu es déjà devant."]
+      : h < 12
+      ? ["Bonne séance.", "On y va.", "Belle journée devant toi.", "Le meilleur moment, c'est maintenant."]
       : h < 17
-      ? ["Profite bien de ta séance.", "Tu es là, c'est déjà tout.", "Chaque effort compte."]
+      ? ["L'après-midi t'appartient.", "Tu es là — c'est déjà l'essentiel.", "Chaque série compte."]
       : h < 20
-      ? ["Belle fin de journée devant toi.", "Tu mérites cette séance.", "Le sport, c'est du temps pour toi."]
-      : ["Encore là ce soir, respect.", "La constance fait tout.", "Termine la journée en beauté."];
+      ? ["Belle fin de journée.", "Tu mérites cette séance.", "Prends le temps, fais-le bien."]
+      : ["Encore là ce soir.", "La régularité fait tout.", "Bonne séance, bonne nuit."];
     const phrase = phrases[Math.floor(Math.random() * phrases.length)];
     document.getElementById('homeGreetingName').textContent = name ? 'Bonjour, ' + name + '.' : 'Bonjour.';
     document.getElementById('homeGreetingPhrase').textContent = phrase;
@@ -4317,17 +4337,18 @@
       const DAY_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
       // A-t-on déjà fait une séance aujourd'hui ?
       const doneToday = sessions.some(s => s.date === todayStr);
+      // Garder uniquement les jours avec une séance assignée, triés
       const sortedDays = [...activeProgram.trainingDays].filter(td => td.sessionId).sort((a, b) => a.day - b.day);
-      // On construit la liste ordonnée des jours à partir du bon point de départ
-      // Si séance faite aujourd'hui → on exclut aujourd'hui et on cherche strictement après
-      // Sinon → on commence depuis aujourd'hui inclus
-      const minDay = doneToday ? todayJs + 1 : todayJs; // peut dépasser 6 → wrapping
-      // Chercher dans la semaine courante (jours > minDay si doneToday, >= sinon)
-      let found = doneToday
-        ? sortedDays.find(td => td.day > todayJs)   // strictement après aujourd'hui
-        : sortedDays.find(td => td.day >= todayJs);  // aujourd'hui ou après
-      // Si rien trouvé cette semaine → premier jour du programme (semaine suivante)
-      if (!found) found = sortedDays[0];
+      // Construire une liste ordonnée de 0→6 en wrappant, à partir du bon point de départ
+      // Si séance déjà faite aujourd'hui → on commence demain, sinon aujourd'hui
+      const startDay = doneToday ? (todayJs + 1) % 7 : todayJs;
+      // Réordonner la liste pour commencer à startDay (ex: si startDay=4, ordre = 4,5,6,0,1,2,3)
+      const reordered = [
+        ...sortedDays.filter(td => td.day >= startDay),
+        ...sortedDays.filter(td => td.day < startDay)
+      ];
+      // Premier élément = prochain jour d'entraînement (jours de repos naturellement sautés)
+      const found = reordered[0] || null;
       if (found) {
         nextRoutine = routines.find(r => r.id === found.sessionId);
         const delta = ((found.day - todayJs) + 7) % 7;
