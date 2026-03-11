@@ -4312,12 +4312,16 @@
     let nextRoutine = null;
     let nextDayLabel = '';
     if (activeProgram?.trainingDays?.length) {
-      // JS getDay() : 0=Dim, 1=Lun... → on cherche le prochain jour assigné à partir d'aujourd'hui
-      const todayJs = new Date().getDay(); // 0-6
-      const sortedDays = [...activeProgram.trainingDays].sort((a, b) => a.day - b.day);
-      // Chercher le prochain jour >= aujourd'hui, sinon prendre le premier de la semaine prochaine
-      let found = sortedDays.find(td => td.day >= todayJs && td.sessionId);
-      if (!found) found = sortedDays.find(td => td.sessionId); // reboucle sur lundi
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayJs = new Date().getDay(); // 0=Dim, 1=Lun...
+      // A-t-on déjà fait une séance aujourd'hui ?
+      const doneToday = sessions.some(s => s.date === todayStr);
+      // Si séance faite aujourd'hui, on cherche à partir de demain, sinon à partir d'aujourd'hui
+      const startDay = doneToday ? (todayJs + 1) % 7 : todayJs;
+      const sortedDays = [...activeProgram.trainingDays].filter(td => td.sessionId).sort((a, b) => a.day - b.day);
+      // Chercher le prochain jour >= startDay, sinon reboucler
+      let found = sortedDays.find(td => td.day >= startDay);
+      if (!found) found = sortedDays[0]; // reboucle en début de semaine
       if (found) {
         nextRoutine = routines.find(r => r.id === found.sessionId);
         const DAY_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
