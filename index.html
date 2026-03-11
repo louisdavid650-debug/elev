@@ -517,21 +517,63 @@
   })();
 </script>
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/elev/sw.js').then(reg => {
-        console.log('[Élev] SW enregistré', reg.scope);
-      }).catch(err => console.warn('[Élev] SW échec', err));
+    // ── Service Worker + Notifications ──
+    async function initSW() {
+      if (!('serviceWorker' in navigator)) {
+        console.warn('[Élev] SW non supporté');
+        return;
+      }
+      try {
+        const reg = await navigator.serviceWorker.register('/elev/sw.js');
+        console.log('[Élev] SW enregistré, scope:', reg.scope);
+        console.log('[Élev] SW state:', reg.active?.state || reg.installing?.state || 'unknown');
+        // Ping le SW pour vérifier qu'il répond
+        await reg.update();
+        const worker = reg.active;
+        if (worker) {
+          navigator.serviceWorker.addEventListener('message', function pong(ev) {
+            if (ev.data?.type === 'PONG') {
+              console.log('[Élev] SW répond, version:', ev.data.version);
+              navigator.serviceWorker.removeEventListener('message', pong);
+            }
+          });
+          worker.postMessage({ type: 'PING' });
+        }
+      } catch(err) {
+        console.warn('[Élev] SW échec:', err.message);
+      }
 
-      // Écoute les messages du SW (REST_DONE = beep quand app revient au premier plan)
+      // Écoute les messages du SW
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data?.type === 'REST_DONE') {
-          playBeep();
+          if (typeof playBeep === 'function') playBeep();
           if (navigator.vibrate) navigator.vibrate([200,100,200]);
-          showToast("C'est reparti ! 💪");
+          if (typeof showToast === 'function') showToast("C'est reparti ! 💪");
           document.getElementById('restOverlay')?.classList.remove('show');
         }
       });
     }
+
+    async function askNotifPermission() {
+      if (!('Notification' in window)) {
+        console.warn('[Élev] Notifications non supportées');
+        return;
+      }
+      console.log('[Élev] Permission actuelle:', Notification.permission);
+      if (Notification.permission === 'default') {
+        const result = await Notification.requestPermission();
+        console.log('[Élev] Permission après demande:', result);
+      }
+    }
+
+    // Init SW immédiatement
+    initSW();
+
+    // Demande permission notifs au premier tap (requis par iOS)
+    document.addEventListener('touchstart', function firstTap() {
+      document.removeEventListener('touchstart', firstTap);
+      askNotifPermission();
+    }, { once: true, passive: true });
   </script>
 </head>
 <body>
@@ -1540,13 +1582,18 @@
   let selectedProgEx = null;
 
   function initApp() {
-    // Demande permission notifications (nécessaire pour les alertes écran verrouillé)
+    // Demande permission notifications
     if ('Notification' in window && Notification.permission === 'default') {
-      // On attend un tap utilisateur avant de demander
       document.addEventListener('touchstart', function askNotifPerm() {
-        Notification.requestPermission();
+        Notification.requestPermission().then(p => console.log('[Élev] Notif permission:', p));
         document.removeEventListener('touchstart', askNotifPerm);
       }, { once: true });
+    }
+    // Log état SW
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        console.log('[Élev] SW ready, active:', !!reg.active, 'state:', reg.active?.state);
+      });
     }
     const nowDate = new Date();
     calYear = nowDate.getFullYear(); calMonth = nowDate.getMonth();
@@ -1694,12 +1741,14 @@
     // Envoie le timer au Service Worker pour notif si écran verrouillé
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(reg => {
-        const sw = reg.active;
-        if (sw) sw.postMessage({
-          type: 'START_REST_TIMER',
-          payload: { seconds: d, exName: exName || '' }
-        });
-      }).catch(() => {});
+        const sw = reg.active || reg.installing || reg.waiting;
+        if (sw) {
+          console.log('[Élev] Envoi START_REST_TIMER au SW, seconds:', d);
+          sw.postMessage({ type: 'START_REST_TIMER', payload: { seconds: d, exName: exName || '' } });
+        } else {
+          console.warn('[Élev] Pas de SW actif pour envoyer le timer');
+        }
+      }).catch(err => console.warn('[Élev] SW ready error:', err));
     }
 
     restInterval = setInterval(() => {
@@ -1750,6 +1799,28 @@
     }
   }
   function skipRest() { clearInterval(restInterval); restPaused = false; _restStartedAt = null; document.getElementById('restOverlay').classList.remove('show'); document.getElementById('restPauseBtn').textContent = '⏸'; }
+
+  // ── Test notifications (accessible via console: testNotification()) ──
+  window.testNotification = async function() {
+    console.log('[Test] Permission:', Notification.permission);
+    if (Notification.permission !== 'granted') {
+      const p = await Notification.requestPermission();
+      console.log('[Test] Permission demandée:', p);
+      if (p !== 'granted') { showToast('Permission refusée'); return; }
+    }
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      const worker = reg.active;
+      if (worker) {
+        console.log('[Test] Envoi timer 3s au SW...');
+        worker.postMessage({ type: 'START_REST_TIMER', payload: { seconds: 3, exName: 'Test' } });
+        showToast('Test envoyé — verrouille dans 3s');
+      } else {
+        console.warn('[Test] Pas de SW actif');
+        showToast('SW inactif');
+      }
+    }
+  };
 
   // ── Audio : contexte persistant + unlock iOS mode silence ──
   let _audioCtx = null;
