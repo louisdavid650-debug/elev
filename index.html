@@ -984,23 +984,8 @@
 
     <!-- Main content (shown after onboarding) -->
     <div id="weightMain" style="display:none">
-      <!-- Goal banner -->
-      <div class="goal-banner" id="goalBanner" style="display:none">
-        <div class="goal-pct-row">
-          <div>
-            <div class="goal-pct-lbl">Objectif</div>
-            <div class="goal-pct-val" id="goalPct">0%</div>
-          </div>
-          <div style="text-align:right">
-            <div class="goal-msg" id="goalMsg"></div>
-            <button onclick="resetOnboarding()" style="background:none;border:none;color:var(--muted2);font-size:9px;font-family:Geist Mono,monospace;cursor:pointer;letter-spacing:1px;margin-top:4px">Modifier ✏</button>
-          </div>
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
-        <div class="goal-details" id="goalDetails"></div>
-      </div>
 
-      <!-- Entry -->
+      <!-- ── 1. SAISIE POIDS ── -->
       <div class="weight-entry-card">
         <div class="weight-big-display">
           <div class="weight-current" id="weightCurrent">—</div>
@@ -1016,14 +1001,12 @@
         </div>
       </div>
 
-      <!-- ── CALORIES ── -->
-      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+      <!-- ── 2. SAISIE CALORIES ── -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div class="label" style="margin:0">Calories</div>
         <div id="kcalTodayBadge" style="display:none;font-size:10px;font-family:Geist Mono,monospace;letter-spacing:1px;padding:4px 10px;border-radius:20px;"></div>
       </div>
-
-      <!-- Saisie calories -->
       <div class="weight-entry-card" style="margin-bottom:16px">
         <div class="weight-input-row" style="margin-bottom:10px">
           <input type="date" id="kcalDate" class="inp" style="flex:1"/>
@@ -1037,20 +1020,38 @@
         <button class="weight-save" onclick="logKcal()" style="width:100%">Ajouter</button>
       </div>
 
-      <!-- Graphique calories -->
-      <div class="chart-wrap" id="kcalChartWrap" style="display:none">
-        <div class="chart-title">Calories — 30 derniers jours</div>
-        <canvas id="kcalChart" height="140"></canvas>
+      <!-- ── 3. OBJECTIF ── -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
+      <div class="goal-banner" id="goalBanner" style="display:none">
+        <div class="goal-pct-row">
+          <div>
+            <div class="goal-pct-lbl">Objectif</div>
+            <div class="goal-pct-val" id="goalPct">0%</div>
+          </div>
+          <div style="text-align:right">
+            <div class="goal-msg" id="goalMsg"></div>
+            <button onclick="resetOnboarding()" style="background:none;border:none;color:var(--muted2);font-size:9px;font-family:Geist Mono,monospace;cursor:pointer;letter-spacing:1px;margin-top:4px">Modifier ✏</button>
+          </div>
+        </div>
+        <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
+        <div class="goal-details" id="goalDetails"></div>
       </div>
 
-      <!-- Chart poids -->
-      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+      <!-- ── 4. ÉVOLUTION DU POIDS ── -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div class="chart-wrap" id="weightChartWrap">
         <div class="chart-title">Évolution du poids</div>
         <canvas id="weightChart" height="140"></canvas>
       </div>
 
-      <!-- Historique poids dépliable (déplié par défaut) -->
+      <!-- ── 5. ÉVOLUTION CALORIES ── -->
+      <div class="chart-wrap" id="kcalChartWrap" style="display:none;margin-top:16px">
+        <div class="chart-title">Calories — 30 derniers jours</div>
+        <canvas id="kcalChart" height="140"></canvas>
+      </div>
+
+      <!-- ── 6. HISTORIQUE POIDS ── -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div onclick="toggleWeightHist()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
           <div class="label" style="margin:0">Historique poids</div>
@@ -1065,8 +1066,8 @@
         <div class="weight-hist-list" id="weightHistList"></div>
       </div>
 
-      <!-- Historique calories dépliable (replié par défaut) -->
-      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+      <!-- ── 7. HISTORIQUE CALORIES ── -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div onclick="toggleKcalHist()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0;margin-bottom:4px">
         <div class="label" style="margin:0">Historique calories</div>
         <span id="kcalHistArrow" style="font-size:12px;color:var(--muted);transition:transform 0.2s">▾</span>
