@@ -1017,12 +1017,20 @@
       ...(accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}),
       ...(options.headers || {})
     };
-    const res = await fetch(SUPA_URL + path, { ...options, headers });
-    if (options.returnData) {
-      const json = await res.json();
-      return json;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(SUPA_URL + path, { ...options, headers, signal: controller.signal });
+      clearTimeout(timeout);
+      if (options.returnData) {
+        const json = await res.json();
+        return json;
+      }
+      return res;
+    } catch(e) {
+      clearTimeout(timeout);
+      throw e;
     }
-    return res;
   }
 
   // ── Auth ──
@@ -3085,7 +3093,7 @@
     renderOnboardingStep(); // re-render to highlight selection
   }
 
-  function nextOnboardingStep() {
+  async function nextOnboardingStep() {
     const steps = getActiveSteps();
     const step = steps[_onboardingStep];
 
