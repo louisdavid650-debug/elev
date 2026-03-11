@@ -1946,12 +1946,15 @@
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     btn.textContent = isOpen ? '+ Créer un programme' : '✕ Fermer';
-    if (!isOpen) {
+    if (isOpen) {
+      // Reset all state when closing/cancelling
       document.getElementById('progFormName').value = '';
       document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
       document.getElementById('progSessionAssign').style.display = 'none';
       document.getElementById('progSessionAssign').innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Associer une séance (optionnel)</div>';
       _editingProgId = null;
+      _progNewSessionDays = {};
+      _progNewSessionExs = {};
     }
   }
 
