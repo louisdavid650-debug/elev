@@ -12,7 +12,7 @@
     --bg: #f7f5f2;
     --surface: #ffffff;
     --border: #e8e4df;
-    --border2: #c8c2bb;
+    --border2: #c8c2bb;a
     --accent: #2d5a3d;
     --accent-light: #e8f0eb;
     --accent2: #c0392b;
@@ -813,10 +813,26 @@
     <!-- Progression par exercice -->
     <div class="label" style="margin-top:4px">Progression par exercice</div>
     <div class="chart-wrap" style="margin-bottom:22px">
-      <div class="pr-search-wrap">
-        <input class="pr-search-inp" id="progExSearch" placeholder="Rechercher un exercice…" oninput="filterProgEx(this.value)" autocomplete="off"/>
+
+      <!-- Graphique global 1RM moyen semaine par semaine -->
+      <div id="globalProgWrap">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Force globale — 8 dernières semaines</div>
+          <div id="globalProgBadge" style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:500"></div>
+        </div>
+        <canvas id="globalProgChart" height="120"></canvas>
+        <div id="globalProgEmpty" style="display:none;text-align:center;padding:16px 0;font-size:11px;color:var(--muted2)">Pas encore assez de données.</div>
       </div>
-      <canvas id="progChart" height="140"></canvas>
+
+      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+
+      <!-- Recherche exercice spécifique -->
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Zoom sur un exercice</div>
+      <div class="pr-search-wrap" style="position:relative">
+        <input class="pr-search-inp" id="progExSearch" placeholder="Rechercher un exercice…" oninput="showProgSuggestions(this.value);if(!this.value){document.getElementById('progChart').style.display='none';document.getElementById('progEmpty').style.display='none';}" onblur="setTimeout(()=>document.getElementById('progExSuggestions').style.display='none',150)" autocomplete="off"/>
+        <div id="progExSuggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+      </div>
+      <canvas id="progChart" height="140" style="margin-top:10px"></canvas>
       <div id="progEmpty" style="display:none;text-align:center;padding:20px 0;font-size:11px;color:var(--muted2)">Aucune donnée pour cet exercice.</div>
     </div>
 
@@ -2392,14 +2408,142 @@
     ctx.fillText(fd(points[0].date),toX(0),H-6);if(points.length>1)ctx.fillText(fd(points[points.length-1].date),toX(points.length-1),H-6);
   }
 
+  // ── 1RM Epley estimé ──
+  function epley(w, r) {
+    if (!w || !r) return 0;
+    const weight = parseFloat(w), reps = parseFloat(r);
+    if (!weight || !reps) return 0;
+    return weight * (1 + reps / 30);
+  }
+
+  // ── Graphique global de progression (1RM moyen par semaine) ──
+  function drawGlobalProgChart() {
+    const canvas = document.getElementById('globalProgChart');
+    const emptyEl = document.getElementById('globalProgEmpty');
+    const badge = document.getElementById('globalProgBadge');
+    const wrap = canvas.parentElement;
+    if (!sessions.length) { canvas.style.display='none'; emptyEl.style.display='block'; badge.textContent=''; return; }
+
+    // Regrouper par semaine (lundi = début)
+    function getWeekKey(dateStr) {
+      const d = new Date(dateStr);
+      const day = (d.getDay() + 6) % 7; // 0=lundi
+      const mon = new Date(d); mon.setDate(d.getDate() - day); mon.setHours(0,0,0,0);
+      return mon.toISOString().split('T')[0];
+    }
+
+    // Pour chaque semaine, calculer le 1RM moyen sur tous les exos
+    const weekMap = {};
+    sessions.forEach(s => {
+      const wk = getWeekKey(s.date);
+      if (!weekMap[wk]) weekMap[wk] = {};
+      s.exercises.forEach(ex => {
+        // Meilleur 1RM estimé pour cet exo dans cette séance
+        const best = Math.max(0, ...ex.sets.map(st => epley(st.w || st.weight, st.r || st.reps)));
+        if (best > 0) {
+          if (!weekMap[wk][ex.name] || best > weekMap[wk][ex.name]) {
+            weekMap[wk][ex.name] = best;
+          }
+        }
+      });
+    });
+
+    // Trier les semaines
+    const weeks = Object.keys(weekMap).sort().slice(-8); // 8 dernières semaines
+    if (weeks.length < 2) { canvas.style.display='none'; emptyEl.style.display='block'; badge.textContent=''; return; }
+
+    // Score par semaine = moyenne des 1RM estimés
+    const points = weeks.map(wk => {
+      const vals = Object.values(weekMap[wk]);
+      const avg = vals.reduce((a,b) => a+b, 0) / vals.length;
+      return { week: wk, score: Math.round(avg * 10) / 10 };
+    });
+
+    // Badge % vs semaine précédente
+    const last = points[points.length-1].score;
+    const prev = points[points.length-2].score;
+    const diff = ((last - prev) / prev * 100);
+    const sign = diff >= 0 ? '+' : '';
+    const color = diff >= 0 ? 'var(--accent)' : 'var(--accent2)';
+    const arrow = diff >= 0 ? '↑' : '↓';
+    badge.innerHTML = `<span style="color:${color}">${arrow} ${sign}${diff.toFixed(1)}% vs sem. préc.</span>`;
+
+    // Dessiner
+    canvas.style.display = 'block'; emptyEl.style.display = 'none';
+    const dpr = window.devicePixelRatio||1, W = wrap.clientWidth-32, H = 120;
+    canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+    const vals = points.map(p => p.score);
+    const minV = Math.min(...vals)*0.97, maxV = Math.max(...vals)*1.03;
+    const padL=40, padR=10, padT=10, padB=28, chartW=W-padL-padR, chartH=H-padT-padB;
+    const toX = i => padL+(i/(points.length-1))*chartW;
+    const toY = v => padT+chartH-((v-minV)/(maxV-minV))*chartH;
+
+    // Grilles
+    ctx.strokeStyle='#e8e4df'; ctx.lineWidth=1;
+    for(let i=0;i<=3;i++){
+      const y=padT+(i/3)*chartH;
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+chartW,y); ctx.stroke();
+      ctx.fillStyle='#9a948e'; ctx.font='9px monospace'; ctx.textAlign='right';
+      ctx.fillText(Math.round(maxV-(i/3)*(maxV-minV)),padL-5,y+3);
+    }
+
+    // Gradient fill
+    const g = ctx.createLinearGradient(0,padT,0,padT+chartH);
+    g.addColorStop(0,'rgba(45,90,61,0.18)'); g.addColorStop(1,'rgba(45,90,61,0)');
+    ctx.beginPath(); ctx.moveTo(toX(0),toY(vals[0]));
+    vals.forEach((v,i)=>{ if(i>0) ctx.lineTo(toX(i),toY(v)); });
+    ctx.lineTo(toX(vals.length-1),padT+chartH); ctx.lineTo(toX(0),padT+chartH);
+    ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+
+    // Ligne
+    ctx.beginPath(); ctx.strokeStyle='#2d5a3d'; ctx.lineWidth=2; ctx.lineJoin='round';
+    vals.forEach((v,i)=>{ i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)); });
+    ctx.stroke();
+
+    // Points + labels semaines
+    vals.forEach((v,i)=>{
+      ctx.beginPath(); ctx.arc(toX(i),toY(v),3,0,Math.PI*2);
+      ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle='#2d5a3d'; ctx.lineWidth=2; ctx.stroke();
+      // Label semaine sous le graphe
+      const d = new Date(points[i].week);
+      const lbl = d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      ctx.fillStyle='#9a948e'; ctx.font='8px monospace'; ctx.textAlign='center';
+      if (i===0 || i===vals.length-1 || points.length<=5) ctx.fillText(lbl, toX(i), H-6);
+    });
+  }
+
   function renderProgSelector() {
-    const el=document.getElementById('progSelector');
-    const exNames=[...new Set(sessions.flatMap(s=>s.exercises.map(e=>e.name)))].slice(0,12);
-    if(!exNames.length){el.innerHTML='';return;}
-    if(!selectedProgEx||!exNames.includes(selectedProgEx))selectedProgEx=exNames[0];
-    el.innerHTML=exNames.map(n=>`<div class="prog-ex-btn ${n===selectedProgEx?'sel':''}" onclick="selectProgEx('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
+    drawGlobalProgChart();
+    // Init search avec premier exo
+    const exNames=[...new Set(sessions.flatMap(s=>s.exercises.map(e=>e.name)))];
+    if(!exNames.length) return;
+    if(!selectedProgEx||!exNames.includes(selectedProgEx)) selectedProgEx=exNames[0];
+    const inp = document.getElementById('progExSearch');
+    if (inp && !inp.value) { inp.value = selectedProgEx; }
     drawProgChart(selectedProgEx);
   }
+
+  function showProgSuggestions(q) {
+    const box = document.getElementById('progExSuggestions');
+    const exNames = [...new Set(sessions.flatMap(s=>s.exercises.map(e=>e.name)))];
+    const matches = q ? exNames.filter(n=>n.toLowerCase().includes(q.toLowerCase())).slice(0,8) : exNames.slice(0,8);
+    if (!matches.length) { box.style.display='none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = matches.map(n=>`<div style="padding:9px 14px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);border-bottom:1px solid var(--border)"
+      onmousedown="selectProgExFromSearch('${n.replace(/'/g,"\'")}')">
+      ${n}
+    </div>`).join('');
+  }
+
+  function selectProgExFromSearch(name) {
+    selectedProgEx = name;
+    const inp = document.getElementById('progExSearch');
+    if (inp) inp.value = name;
+    document.getElementById('progExSuggestions').style.display = 'none';
+    drawProgChart(name);
+  }
+
   function selectProgEx(name){selectedProgEx=name;document.querySelectorAll('.prog-ex-btn').forEach(b=>b.classList.toggle('sel',b.textContent===name));drawProgChart(name);}
 
   // ── Calendar ──
