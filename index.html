@@ -1922,6 +1922,9 @@
     renderProgSessionAssign();
   }
 
+  // Track which days have a "create new session" form open
+  let _progNewSessionDays = {};
+
   function renderProgSessionAssign() {
     const selectedDays = [...document.querySelectorAll('.day-btn.on')].map(b => parseInt(b.dataset.day));
     const assign = document.getElementById('progSessionAssign');
@@ -1930,14 +1933,57 @@
     const dayOrder = [1,2,3,4,5,6,0];
     const sorted = dayOrder.filter(d => selectedDays.includes(d));
     assign.innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Associer une séance (optionnel)</div>' +
-      sorted.map(d => `
-        <div class="prog-session-row">
-          <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
-          <select class="inp" id="progDaySession-${d}" style="flex:1;font-size:12px">
-            <option value="">— Aucune séance —</option>
-            ${routines.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
-          </select>
-        </div>`).join('');
+      sorted.map(d => {
+        const isCreating = _progNewSessionDays[d];
+        return `<div style="margin-bottom:10px">
+          <div class="prog-session-row">
+            <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
+            <select class="inp" id="progDaySession-${d}" style="flex:1;font-size:12px" ${isCreating ? 'disabled' : ''}>
+              <option value="">— Aucune séance —</option>
+              ${routines.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+            </select>
+            <button onclick="toggleNewSessionForDay(${d})" style="background:none;border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0" title="Créer une nouvelle séance">
+              ${isCreating ? '✕' : '+ Nouvelle'}
+            </button>
+          </div>
+          ${isCreating ? `<div style="background:var(--warm);border:1px solid var(--border);border-radius:4px;padding:12px;margin-top:8px;margin-left:50px">
+            <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Nouvelle séance</div>
+            <input class="inp" id="newSessName-${d}" placeholder="Nom (ex: Push A, Legs…)" style="width:100%;box-sizing:border-box;margin-bottom:8px"/>
+            <button class="btn-add" style="width:100%" onclick="createSessionFromProg(${d})">Créer et associer</button>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+  }
+
+  function toggleNewSessionForDay(day) {
+    _progNewSessionDays[day] = !_progNewSessionDays[day];
+    renderProgSessionAssign();
+    if (_progNewSessionDays[day]) {
+      setTimeout(() => document.getElementById('newSessName-' + day)?.focus(), 50);
+    }
+  }
+
+  async function createSessionFromProg(day) {
+    const nameEl = document.getElementById('newSessName-' + day);
+    const name = nameEl?.value.trim();
+    if (!name) { showToast('Donne un nom à la séance'); return; }
+    // Create new routine
+    const newRoutine = { id: Date.now(), name, exercises: [] };
+    routines.push(newRoutine);
+    routines.sort((a,b) => { const g=n=>{const m=(n||'').match(/J(\d+)/i);return m?parseInt(m[1]):999;}; return g(a.name)-g(b.name); });
+    showSyncBadge('Sauvegarde...');
+    await sbSave('routines', [newRoutine]);
+    showSyncBadge('✓ Sync', true);
+    // Close create form for this day
+    delete _progNewSessionDays[day];
+    // Re-render and select the new routine
+    renderProgSessionAssign();
+    setTimeout(() => {
+      const sel = document.getElementById('progDaySession-' + day);
+      if (sel) sel.value = newRoutine.id;
+    }, 30);
+    showToast(`Séance "${name}" créée ✓`);
+    renderRoutinesList();
   }
 
   let _editingProgId = null;
@@ -2035,6 +2081,8 @@
     renderInlineProgAssign(progId, p);
   }
 
+  let _inlineNewSessionDays = {};
+
   function renderInlineProgAssign(progId, origProg) {
     const el = document.getElementById('inlineProgAssign-' + progId);
     if (!el) return;
@@ -2045,14 +2093,53 @@
     el.innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Associer une séance (optionnel)</div>' +
       sorted.map(d => {
         const existing = origProg?.trainingDays.find(td => td.day === d);
-        return `<div class="prog-session-row" style="margin-bottom:6px">
-          <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
-          <select class="inp" id="inlineProgDay-${progId}-${d}" style="flex:1;font-size:12px">
-            <option value="">— Aucune séance —</option>
-            ${routines.map(r => `<option value="${r.id}" ${existing?.sessionId === r.id ? 'selected' : ''}>${r.name}</option>`).join('')}
-          </select>
+        const isCreating = _inlineNewSessionDays[progId + '-' + d];
+        return `<div style="margin-bottom:10px">
+          <div class="prog-session-row">
+            <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
+            <select class="inp" id="inlineProgDay-${progId}-${d}" style="flex:1;font-size:12px" ${isCreating ? 'disabled' : ''}>
+              <option value="">— Aucune séance —</option>
+              ${routines.map(r => `<option value="${r.id}" ${existing?.sessionId === r.id ? 'selected' : ''}>${r.name}</option>`).join('')}
+            </select>
+            <button onclick="toggleInlineNewSession('${progId}',${d})" style="background:none;border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0">
+              ${isCreating ? '✕' : '+ Nouvelle'}
+            </button>
+          </div>
+          ${isCreating ? `<div style="background:var(--warm);border:1px solid var(--border);border-radius:4px;padding:12px;margin-top:8px;margin-left:50px">
+            <input class="inp" id="inlineNewSessName-${progId}-${d}" placeholder="Nom de la séance…" style="width:100%;box-sizing:border-box;margin-bottom:8px"/>
+            <button class="btn-add" style="width:100%" onclick="createInlineSession('${progId}',${d})">Créer et associer</button>
+          </div>` : ''}
         </div>`;
       }).join('');
+  }
+
+  function toggleInlineNewSession(progId, day) {
+    const key = progId + '-' + day;
+    _inlineNewSessionDays[key] = !_inlineNewSessionDays[key];
+    const p = programs.find(x => x.id === parseInt(progId));
+    renderInlineProgAssign(progId, p);
+    if (_inlineNewSessionDays[key]) {
+      setTimeout(() => document.getElementById(`inlineNewSessName-${progId}-${day}`)?.focus(), 50);
+    }
+  }
+
+  async function createInlineSession(progId, day) {
+    const nameEl = document.getElementById(`inlineNewSessName-${progId}-${day}`);
+    const name = nameEl?.value.trim();
+    if (!name) { showToast('Donne un nom à la séance'); return; }
+    const newRoutine = { id: Date.now(), name, exercises: [] };
+    routines.push(newRoutine);
+    routines.sort((a,b) => { const g=n=>{const m=(n||'').match(/J(\d+)/i);return m?parseInt(m[1]):999;}; return g(a.name)-g(b.name); });
+    await sbSave('routines', [newRoutine]);
+    delete _inlineNewSessionDays[progId + '-' + day];
+    const p = programs.find(x => x.id === parseInt(progId));
+    renderInlineProgAssign(progId, p);
+    setTimeout(() => {
+      const sel = document.getElementById(`inlineProgDay-${progId}-${day}`);
+      if (sel) sel.value = newRoutine.id;
+    }, 30);
+    showToast(`Séance "${name}" créée ✓`);
+    renderRoutinesList();
   }
 
   async function saveInlineProgram(progId) {
