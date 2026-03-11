@@ -1165,8 +1165,16 @@
 
     } catch(e) {
       console.warn('Init error:', e);
-      localStorage.removeItem('seance_session');
-      document.getElementById('loginScreen').style.display = 'flex';
+      // Ne supprimer la session QUE si c'est vraiment une erreur de parsing
+      // Pas si c'est un problème réseau
+      if (e instanceof SyntaxError) {
+        localStorage.removeItem('seance_session');
+        document.getElementById('loginScreen').style.display = 'flex';
+      } else {
+        // Réseau HS — garder la session et afficher l'app quand même
+        document.getElementById('loginScreen').style.display = 'none';
+        initApp();
+      }
       hideLoading();
     }
   })();
