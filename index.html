@@ -58,7 +58,7 @@
   header { padding: 18px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(247,245,242,0.96); backdrop-filter: blur(12px); z-index: 100; transition: background 0.3s; display: flex; align-items: center; justify-content: space-between; }
   html.dark header { background: rgba(20,20,18,0.97); }
   .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; letter-spacing: 9px; text-transform: uppercase; color: var(--text); line-height: 1; }
-  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; font-style: italic; color: var(--accent); line-height: 1; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; font-style: italic; color: var(--accent); line-height: 1; }
   .header-date { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
   .header-center { text-align: center; }
   .header-right { display: flex; align-items: center; gap: 8px; }
@@ -1621,14 +1621,14 @@
     document.getElementById('headerDate').textContent = dateStr + ' · ' + timeStr;
     const h = nowDate.getHours();
     const phrases = h < 6
-      ? ['Déjà debout.', 'Les autres dorment.', 'Avant l\'aube.']
+      ? ['Le monde dort, toi non.', 'Chaque matin compte.', 'Belle journée qui commence.']
       : h < 12
-      ? ['Commence fort.', 'La journée t\'appartient.', 'Premier sang.']
+      ? ['Bonne séance à toi.', 'Prends soin de toi aujourd\'hui.', 'C\'est parti, tu vas assurer.', 'Une séance de plus, bravo.']
       : h < 17
-      ? ['On lâche rien.', 'Fais le taf.', 'Reste focus.']
+      ? ['Profite bien de ta séance.', 'Tu es là, c\'est déjà tout.', 'Chaque effort compte.', 'À toi de jouer.']
       : h < 20
-      ? ['Vide le réservoir.', 'Finis ce que tu as commencé.', 'Tout donner.']
-      : ['Soir de guerre.', 'Les forts s\'entraînent tard.', 'Dernière rep.'];
+      ? ['Belle fin de journée devant toi.', 'Tu mérites cette séance.', 'Prends le temps, fais-le bien.', 'Le sport, c\'est du temps pour toi.']
+      : ['Encore là ce soir, respect.', 'La constance fait tout.', 'Termine la journée en beauté.'];
     document.getElementById('headerTitle').textContent = phrases[Math.floor(Math.random() * phrases.length)];
     initDark();
     // Init indicateur nav
