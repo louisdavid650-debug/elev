@@ -775,7 +775,9 @@
 
     <!-- ══ SÉANCES ══ -->
     <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
-    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une séance</button>
+    <div class="label" style="margin-bottom:12px">Mes séances</div>
+    <div class="routines-list" id="routinesList"></div>
+    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px;margin-top:8px" onclick="toggleCreateRoutineForm()">+ Créer une séance</button>
     <div class="create-routine-form" id="createRoutineForm" style="display:none">
       <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
@@ -811,8 +813,6 @@
         <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
       </div>
     </div>
-    <div class="label" style="margin-bottom:12px">Mes séances</div>
-    <div class="routines-list" id="routinesList"></div>
   </div>
 
   <!-- ══ POIDS DU CORPS ══ -->
