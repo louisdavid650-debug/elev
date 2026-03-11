@@ -516,6 +516,23 @@
     }
   })();
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/elev/sw.js').then(reg => {
+        console.log('[Élev] SW enregistré', reg.scope);
+      }).catch(err => console.warn('[Élev] SW échec', err));
+
+      // Écoute les messages du SW (REST_DONE = beep quand app revient au premier plan)
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'REST_DONE') {
+          playBeep();
+          if (navigator.vibrate) navigator.vibrate([200,100,200]);
+          showToast("C'est reparti ! 💪");
+          document.getElementById('restOverlay')?.classList.remove('show');
+        }
+      });
+    }
+  </script>
 </head>
 <body>
 
@@ -1523,6 +1540,14 @@
   let selectedProgEx = null;
 
   function initApp() {
+    // Demande permission notifications (nécessaire pour les alertes écran verrouillé)
+    if ('Notification' in window && Notification.permission === 'default') {
+      // On attend un tap utilisateur avant de demander
+      document.addEventListener('touchstart', function askNotifPerm() {
+        Notification.requestPermission();
+        document.removeEventListener('touchstart', askNotifPerm);
+      }, { once: true });
+    }
     const nowDate = new Date();
     calYear = nowDate.getFullYear(); calMonth = nowDate.getMonth();
     const dateStr = nowDate.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
@@ -1666,6 +1691,14 @@
     if (nameEl) nameEl.textContent = exName || '';
     updateRestDisplay();
     document.getElementById('restOverlay').classList.add('show');
+    // Envoie le timer au Service Worker pour notif si écran verrouillé
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'START_REST_TIMER',
+        payload: { seconds: d, exName: exName || '' }
+      });
+    }
+
     restInterval = setInterval(() => {
       restRemaining--;
       updateRestDisplay();
@@ -1675,6 +1708,10 @@
         showToast("C'est reparti ! 💪");
         if (navigator.vibrate) navigator.vibrate([200,100,200]);
         playBeep();
+        // Annule le timer SW (on a géré nous-même)
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_REST_TIMER' });
+        }
       }
     }, 1000);
   }
@@ -1711,9 +1748,50 @@
   }
   function skipRest() { clearInterval(restInterval); restPaused = false; _restStartedAt = null; document.getElementById('restOverlay').classList.remove('show'); document.getElementById('restPauseBtn').textContent = '⏸'; }
 
+  // ── Audio : contexte persistant + unlock iOS mode silence ──
+  let _audioCtx = null;
+  let _audioUnlocked = false;
+
+  // Élément audio silencieux — joué brièvement au moment du beep pour forcer le canal média iOS
+  const _silentAudio = (() => {
+    try {
+      const silence = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      const a = document.createElement('audio');
+      a.src = silence;
+      a.volume = 0;
+      a.setAttribute('playsinline', '');
+      return a;
+    } catch(e) { return null; }
+  })();
+
+  function _getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    return _audioCtx;
+  }
+
+  function _unlockAudio() {
+    if (_audioUnlocked) return;
+    _audioUnlocked = true;
+    try {
+      const ctx = _getAudioCtx();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch(e) {}
+  }
+
+  document.addEventListener('touchstart', _unlockAudio, { once: false, passive: true });
+  document.addEventListener('click', _unlockAudio, { once: false, passive: true });
+
   function playBeep() {
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // Joue 1 frame de silence pour basculer sur canal média iOS (sans interférer avec la musique)
+      if (_silentAudio) { _silentAudio.play().catch(()=>{}); }
+      _unlockAudio();
+      const ctx = _getAudioCtx();
       const beep = (freq, start, dur, vol=0.4) => {
         const o = ctx.createOscillator();
         const g = ctx.createGain();
@@ -1725,7 +1803,6 @@
         o.start(ctx.currentTime + start);
         o.stop(ctx.currentTime + start + dur + 0.05);
       };
-      // 3 waves over 3 seconds
       beep(880, 0, 0.15);
       beep(880, 0.2, 0.15);
       beep(1100, 0.4, 0.3, 0.5);
