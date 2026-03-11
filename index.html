@@ -1362,11 +1362,11 @@
     }
     if (document.visibilityState === 'hidden') {
       // Sauvegarder le draft avec timestamp exact
-      saveDraft();
+      autosaveDraft();
     }
   });
 
-  window.addEventListener('pagehide', () => { saveDraft(); });
+  window.addEventListener('pagehide', () => { autosaveDraft(); });
 
   window.addEventListener('online', async () => {
     document.getElementById('offlineBanner').classList.remove('show');
@@ -1802,7 +1802,7 @@
     // Hide modal directly — do NOT call closeRoutineConfirm (which resets block state)
     document.getElementById('routineConfirmModal').style.display = 'none';
     loadedRoutineId = id;
-    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, repsTarget: ex.repsTarget || '', sets: Array.from({length:ex.sets||3},()=>({w:'',r:'',done:false})) }));
+    exercises = routine.exercises.map(ex => ({ id: Date.now()+Math.random(), name: ex.name, muscle: ex.muscle, restTime: ex.restTime ?? 90, repsTarget: ex.repsTarget || '', sets: Array.from({length: Array.isArray(ex.sets) ? ex.sets.length : (parseInt(ex.sets)||3)},()=>({w:'',r:'',done:false})) }));
     const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
     document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
     // Auto-start timer
