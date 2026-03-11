@@ -577,7 +577,7 @@
   </div>
   <nav class="nav">
     <button class="nav-btn active" onclick="switchTab('session')">Session</button>
-    <button class="nav-btn" onclick="switchTab('routines')">Séances</button>
+    <button class="nav-btn" onclick="switchTab('routines')">Programmes</button>
     <button class="nav-btn" onclick="switchTab('poids')">Poids</button>
     <button class="nav-btn" onclick="switchTab('history')">Historique</button>
     <button class="nav-btn" onclick="switchTab('stats')">Stats</button>
@@ -588,7 +588,7 @@
 
     <!-- Bloc routines -->
     <div id="sessionRoutineBlock">
-      <div class="label">Charger une routine</div>
+      <div class="label">Charger une séance</div>
       <div id="routinePickerList" style="margin-bottom:4px"></div>
     </div>
 
@@ -938,7 +938,7 @@
       <rect x="9" y="3" width="6" height="4" rx="1"/>
       <path d="M9 12h6M9 16h4"/>
     </svg>
-    <span class="bn-label">Séances</span>
+    <span class="bn-label">Programmes</span>
   </button>
   <button class="bn-btn" id="bnav-poids" onclick="switchTab('poids')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
@@ -1505,12 +1505,50 @@
     const el = document.getElementById('routinePickerList');
     const tag = document.getElementById('freeSessionRoutineTag');
     if (tag) { const r = loadedRoutineId ? routines.find(r=>r.id===loadedRoutineId) : null; tag.textContent = r ? `📌 ${r.name}` : ''; }
-    if (!routines.length) { el.innerHTML = `<div class="no-routine-hint">Aucune routine créée.<br><span onclick="switchTab('routines')">Créer ma première séance →</span></div>`; return; }
-    // Sort: loaded routine first, then rest in original order
+
+    // Aucune séance ni programme créé
+    if (!routines.length && !programs.length) {
+      el.innerHTML = `<div class="no-routine-hint" style="text-align:center;padding:20px 0">
+        <div style="font-size:28px;margin-bottom:8px">🏋️</div>
+        <div style="font-size:13px;color:var(--text);margin-bottom:6px">Aucun programme créé</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Commence par créer ton programme pour organiser tes séances.</div>
+        <span onclick="switchTab('routines')" style="font-size:11px;font-family:Geist Mono,monospace;letter-spacing:1px;color:var(--accent);cursor:pointer;border:1px solid var(--accent);border-radius:20px;padding:6px 14px">Créer mon programme →</span>
+      </div>`;
+      return;
+    }
+
+    // Filtrer par programme actif si dispo
+    let displayRoutines = routines;
+    if (activeProgId) {
+      const activeProg = programs.find(p => p.id === activeProgId);
+      if (activeProg) {
+        const progSessionIds = activeProg.trainingDays.map(td => td.sessionId).filter(Boolean);
+        if (progSessionIds.length) {
+          displayRoutines = routines.filter(r => progSessionIds.includes(r.id));
+        }
+      }
+    }
+
+    if (!displayRoutines.length) {
+      el.innerHTML = `<div class="no-routine-hint" style="text-align:center;padding:16px 0">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Aucune séance dans ce programme.</div>
+        <span onclick="switchTab('routines')" style="font-size:11px;font-family:Geist Mono,monospace;letter-spacing:1px;color:var(--accent);cursor:pointer;border:1px solid var(--accent);border-radius:20px;padding:6px 14px">Gérer mes programmes →</span>
+      </div>`;
+      return;
+    }
+
+    // Sort: loaded routine first
     const sorted = loadedRoutineId
-      ? [...routines.filter(r => r.id === loadedRoutineId), ...routines.filter(r => r.id !== loadedRoutineId)]
-      : routines;
-    el.innerHTML = sorted.map(r => {
+      ? [...displayRoutines.filter(r => r.id === loadedRoutineId), ...displayRoutines.filter(r => r.id !== loadedRoutineId)]
+      : displayRoutines;
+
+    // Badge programme actif
+    const activeProg = programs.find(p => p.id === activeProgId);
+    const progBadge = activeProg
+      ? `<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-family:Geist Mono,monospace;margin-bottom:10px">Programme actif : ${activeProg.name}</div>`
+      : '';
+
+    el.innerHTML = progBadge + sorted.map(r => {
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isLoaded = loadedRoutineId === r.id;
       return `<div class="routine-pick-card ${isLoaded?'loaded':''}" ontouchstart="_rpcTouchStart(event)" ontouchend="_rpcTouchEnd(event,${r.id})" onclick="loadRoutine(${r.id})">
@@ -2043,7 +2081,7 @@
       const prog = { id: Date.now(), name, trainingDays, createdAt: new Date().toISOString() };
       programs.push(prog);
       // First program is auto-active
-      if (programs.length === 1) { activeProgId = prog.id; localStorage.setItem('elev_active_prog', prog.id); }
+      if (programs.length === 1) { activeProgId = prog.id; localStorage.setItem('elev_active_prog', prog.id); renderRoutinePicker(); }
       await sbSave('programs', [prog]);
       showToast(`"${name}" créé !`);
     }
@@ -2055,7 +2093,7 @@
     const p = programs.find(x => x.id === id);
     if (!confirm(`Supprimer "${p?.name}" ?`)) return;
     programs = programs.filter(x => x.id !== id);
-    if (activeProgId === id) { activeProgId = programs[0]?.id || null; localStorage.setItem('elev_active_prog', activeProgId || ''); }
+    if (activeProgId === id) { activeProgId = programs[0]?.id || null; localStorage.setItem('elev_active_prog', activeProgId || ''); renderRoutinePicker(); }
     await sbDelete('programs', id);
     renderProgramsList();
     showToast('Programme supprimé');
@@ -2065,6 +2103,7 @@
     activeProgId = id;
     localStorage.setItem('elev_active_prog', id);
     renderProgramsList();
+    renderRoutinePicker();
     showToast('Programme activé ✓');
   }
 
