@@ -64,7 +64,7 @@
   header { padding: 18px 24px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(247,245,242,0.96); backdrop-filter: blur(12px); z-index: 100; transition: background 0.3s; display: flex; align-items: center; justify-content: space-between; }
   html.dark header { background: rgba(18,16,14,0.97); }
   .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; letter-spacing: 9px; text-transform: uppercase; color: var(--text); line-height: 1; }
-  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; font-style: italic; color: var(--terra); line-height: 1; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 400; font-style: italic; color: var(--terra); line-height: 1; }
   .header-date { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; }
   .header-center { text-align: center; }
   .header-right { display: flex; align-items: center; gap: 8px; }
@@ -445,6 +445,32 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* Bottom nav */
+  /* ── Home tab ── */
+  .home-greeting { margin-bottom: 24px; }
+  .home-greeting-name { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.1; }
+  .home-greeting-phrase { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--terra); margin-top: 4px; }
+  .home-date { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 6px; }
+  .home-cta { width: 100%; padding: 18px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; margin-bottom: 24px; transition: opacity 0.15s; }
+  .home-cta:active { opacity: 0.85; }
+  .home-snap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .home-snap-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+  .home-snap-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 6px; }
+  .home-snap-val { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--text); line-height: 1; }
+  .home-snap-unit { font-size: 10px; color: var(--muted); margin-left: 3px; }
+  .home-snap-sub { font-size: 9px; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-top: 4px; }
+  .home-section-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 10px; }
+  .home-next-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.15s; }
+  .home-next-card:active { border-color: var(--accent); }
+  .home-next-name { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 400; color: var(--text); }
+  .home-next-meta { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 4px; }
+  .home-next-muscles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .home-streak { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .home-streak-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+  .home-last-session { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; cursor: pointer; }
+  .home-last-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; margin-bottom: 4px; }
+  .home-last-meta { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; }
+  .home-last-exercises { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+
   .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; background: rgba(247,245,242,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; }
   .bn-btn { flex: 1; background: none; border: none; color: var(--muted2); padding: 12px 4px 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: color 0.2s; font-family: 'Geist Mono', monospace; }
   .bn-btn.active { color: var(--accent); }
@@ -763,14 +789,73 @@
   <div style="height:2px;background:transparent;overflow:hidden;">
     <div id="tabLoadBar" style="height:2px;width:0%;background:var(--accent);opacity:0;"></div>
   </div>
-  <nav class="nav" id="mainNav">
-    <div class="nav-indicator" id="navIndicator"></div>
-    <button class="nav-btn active" onclick="switchTab('session')">Séances</button>
-    <button class="nav-btn" onclick="switchTab('routines')">Programmes</button>
-    <button class="nav-btn" onclick="switchTab('poids')">Poids</button>
-    <button class="nav-btn" onclick="switchTab('history')">Historique</button>
-    <button class="nav-btn" onclick="switchTab('stats')">Stats</button>
-  </nav>
+
+  <!-- ══ HOME ══ -->
+  <div class="section" id="tab-home">
+    <!-- Greeting -->
+    <div class="home-greeting">
+      <div class="home-greeting-name" id="homeGreetingName">Bonjour</div>
+      <div class="home-greeting-phrase" id="homeGreetingPhrase"></div>
+      <div class="home-date" id="homeDate"></div>
+    </div>
+
+    <!-- CTA démarrer séance -->
+    <button class="home-cta" onclick="switchTab('session')">Démarrer une séance →</button>
+
+    <!-- Snapshot poids + calories du jour -->
+    <div class="home-snap">
+      <div class="home-snap-card">
+        <div class="home-snap-label">Poids du jour</div>
+        <div>
+          <span class="home-snap-val" id="homeWeightVal">—</span>
+          <span class="home-snap-unit">kg</span>
+        </div>
+        <div class="home-snap-sub" id="homeWeightSub"></div>
+      </div>
+      <div class="home-snap-card">
+        <div class="home-snap-label">Calories</div>
+        <div>
+          <span class="home-snap-val" id="homeKcalVal">—</span>
+          <span class="home-snap-unit" id="homeKcalUnit"></span>
+        </div>
+        <div class="home-snap-sub" id="homeKcalSub"></div>
+      </div>
+    </div>
+
+    <!-- Prochaine séance -->
+    <div class="home-section-title">Prochaine séance suggérée</div>
+    <div id="homeNextSession" class="home-next-card" onclick="homeLoadNextSession()">
+      <div>
+        <div class="home-next-name" id="homeNextName">—</div>
+        <div class="home-next-meta" id="homeNextMeta"></div>
+        <div class="home-next-muscles" id="homeNextMuscles"></div>
+      </div>
+      <div style="color:var(--muted);font-size:18px">→</div>
+    </div>
+
+    <!-- Streak -->
+    <div class="home-section-title">Cette semaine</div>
+    <div class="home-streak">
+      <div class="home-streak-card">
+        <div class="home-snap-label">Séances</div>
+        <div class="home-snap-val" id="homeWeekSessions">0</div>
+        <div class="home-snap-sub" id="homeWeekVsLast"></div>
+      </div>
+      <div class="home-streak-card">
+        <div class="home-snap-label">Jours actifs</div>
+        <div class="home-snap-val" id="homeWeekDays">0</div>
+        <div class="home-snap-sub" id="homeStreak"></div>
+      </div>
+    </div>
+
+    <!-- Dernière séance -->
+    <div class="home-section-title">Dernière séance</div>
+    <div id="homeLastSession" class="home-last-session" onclick="switchTab('history')">
+      <div class="home-last-title" id="homeLastName">—</div>
+      <div class="home-last-meta" id="homeLastMeta"></div>
+      <div class="home-last-exercises" id="homeLastExercises"></div>
+    </div>
+  </div>
 
   <!-- ══ SESSION ══ -->
   <div class="section active" id="tab-session">
@@ -1222,6 +1307,13 @@
       <path d="M9 12h6M9 16h4"/>
     </svg>
     <span class="bn-label">Programmes</span>
+  </button>
+  <button class="bn-btn" id="bnav-home" onclick="switchTab('home')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
+      <path d="M9 21V12h6v9"/>
+    </svg>
+    <span class="bn-label">Accueil</span>
   </button>
   <button class="bn-btn" id="bnav-poids" onclick="switchTab('poids')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
@@ -1767,15 +1859,7 @@
   function switchTab(tab) {
     document.title = 'Élev | ' + (TAB_TITLES[tab] || tab);
     localStorage.setItem('elev_last_tab', tab);
-    // Indicateur glissant
-    setTimeout(() => {
-      const activeBtn = document.querySelector('.nav-btn.active');
-      const indicator = document.getElementById('navIndicator');
-      if (activeBtn && indicator) {
-        indicator.style.left = activeBtn.offsetLeft + 'px';
-        indicator.style.width = activeBtn.offsetWidth + 'px';
-      }
-    }, 10);
+
     const bar = document.getElementById('tabLoadBar');
     if (bar) {
       bar.style.transition = 'none'; bar.style.width = '0%'; bar.style.opacity = '1';
@@ -1785,11 +1869,10 @@
       });
     }
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.bn-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-' + tab).classList.add('active');
-    document.querySelector(`.nav-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById('bnav-' + tab).classList.add('active');
+    if (tab === 'home') renderHome();
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
@@ -1809,6 +1892,7 @@
     if (!active) return;
     const tab = active.id.replace('tab-', '');
     if (tab === 'session') { renderRoutinePicker(); }
+    if (tab === 'home') renderHome();
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
@@ -4156,6 +4240,128 @@
       showToast('Poids enregistré 💪');
     }
     closeDailyGreeting();
+  }
+
+
+  // ══ HOME PAGE ══
+  function renderHome() {
+    const profile = getUserProfile();
+    const today = new Date().toISOString().split('T')[0];
+
+    // Greeting
+    const name = profile?.firstName || '';
+    const h = new Date().getHours();
+    const phrases = h < 12
+      ? ["Bonne séance à toi.", "C'est parti, tu vas assurer.", "Belle journée devant toi."]
+      : h < 17
+      ? ["Profite bien de ta séance.", "Tu es là, c'est déjà tout.", "Chaque effort compte."]
+      : h < 20
+      ? ["Belle fin de journée devant toi.", "Tu mérites cette séance.", "Le sport, c'est du temps pour toi."]
+      : ["Encore là ce soir, respect.", "La constance fait tout.", "Termine la journée en beauté."];
+    const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+    document.getElementById('homeGreetingName').textContent = name ? 'Bonjour, ' + name + '.' : 'Bonjour.';
+    document.getElementById('homeGreetingPhrase').textContent = phrase;
+    document.getElementById('homeDate').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Poids du jour
+    const todayWeight = bodyWeights.find(w => w.date === today);
+    const lastWeight = bodyWeights.length ? bodyWeights[bodyWeights.length - 1] : null;
+    if (todayWeight) {
+      document.getElementById('homeWeightVal').textContent = todayWeight.kg;
+      if (bodyWeights.length >= 2) {
+        const prev = bodyWeights[bodyWeights.length - 2];
+        if (prev && prev.date !== today) {
+          const diff = (todayWeight.kg - prev.kg).toFixed(1);
+          document.getElementById('homeWeightSub').textContent = (diff > 0 ? '+' : '') + diff + ' kg vs hier';
+        }
+      }
+    } else if (lastWeight) {
+      document.getElementById('homeWeightVal').textContent = lastWeight.kg;
+      document.getElementById('homeWeightSub').textContent = 'dernier : ' + new Date(lastWeight.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    } else {
+      document.getElementById('homeWeightVal').textContent = '—';
+      document.getElementById('homeWeightSub').textContent = '';
+    }
+
+    // Calories du jour
+    const todayKcal = kcalEntries.filter(k => k.date === today).reduce((s, k) => s + (k.kcal || 0), 0);
+    const kcalTarget = profile?.kcalTarget || 0;
+    if (todayKcal > 0) {
+      document.getElementById('homeKcalVal').textContent = todayKcal;
+      document.getElementById('homeKcalUnit').textContent = 'kcal';
+      document.getElementById('homeKcalSub').textContent = kcalTarget ? (Math.round(todayKcal / kcalTarget * 100) + '% objectif') : "aujourd'hui";
+    } else {
+      document.getElementById('homeKcalVal').textContent = kcalTarget || '—';
+      document.getElementById('homeKcalUnit').textContent = kcalTarget ? 'kcal' : '';
+      document.getElementById('homeKcalSub').textContent = kcalTarget ? 'objectif' : 'non saisi';
+    }
+
+    // Prochaine séance suggérée
+    const activeProgram = programs.find(p => p.id === activeProgId);
+    let nextRoutine = null;
+    if (activeProgram?.routines?.length) {
+      const lastSession = sessions[0];
+      const lastRoutineId = lastSession?.routineId;
+      const progRoutineIds = activeProgram.routines.map(r => r.id || r);
+      const lastIdx = lastRoutineId ? progRoutineIds.indexOf(lastRoutineId) : -1;
+      const nextIdx = (lastIdx + 1) % progRoutineIds.length;
+      const nextId = progRoutineIds[nextIdx];
+      nextRoutine = routines.find(r => r.id === nextId);
+    }
+    if (!nextRoutine && routines.length) nextRoutine = routines[0];
+
+    if (nextRoutine) {
+      document.getElementById('homeNextName').textContent = nextRoutine.name;
+      document.getElementById('homeNextMeta').textContent = nextRoutine.exercises.length + ' exercice' + (nextRoutine.exercises.length > 1 ? 's' : '');
+      const muscles = [...new Set(nextRoutine.exercises.map(e => e.muscle).filter(Boolean))].slice(0, 4);
+      document.getElementById('homeNextMuscles').innerHTML = muscles.map(m => `<span class="rpc-chip">${m}</span>`).join('');
+      document.getElementById('homeNextSession').dataset.routineId = nextRoutine.id;
+    } else {
+      document.getElementById('homeNextName').textContent = 'Aucun programme actif';
+      document.getElementById('homeNextMeta').textContent = 'Configure un programme →';
+      document.getElementById('homeNextMuscles').innerHTML = '';
+    }
+
+    // Stats semaine
+    const monday = new Date(); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); monday.setHours(0,0,0,0);
+    const lastMonday = new Date(monday); lastMonday.setDate(lastMonday.getDate() - 7);
+    const thisWeekSessions = sessions.filter(s => new Date(s.date) >= monday);
+    const lastWeekSessions = sessions.filter(s => { const d = new Date(s.date); return d >= lastMonday && d < monday; });
+    const thisWeekDays = new Set(thisWeekSessions.map(s => s.date)).size;
+    document.getElementById('homeWeekSessions').textContent = thisWeekSessions.length;
+    const diff = thisWeekSessions.length - lastWeekSessions.length;
+    document.getElementById('homeWeekVsLast').textContent = diff === 0 ? 'comme la semaine dernière' : (diff > 0 ? '+' + diff + ' vs sem. dernière' : diff + ' vs sem. dernière');
+    document.getElementById('homeWeekDays').textContent = thisWeekDays;
+
+    // Streak (jours consécutifs)
+    let streak = 0;
+    const sessionDates = new Set(sessions.map(s => s.date));
+    let d = new Date(); d.setHours(0,0,0,0);
+    while (sessionDates.has(d.toISOString().split('T')[0])) {
+      streak++; d.setDate(d.getDate() - 1);
+    }
+    document.getElementById('homeStreak').textContent = streak > 0 ? '🔥 ' + streak + ' jour' + (streak > 1 ? 's' : '') + ' de suite' : 'Continue comme ça !';
+
+    // Dernière séance
+    const last = sessions[0];
+    if (last) {
+      document.getElementById('homeLastName').textContent = last.routineName || 'Séance libre';
+      const d2 = new Date(last.date);
+      const daysAgo = Math.floor((new Date() - d2) / 86400000);
+      document.getElementById('homeLastMeta').textContent = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? 'Hier' : ('Il y a ' + daysAgo + ' jours');
+      const exNames = (last.exercises || []).slice(0, 5).map(e => e.name).filter(Boolean);
+      document.getElementById('homeLastExercises').innerHTML = exNames.map(n => `<span class="rpc-chip">${n}</span>`).join('');
+    } else {
+      document.getElementById('homeLastName').textContent = 'Aucune séance encore';
+      document.getElementById('homeLastMeta').textContent = 'Lance ta première séance !';
+      document.getElementById('homeLastExercises').innerHTML = '';
+    }
+  }
+
+  function homeLoadNextSession() {
+    const id = parseInt(document.getElementById('homeNextSession').dataset.routineId);
+    if (id) { loadRoutine(id); switchTab('session'); }
+    else switchTab('session');
   }
 
     function checkWeightOnboarding() {
