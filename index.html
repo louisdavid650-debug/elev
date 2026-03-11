@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="apple-touch-icon" href="elev-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Élev">
 <title>Élev — Gym Tracker</title>
@@ -1987,7 +1988,7 @@
             <div class="set-n">${si+1}</div>
             <div style="position:relative">
               <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
-              ${_histBest && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_histBest+'<br>kg</span>' : ''}
+              ${_pr && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_pr.weight+'<br>kg</span>' : ''}
             </div>
             <input class="set-inp" type="number" placeholder="${ex.repsTarget || prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget && !s.r ? 'color:var(--accent)' : ''}"/>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
