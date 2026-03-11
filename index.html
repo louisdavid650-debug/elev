@@ -12,7 +12,7 @@
     --bg: #f7f5f2;
     --surface: #ffffff;
     --border: #e8e4df;
-    --border2: #c8c2bb;a
+    --border2: #c8c2bb;
     --accent: #2d5a3d;
     --accent-light: #e8f0eb;
     --accent2: #c0392b;
@@ -153,6 +153,29 @@
   .rest-opt { background: var(--surface); border: 1px solid var(--border2); border-radius: 2px; padding: 5px 12px; font-size: 10px; letter-spacing: 1px; color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
   .rest-opt.sel { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 
+  /* ── Programmes ── */
+  .prog-card { background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px;animation:fadeUp 0.2s ease; }
+  .prog-card.active-prog { border-color:var(--accent);border-left:3px solid var(--accent); }
+  .prog-head { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer; }
+  .prog-name { font-family:Cormorant Garamond,serif;font-size:20px;font-weight:400; }
+  .prog-meta { font-size:10px;color:var(--muted);margin-top:2px; }
+  .prog-active-badge { font-family:Geist Mono,monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);background:var(--accent-light);border:1px solid rgba(45,90,61,0.2);border-radius:10px;padding:2px 8px; }
+  .prog-body { border-top:1px solid var(--border);padding:14px 18px;display:none; }
+  .prog-body.open { display:block; }
+  .prog-day-row { display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border); }
+  .prog-day-row:last-child { border-bottom:none; }
+  .prog-day-label { font-family:Geist Mono,monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);width:40px;flex-shrink:0; }
+  .prog-day-session { font-family:Cormorant Garamond,serif;font-size:15px;color:var(--muted); }
+  .prog-day-session.has-session { color:var(--accent); }
+  /* Create programme form */
+  .create-prog-form { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:18px;margin-bottom:16px; }
+  .day-selector { display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px; }
+  .day-btn { width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:none;font-family:Geist Mono,monospace;font-size:10px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0; }
+  .day-btn.on { background:var(--accent);border-color:var(--accent);color:#fff; }
+  .prog-session-assign { display:flex;flex-direction:column;gap:8px;margin-bottom:14px; }
+  .prog-session-row { display:flex;align-items:center;gap:10px; }
+  .prog-session-day-lbl { font-family:Geist Mono,monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);width:40px;flex-shrink:0; }
+
   /* ── Routines ── */
   .routines-list { display: flex; flex-direction: column; gap: 12px; }
   .routine-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; animation: fadeUp 0.2s ease; }
@@ -187,7 +210,7 @@
   .rex-inp { border:1px solid #ddd; border-radius:6px; padding:6px 9px; font-size:13px; background:#fff; outline:none; }
   .rex-inp:focus { border-color:var(--accent); }
   .rex-name-wrap { position:relative; flex:1; }
-  .rex-name-inp { width:100%; box-sizing:border-box; font-family:'Cormorant Garamond',serif; font-size:15px; }
+  .rex-name-inp { width:100%; box-sizing:border-box; font-family:Cormorant Garamond,serif; font-size:15px; }
   .routine-ex-item { display: flex; align-items: center; justify-content: space-between; background: var(--warm); border: 1px solid var(--border); border-radius: 2px; padding: 8px 12px; }
   .routine-ex-item-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; }
   .routine-ex-item-tag { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
@@ -226,7 +249,7 @@
   /* Exercise replace modal */
   .ex-replace-modal { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:flex-end;justify-content:center; }
   .ex-replace-sheet { background:var(--surface);border-radius:18px 18px 0 0;padding:28px 22px 36px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,.12); }
-  .ex-replace-title { font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:16px;color:var(--text); }
+  .ex-replace-title { font-family:Cormorant Garamond,serif;font-size:20px;margin-bottom:16px;color:var(--text); }
   .ex-search-wrap { position:relative;margin-bottom:8px; }
   .ex-search-inp { width:100%;padding:10px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:15px;box-sizing:border-box;outline:none; }
   .ex-search-inp:focus { border-color:var(--accent); }
@@ -339,22 +362,22 @@
   .edit-modal-overlay.show { opacity:1;pointer-events:all; }
   .edit-modal { background:var(--bg);border-radius:12px 12px 0 0;padding:24px 20px 40px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); }
   .edit-modal-overlay.show .edit-modal { transform:translateY(0); }
-  .edit-modal-title { font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;margin-bottom:16px; }
+  .edit-modal-title { font-family:Cormorant Garamond,serif;font-size:22px;font-weight:400;margin-bottom:16px; }
   .edit-ex-block { border:1px solid var(--border);border-radius:4px;margin-bottom:12px;overflow:hidden; }
   .edit-ex-name { padding:10px 14px;background:var(--warm);font-size:13px;font-weight:500;border-bottom:1px solid var(--border); }
   .edit-set-row { display:grid;grid-template-columns:24px 1fr 1fr 28px;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border); }
   .edit-set-row:last-child { border-bottom:none; }
   .edit-set-n { font-size:10px;color:var(--muted);text-align:center; }
-  .edit-set-inp { background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:5px 8px;font-family:'Geist Mono',monospace;font-size:12px;color:var(--text);width:100%;text-align:center; }
+  .edit-set-inp { background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:5px 8px;font-family:Geist Mono,monospace;font-size:12px;color:var(--text);width:100%;text-align:center; }
   .edit-set-del { background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;text-align:center; }
   /* ── Share modal ── */
   .share-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s; }
   .share-overlay.show { opacity:1;pointer-events:all; }
   .share-card { background:var(--bg);border-radius:8px;padding:28px 24px;width:100%;max-width:340px;text-align:center; }
-  .share-title { font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px; }
+  .share-title { font-family:Cormorant Garamond,serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px; }
   .share-preview { background:var(--warm);border-radius:4px;padding:18px;margin-bottom:16px;text-align:left; }
   .share-btns { display:flex;gap:10px; }
-  .share-btn { flex:1;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer;border:none; }
+  .share-btn { flex:1;padding:11px;font-family:Geist Mono,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;border-radius:4px;cursor:pointer;border:none; }
   /* ── Drag session exercises ── */
   .ex-card { touch-action: pan-y; }
   .ex-drag-handle { cursor:grab;color:var(--muted);font-size:16px;padding:0 6px 0 0;user-select:none;touch-action:none; }
@@ -362,31 +385,31 @@
   .ex-card.ex-drag-over { border-color: var(--accent); border-style: dashed; }
 
   /* ── Notes exercice ── */
-  .ex-note-toggle { background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 8px;letter-spacing:1px;font-family:'Geist Mono',monospace;text-align:left; }
+  .ex-note-toggle { background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 8px;letter-spacing:1px;font-family:Geist Mono,monospace;text-align:left; }
   .ex-note-toggle:hover { color:var(--accent); }
-  .ex-note-area { width:100%;background:var(--warm);border:none;border-top:1px solid var(--border);padding:10px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--text);resize:none;min-height:52px;line-height:1.5;box-sizing:border-box; }
+  .ex-note-area { width:100%;background:var(--warm);border:none;border-top:1px solid var(--border);padding:10px 14px;font-family:Cormorant Garamond,serif;font-size:14px;font-style:italic;color:var(--text);resize:none;min-height:52px;line-height:1.5;box-sizing:border-box; }
   .ex-note-area:focus { outline:none;background:#f0ece6; }
   /* ── Récap modal ── */
   .recap-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s; }
   .recap-overlay.show { opacity:1;pointer-events:all; }
   .recap-sheet { background:var(--bg);border-radius:16px 16px 0 0;padding:28px 24px 48px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.1,0.64,1); }
   .recap-overlay.show .recap-sheet { transform:translateY(0); }
-  .recap-logo { font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:20px; }
-  .recap-title { font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;color:var(--text);margin-bottom:4px;line-height:1.1; }
+  .recap-logo { font-family:Cormorant Garamond,serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:20px; }
+  .recap-title { font-family:Cormorant Garamond,serif;font-size:32px;font-weight:400;color:var(--text);margin-bottom:4px;line-height:1.1; }
   .recap-sub { font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:24px; }
   .recap-stats { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px; }
   .recap-stat { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center; }
-  .recap-stat-val { font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--text);line-height:1; }
+  .recap-stat-val { font-family:Cormorant Garamond,serif;font-size:28px;font-weight:400;color:var(--text);line-height:1; }
   .recap-stat-lbl { font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px; }
   .recap-pr { background:linear-gradient(135deg,#fdf6e3,#fff8e7);border:1px solid #e8d48a;border-radius:4px;padding:14px 16px;margin-bottom:20px; }
   .recap-pr-title { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#b8960c;margin-bottom:8px; }
-  .recap-pr-row { font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);padding:3px 0; }
+  .recap-pr-row { font-family:Cormorant Garamond,serif;font-size:16px;color:var(--text);padding:3px 0; }
   .recap-ex { margin-bottom:12px; }
-  .recap-ex-name { font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:500;color:var(--text);margin-bottom:4px; }
-  .recap-ex-sets { font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;line-height:1.8; }
-  .recap-close { width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:14px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:20px; }
+  .recap-ex-name { font-family:Cormorant Garamond,serif;font-size:17px;font-weight:500;color:var(--text);margin-bottom:4px; }
+  .recap-ex-sets { font-size:11px;color:var(--muted);font-family:Geist Mono,monospace;line-height:1.8; }
+  .recap-close { width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:14px;font-family:Geist Mono,monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:20px; }
   /* ── Offline indicator ── */
-  .offline-banner { position:fixed;top:0;left:0;right:0;z-index:999;background:#b85c2a;color:#fff;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:6px;transform:translateY(-100%);transition:transform 0.3s ease; }
+  .offline-banner { position:fixed;top:0;left:0;right:0;z-index:999;background:#b85c2a;color:#fff;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:6px;transform:translateY(-100%);transition:transform 0.3s ease; }
   .offline-banner.show { transform:translateY(0); }
   .sync-dot { display:inline-block;width:6px;height:6px;border-radius:50%;background:#aaa;margin-left:6px;vertical-align:middle;transition:background 0.3s; }
   .sync-dot.online { background:#4caf50; }
@@ -397,56 +420,56 @@
   /* ── Résumé hebdomadaire ── */
   .weekly-card { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:22px;position:relative;overflow:hidden; }
   .weekly-card::before { content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),#7ab893); }
-  .weekly-title { font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:2px; }
+  .weekly-title { font-family:Cormorant Garamond,serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:2px; }
   .weekly-sub { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:18px; }
   .weekly-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px; }
   .weekly-stat { text-align:center; }
-  .weekly-stat-val { font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--text);line-height:1; }
+  .weekly-stat-val { font-family:Cormorant Garamond,serif;font-size:26px;font-weight:400;color:var(--text);line-height:1; }
   .weekly-stat-lbl { font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px; }
   .weekly-days { display:flex;gap:6px;margin-bottom:16px;justify-content:center; }
-  .weekly-day { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:0;border:1px solid var(--border);color:var(--muted2);flex-direction:column;gap:1px; }
+  .weekly-day { width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:0;border:1px solid var(--border);color:var(--muted2);flex-direction:column;gap:1px; }
   .weekly-day.done { background:var(--accent);color:#fff;border-color:var(--accent); }
   .weekly-day.today { border-color:var(--accent);color:var(--accent); }
   .weekly-muscles { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px; }
   .weekly-muscle-chip { background:var(--warm);border:1px solid var(--border);border-radius:2px;padding:3px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
-  .weekly-pr-line { font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);padding:2px 0; }
-  .weekly-empty { text-align:center;padding:20px 0;font-size:13px;color:var(--muted);font-style:italic;font-family:'Cormorant Garamond',serif; }
-  .weekly-compare { font-size:10px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace; }
+  .weekly-pr-line { font-family:Cormorant Garamond,serif;font-size:14px;color:var(--text);padding:2px 0; }
+  .weekly-empty { text-align:center;padding:20px 0;font-size:13px;color:var(--muted);font-style:italic;font-family:Cormorant Garamond,serif; }
+  .weekly-compare { font-size:10px;color:var(--muted);margin-top:4px;font-family:Geist Mono,monospace; }
   .weekly-compare.up { color:#4caf50; }
   .weekly-compare.down { color:#e57373; }
 
   /* ── Supersets ── */
   .ex-card.ss-card { border-left: 2px solid var(--accent); }
-  .ss-badge { font-family:'Geist Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--accent-light); border:1px solid rgba(45,90,61,0.2); border-radius:10px; padding:1px 6px; margin-left:4px; }
+  .ss-badge { font-family:Geist Mono,monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--accent-light); border:1px solid rgba(45,90,61,0.2); border-radius:10px; padding:1px 6px; margin-left:4px; }
   .ss-connector { text-align:center; padding:2px 0; margin:-4px 0; position:relative; }
   .ss-connector::before { content:''; position:absolute; left:10px; top:50%; bottom:0; width:2px; background:var(--accent); opacity:0.3; }
-  .ss-connector-label { font-family:'Geist Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--bg); position:relative; padding:0 6px; }
+  .ss-connector-label { font-family:Geist Mono,monospace; font-size:8px; letter-spacing:1px; color:var(--accent); background:var(--bg); position:relative; padding:0 6px; }
   /* Superset picker modal */
   .ss-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:600;display:flex;align-items:flex-end;justify-content:center; }
   .ss-sheet { background:var(--surface);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:460px; }
-  .ss-sheet-title { font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);margin-bottom:4px; }
+  .ss-sheet-title { font-family:Cormorant Garamond,serif;font-size:20px;color:var(--text);margin-bottom:4px; }
   .ss-sheet-sub { font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:18px; }
-  .ss-ex-option { padding:12px 16px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text);transition:all 0.15s; }
+  .ss-ex-option { padding:12px 16px;border:1px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:pointer;font-family:Cormorant Garamond,serif;font-size:16px;color:var(--text);transition:all 0.15s; }
   .ss-ex-option:hover { border-color:var(--accent);background:var(--accent-light); }
-  .ss-cancel { width:100%;background:none;border:none;color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:12px;margin-top:4px; }
+  .ss-cancel { width:100%;background:none;border:none;color:var(--muted);font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:12px;margin-top:4px; }
 
   /* ── Fréquence musculaire ── */
   .freq-card { background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:22px; }
   .freq-row { display:flex;align-items:center;gap:10px;margin-bottom:10px; }
   .freq-row:last-child { margin-bottom:0; }
-  .freq-muscle { font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);width:80px;flex-shrink:0; }
+  .freq-muscle { font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);width:80px;flex-shrink:0; }
   .freq-track { flex:1;height:6px;background:var(--warm);border-radius:3px;overflow:hidden; }
   .freq-fill { height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s ease; }
   .freq-fill.low { background:var(--muted2); }
   .freq-fill.ok { background:var(--accent); }
   .freq-fill.high { background:var(--gold); }
-  .freq-count { font-family:'Geist Mono',monospace;font-size:9px;color:var(--muted);width:28px;text-align:right;flex-shrink:0; }
+  .freq-count { font-family:Geist Mono,monospace;font-size:9px;color:var(--muted);width:28px;text-align:right;flex-shrink:0; }
   .freq-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
   .freq-dot.low { background:var(--muted2); }
   .freq-dot.ok { background:var(--accent); }
   .freq-dot.high { background:var(--gold); }
   .freq-legend { display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap; }
-  .freq-legend-item { display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
+  .freq-legend-item { display:flex;align-items:center;gap:5px;font-family:Geist Mono,monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted); }
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 <script>
@@ -491,27 +514,27 @@
         </svg>
       </div>
 
-      <div style="font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:var(--text);line-height:1.05;margin-bottom:6px;">Bienvenue.</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--muted);line-height:1.7;margin-bottom:36px;">Chaque séance est une promesse tenue à toi-même.</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:40px;font-weight:300;color:var(--text);line-height:1.05;margin-bottom:6px;">Bienvenue.</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:14px;font-style:italic;color:var(--muted);line-height:1.7;margin-bottom:36px;">Chaque séance est une promesse tenue à toi-même.</div>
 
       <div id="loginForm">
         <div style="margin-bottom:20px;">
           <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px;">E-mail</div>
-          <input id="loginEmail" type="email" placeholder="Votre e-mail" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:'Geist Mono',monospace;font-size:13px;color:var(--text);outline:none;"/>
+          <input id="loginEmail" type="email" placeholder="Votre e-mail" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;"/>
         </div>
         <div style="margin-bottom:28px;">
           <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px;">Mot de passe</div>
-          <input id="loginPassword" type="password" placeholder="••••••••" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:'Geist Mono',monospace;font-size:13px;color:var(--text);outline:none;"/>
+          <input id="loginPassword" type="password" placeholder="••••••••" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;"/>
         </div>
-        <button onclick="signIn()" style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:20px;padding:13px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;transition:background 0.2s;">Se connecter</button>
-        <button onclick="signUp()" style="width:100%;background:none;color:var(--muted);border:1px solid var(--border2);border-radius:20px;padding:11px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">Créer un compte</button>
-        <div id="loginError" style="margin-top:14px;font-size:11px;color:var(--accent2);text-align:center;display:none;font-family:'Geist Mono',monospace;"></div>
+        <button onclick="signIn()" style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:20px;padding:13px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;transition:background 0.2s;">Se connecter</button>
+        <button onclick="signUp()" style="width:100%;background:none;color:var(--muted);border:1px solid var(--border2);border-radius:20px;padding:11px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">Créer un compte</button>
+        <div id="loginError" style="margin-top:14px;font-size:11px;color:var(--accent2);text-align:center;display:none;font-family:Geist Mono,monospace;"></div>
       </div>
 
       <div id="loginConfirm" style="display:none;padding:20px 0;">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--text);margin-bottom:10px;">Vérifie<br>ta boîte mail.</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.8;font-family:'Geist Mono',monospace;margin-bottom:28px;">Un lien de confirmation<br>t'a été envoyé.</div>
-        <button onclick="document.getElementById('loginConfirm').style.display='none';document.getElementById('loginForm').style.display='block';" style="background:none;border:1px solid var(--border2);border-radius:20px;padding:10px 24px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;">Retour</button>
+        <div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:300;color:var(--text);margin-bottom:10px;">Vérifie<br>ta boîte mail.</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.8;font-family:Geist Mono,monospace;margin-bottom:28px;">Un lien de confirmation<br>t'a été envoyé.</div>
+        <button onclick="document.getElementById('loginConfirm').style.display='none';document.getElementById('loginForm').style.display='block';" style="background:none;border:1px solid var(--border2);border-radius:20px;padding:10px 24px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;">Retour</button>
       </div>
 
     </div><!-- /card -->
@@ -540,9 +563,9 @@
         <div class="header-date" id="headerTime" style="margin-top:2px;margin-left:3px"></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
-        <button onclick="toggleDark()" id="darkToggleBtn" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.2s;" title="Mode sombre">☽ Nuit</button>
-        <div style="display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="netStatusLabel">
+        <button onclick="signOut()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;" title="Déconnexion">Déconnexion</button>
+        <button onclick="toggleDark()" id="darkToggleBtn" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0;transition:all 0.2s;" title="Mode sombre">☽ Nuit</button>
+        <div style="display:flex;align-items:center;gap:5px;font-family:Geist Mono,monospace;font-size:8px;letter-spacing:1px;color:var(--muted)" id="netStatusLabel">
           <span id="syncDot" class="sync-dot"></span>
         </div>
       </div>
@@ -554,7 +577,7 @@
   </div>
   <nav class="nav">
     <button class="nav-btn active" onclick="switchTab('session')">Session</button>
-    <button class="nav-btn" onclick="switchTab('routines')">Routines</button>
+    <button class="nav-btn" onclick="switchTab('routines')">Séances</button>
     <button class="nav-btn" onclick="switchTab('poids')">Poids</button>
     <button class="nav-btn" onclick="switchTab('history')">Historique</button>
     <button class="nav-btn" onclick="switchTab('stats')">Stats</button>
@@ -578,7 +601,7 @@
         <div id="freeSessionContent" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div class="label" style="margin:0">Séance en cours</div>
-        <div id="freeSessionRoutineTag" style="font-size:11px;color:var(--accent);font-family:'Geist Mono',monospace;"></div>
+        <div id="freeSessionRoutineTag" style="font-size:11px;color:var(--accent);font-family:Geist Mono,monospace;"></div>
       </div>
       <div class="label" style="font-size:9px;margin-bottom:8px">Durée</div>
       <div class="timer-card">
@@ -640,7 +663,7 @@
       <div class="label">Ressenti & notes</div>
       <textarea class="notes-area" id="sessionNotes" placeholder="Comment tu te sens aujourd'hui ?"></textarea>
       <div style="display:flex;gap:10px">
-        <button onclick="abandonSession()" style="flex:1;background:none;border:1px solid var(--border2);border-radius:20px;padding:12px 10px;font-family:'Geist Mono',monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all 0.18s;">Annuler</button>
+        <button onclick="abandonSession()" style="flex:1;background:none;border:1px solid var(--border2);border-radius:20px;padding:12px 10px;font-family:Geist Mono,monospace;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all 0.18s;">Annuler</button>
         <button class="save-btn" onclick="saveSession()" style="flex:2">Terminer ✓</button>
       </div>
         </div><!-- end freeSessionContent -->
@@ -650,13 +673,13 @@
   <!-- ══ SAVE AS ROUTINE MODAL ══ -->
   <div id="saveRoutineModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:800;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeSaveRoutineModal()">
     <div style="background:var(--surface);border-radius:12px 12px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.15)">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:6px">Sauvegarder en routine ?</div>
+      <div style="font-family:Cormorant Garamond,serif;font-size:22px;margin-bottom:6px">Sauvegarder en routine ?</div>
       <div style="font-size:11px;color:var(--muted2);margin-bottom:20px">Tu peux enregistrer cette séance comme routine pour la réutiliser.</div>
       <input class="inp" id="saveRoutineName" placeholder="Nom de la routine (ex: Push A, Legs…)" style="width:100%;box-sizing:border-box;margin-bottom:16px"/>
       <div style="display:flex;flex-direction:column;gap:10px">
         <button class="btn-add" style="width:100%" onclick="saveSessionAndRoutine()">💾 Sauvegarder séance + créer routine</button>
         <button class="save-btn" onclick="saveSessionOnly()" style="background:var(--warm);color:var(--text);border:1px solid var(--border2)">Sauvegarder uniquement la séance</button>
-        <button onclick="closeSaveRoutineModal()" style="background:none;border:none;color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px">Annuler</button>
+        <button onclick="closeSaveRoutineModal()" style="background:none;border:none;color:var(--muted);font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px">Annuler</button>
       </div>
     </div>
   </div>
@@ -665,7 +688,7 @@
   <div class="ex-replace-modal" id="routineConfirmModal" style="display:none" onclick="if(event.target===this)closeRoutineConfirm()">
     <div class="ex-replace-sheet">
       <div class="ex-replace-title">Lancer la routine</div>
-      <div style="margin-bottom:6px;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;color:var(--text)" id="routineConfirmName"></div>
+      <div style="margin-bottom:6px;font-family:Cormorant Garamond,serif;font-size:22px;font-weight:500;color:var(--text)" id="routineConfirmName"></div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:20px;" id="routineConfirmExs"></div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Le chrono démarrera automatiquement.</div>
       <div class="ex-replace-actions">
@@ -698,9 +721,38 @@
 
   <!-- ══ ROUTINES ══ -->
   <div class="section" id="tab-routines">
-    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une routine</button>
+
+    <!-- ══ PROGRAMMES ══ -->
+    <div class="label">Mes programmes</div>
+    <button id="createProgToggleBtn" class="btn-add" style="width:100%;margin-bottom:12px" onclick="toggleCreateProgForm()">+ Créer un programme</button>
+    <div class="create-prog-form" id="createProgForm" style="display:none">
+      <div class="label" style="margin-bottom:10px">Nouveau programme</div>
+      <input class="inp" id="progFormName" placeholder="Nom du programme (ex: PPL, Full Body…)" style="width:100%;box-sizing:border-box;margin-bottom:12px"/>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Jours d'entraînement</div>
+      <div class="day-selector">
+        <button class="day-btn" data-day="1" onclick="toggleProgDay(this)">L</button>
+        <button class="day-btn" data-day="2" onclick="toggleProgDay(this)">M</button>
+        <button class="day-btn" data-day="3" onclick="toggleProgDay(this)">M</button>
+        <button class="day-btn" data-day="4" onclick="toggleProgDay(this)">J</button>
+        <button class="day-btn" data-day="5" onclick="toggleProgDay(this)">V</button>
+        <button class="day-btn" data-day="6" onclick="toggleProgDay(this)">S</button>
+        <button class="day-btn" data-day="0" onclick="toggleProgDay(this)">D</button>
+      </div>
+      <div id="progSessionAssign" class="prog-session-assign" style="display:none">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Associer une séance (optionnel)</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn-add" style="flex:1" onclick="saveProgram()">Enregistrer</button>
+        <button class="btn-ghost" onclick="toggleCreateProgForm()">Annuler</button>
+      </div>
+    </div>
+    <div id="programsList" style="margin-bottom:24px"></div>
+
+    <!-- ══ SÉANCES ══ -->
+    <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une séance</button>
     <div class="create-routine-form" id="createRoutineForm" style="display:none">
-      <div class="label" style="margin-bottom:14px">Nouvelle routine</div>
+      <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
       <div id="routineExList" class="routine-ex-list"></div>
       <div class="form-row">
@@ -729,11 +781,11 @@
         <button class="btn-ghost" onclick="addRoutineEx()">+</button>
       </div>
       <div style="display:flex;gap:10px">
-        <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la routine</button>
+        <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la séance</button>
         <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
       </div>
     </div>
-    <div class="label" style="margin-bottom:12px">Mes routines</div>
+    <div class="label" style="margin-bottom:12px">Mes séances</div>
     <div class="routines-list" id="routinesList"></div>
   </div>
 
@@ -818,7 +870,7 @@
       <div id="globalProgWrap">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
           <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Force globale — 8 dernières semaines</div>
-          <div id="globalProgBadge" style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:500"></div>
+          <div id="globalProgBadge" style="font-family:Geist Mono,monospace;font-size:11px;font-weight:500"></div>
         </div>
         <canvas id="globalProgChart" height="120"></canvas>
         <div id="globalProgEmpty" style="display:none;text-align:center;padding:16px 0;font-size:11px;color:var(--muted2)">Pas encore assez de données.</div>
@@ -886,7 +938,7 @@
       <rect x="9" y="3" width="6" height="4" rx="1"/>
       <path d="M9 12h6M9 16h4"/>
     </svg>
-    <span class="bn-label">Routines</span>
+    <span class="bn-label">Séances</span>
   </button>
   <button class="bn-btn" id="bnav-poids" onclick="switchTab('poids')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
@@ -1028,7 +1080,7 @@
   })();
 
   // ── Offline queue ──
-  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights' };
+  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights', programs: 'elev_cache_programs' };
   const QUEUE_KEY = 'elev_offline_queue';
 
   function isOnline() { return navigator.onLine; }
@@ -1189,6 +1241,8 @@
     sessions = await sbLoad('sessions');
     sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
     routines = await sbLoad('routines');
+    programs = await sbLoad('programs');
+    activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
     // Sort routines by day number extracted from name (J1, J2, J3...)
     routines.sort((a, b) => {
       const getDay = name => { const m = (name||'').match(/J(\d+)/i); return m ? parseInt(m[1]) : 999; };
@@ -1228,6 +1282,7 @@
     const h = nowDate.getHours();
     document.getElementById('headerTitle').textContent = h < 12 ? 'Bonne séance' : h < 18 ? 'À toi de jouer' : 'Bonne session';
     renderRoutinePicker();
+    renderProgramsList();
     renderWeightTab();
     // Restore any in-progress session
     restoreDraft();
@@ -1251,7 +1306,7 @@
     document.getElementById('bnav-' + tab).classList.add('active');
     if (tab === 'history') renderHistory();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); renderFrequency(); }
-    if (tab === 'routines') renderRoutinesList();
+    if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
     if (tab === 'poids') { sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); renderWeightTab(); }); }
   }
 
@@ -1450,7 +1505,7 @@
     const el = document.getElementById('routinePickerList');
     const tag = document.getElementById('freeSessionRoutineTag');
     if (tag) { const r = loadedRoutineId ? routines.find(r=>r.id===loadedRoutineId) : null; tag.textContent = r ? `📌 ${r.name}` : ''; }
-    if (!routines.length) { el.innerHTML = `<div class="no-routine-hint">Aucune routine créée.<br><span onclick="switchTab('routines')">Créer ma première routine →</span></div>`; return; }
+    if (!routines.length) { el.innerHTML = `<div class="no-routine-hint">Aucune routine créée.<br><span onclick="switchTab('routines')">Créer ma première séance →</span></div>`; return; }
     // Sort: loaded routine first, then rest in original order
     const sorted = loadedRoutineId
       ? [...routines.filter(r => r.id === loadedRoutineId), ...routines.filter(r => r.id !== loadedRoutineId)]
@@ -1638,7 +1693,7 @@
             <div class="ex-meta">${ex.muscle?'<span class="ex-muscle-tag">'+ex.muscle+'</span>':''}${pr?'<span class="ex-pr-badge">🏆 PR '+pr.weight+'kg</span>':''}</div></div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:11px;letter-spacing:0.5px;font-family:'Geist Mono',monospace;" onclick="openSSPicker(${ei})" title="Superset">⇄</button>
+            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:11px;letter-spacing:0.5px;font-family:Geist Mono,monospace;" onclick="openSSPicker(${ei})" title="Superset">⇄</button>
             <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button>
             <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div></div>
@@ -1841,6 +1896,213 @@
     renderRoutinesList(); renderRoutinePicker();
   }
 
+  // ── Programmes ──
+  let programs = [];
+  let activeProgId = null;
+  const DAY_NAMES = ['D','L','M','M','J','V','S'];
+  const DAY_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+  function toggleCreateProgForm() {
+    const form = document.getElementById('createProgForm');
+    const btn = document.getElementById('createProgToggleBtn');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? '+ Créer un programme' : '✕ Fermer';
+    if (!isOpen) {
+      document.getElementById('progFormName').value = '';
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
+      document.getElementById('progSessionAssign').style.display = 'none';
+      document.getElementById('progSessionAssign').innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Associer une séance (optionnel)</div>';
+      _editingProgId = null;
+    }
+  }
+
+  function toggleProgDay(btn) {
+    btn.classList.toggle('on');
+    renderProgSessionAssign();
+  }
+
+  function renderProgSessionAssign() {
+    const selectedDays = [...document.querySelectorAll('.day-btn.on')].map(b => parseInt(b.dataset.day));
+    const assign = document.getElementById('progSessionAssign');
+    if (!selectedDays.length) { assign.style.display = 'none'; return; }
+    assign.style.display = 'block';
+    const dayOrder = [1,2,3,4,5,6,0];
+    const sorted = dayOrder.filter(d => selectedDays.includes(d));
+    assign.innerHTML = '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Associer une séance (optionnel)</div>' +
+      sorted.map(d => `
+        <div class="prog-session-row">
+          <div class="prog-session-day-lbl">${DAY_FULL[d].substring(0,3)}</div>
+          <select class="inp" id="progDaySession-${d}" style="flex:1;font-size:12px">
+            <option value="">— Aucune séance —</option>
+            ${routines.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
+          </select>
+        </div>`).join('');
+  }
+
+  let _editingProgId = null;
+
+  async function saveProgram() {
+    const name = document.getElementById('progFormName').value.trim() || 'Mon programme';
+    const selectedDays = [...document.querySelectorAll('.day-btn.on')].map(b => parseInt(b.dataset.day));
+    if (!selectedDays.length) { showToast('Sélectionne au moins un jour'); return; }
+    const dayOrder = [1,2,3,4,5,6,0];
+    const trainingDays = dayOrder.filter(d => selectedDays.includes(d)).map(d => {
+      const sel = document.getElementById('progDaySession-' + d);
+      const sessionId = sel ? parseInt(sel.value) || null : null;
+      return { day: d, sessionId };
+    });
+    if (_editingProgId !== null) {
+      const idx = programs.findIndex(p => p.id === _editingProgId);
+      if (idx !== -1) {
+        programs[idx] = { ...programs[idx], name, trainingDays };
+        await sbSave('programs', [programs[idx]]);
+        showToast(`"${name}" mis à jour`);
+      }
+      _editingProgId = null;
+    } else {
+      const prog = { id: Date.now(), name, trainingDays, createdAt: new Date().toISOString() };
+      programs.push(prog);
+      // First program is auto-active
+      if (programs.length === 1) { activeProgId = prog.id; localStorage.setItem('elev_active_prog', prog.id); }
+      await sbSave('programs', [prog]);
+      showToast(`"${name}" créé !`);
+    }
+    toggleCreateProgForm();
+    renderProgramsList();
+  }
+
+  async function deleteProgram(id) {
+    const p = programs.find(x => x.id === id);
+    if (!confirm(`Supprimer "${p?.name}" ?`)) return;
+    programs = programs.filter(x => x.id !== id);
+    if (activeProgId === id) { activeProgId = programs[0]?.id || null; localStorage.setItem('elev_active_prog', activeProgId || ''); }
+    await sbDelete('programs', id);
+    renderProgramsList();
+    showToast('Programme supprimé');
+  }
+
+  function setActiveProgram(id) {
+    activeProgId = id;
+    localStorage.setItem('elev_active_prog', id);
+    renderProgramsList();
+    showToast('Programme activé ✓');
+  }
+
+  function editProgram(id) {
+    const p = programs.find(x => x.id === id);
+    if (!p) return;
+    _editingProgId = id;
+    const form = document.getElementById('createProgForm');
+    const btn = document.getElementById('createProgToggleBtn');
+    form.style.display = 'block';
+    btn.textContent = '✕ Fermer';
+    document.getElementById('progFormName').value = p.name;
+    document.querySelectorAll('.day-btn').forEach(b => {
+      b.classList.toggle('on', p.trainingDays.some(td => td.day === parseInt(b.dataset.day)));
+    });
+    renderProgSessionAssign();
+    // Re-apply saved session assignments
+    setTimeout(() => {
+      p.trainingDays.forEach(td => {
+        const sel = document.getElementById('progDaySession-' + td.day);
+        if (sel && td.sessionId) sel.value = td.sessionId;
+      });
+    }, 50);
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  let openProgIds = new Set();
+  function toggleProgCard(id) {
+    if (openProgIds.has(id)) openProgIds.delete(id); else openProgIds.add(id);
+    renderProgramsList();
+  }
+
+  function renderProgramsList() {
+    const el = document.getElementById('programsList');
+    if (!programs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2);font-family:Cormorant Garamond,serif;font-style:italic">Aucun programme — crée le tien ci-dessus.</div>';
+      return;
+    }
+    el.innerHTML = programs.map(p => {
+      const isActive = p.id === activeProgId;
+      const isOpen = openProgIds.has(p.id);
+      const dayLabels = p.trainingDays.map(td => DAY_FULL[td.day].substring(0,3)).join(' · ');
+      return `<div class="prog-card ${isActive ? 'active-prog' : ''}">
+        <div class="prog-head" onclick="toggleProgCard(${p.id})">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="prog-name">${p.name}</div>
+              ${isActive ? '<span class="prog-active-badge">Actif</span>' : ''}
+            </div>
+            <div class="prog-meta">${p.trainingDays.length}j/sem · ${dayLabels}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--muted)">${isOpen ? '▲' : '▼'}</span>
+          </div>
+        </div>
+        <div class="prog-body ${isOpen ? 'open' : ''}">
+          ${p.trainingDays.map(td => {
+            const sess = routines.find(r => r.id === td.sessionId);
+            return `<div class="prog-day-row">
+              <div class="prog-day-label">${DAY_FULL[td.day].substring(0,3)}</div>
+              <div class="prog-day-session ${sess ? 'has-session' : ''}">${sess ? sess.name : 'Repos actif / libre'}</div>
+            </div>`;
+          }).join('')}
+          <div style="display:flex;gap:8px;margin-top:14px">
+            ${!isActive ? `<button class="btn-add" style="flex:1" onclick="event.stopPropagation();setActiveProgram(${p.id})">✓ Activer</button>` : '<div style="flex:1;text-align:center;font-size:10px;color:var(--accent);font-family:Geist Mono,monospace;letter-spacing:1px;padding:8px">Programme actif</div>'}
+            <button class="btn-ghost" onclick="event.stopPropagation();editProgram(${p.id})">✏️</button>
+            <button class="btn-ghost danger" onclick="event.stopPropagation();deleteProgram(${p.id})">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Streak intelligent basé sur le programme actif ──
+  function computeSmartStreak() {
+    const prog = programs.find(p => p.id === activeProgId);
+    if (!prog) {
+      // Pas de programme : streak classique
+      let streak = 0; const check = new Date();
+      while (true) {
+        const key = check.toDateString();
+        if (sessions.some(s => new Date(s.date).toDateString() === key)) { streak++; check.setDate(check.getDate()-1); }
+        else break;
+      }
+      return streak;
+    }
+    // Streak intelligent : on remonte jour par jour
+    // Un jour "prévu" = dans trainingDays
+    // Un jour "repos" = pas dans trainingDays → on ignore
+    // Si jour prévu et séance faite → streak continue
+    // Si jour prévu et pas de séance → streak cassé
+    const trainingDayNums = new Set(prog.trainingDays.map(td => td.day));
+    let streak = 0;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const check = new Date(today);
+    // Si aujourd'hui est un jour de repos, on commence à vérifier sans pénalité
+    let maxDays = 365;
+    while (maxDays-- > 0) {
+      const dow = check.getDay(); // 0=dim
+      const key = check.toDateString();
+      const hasSess = sessions.some(s => new Date(s.date).toDateString() === key);
+      if (trainingDayNums.has(dow)) {
+        // Jour prévu
+        if (hasSess) {
+          streak++;
+        } else if (check < today) {
+          // Jour prévu dans le passé sans séance = cassé
+          break;
+        }
+        // Si c'est aujourd'hui et pas encore de séance, on continue (streak en cours)
+      }
+      // Jour de repos → on passe sans toucher au streak
+      check.setDate(check.getDate() - 1);
+    }
+    return streak;
+  }
+
   // ── Routines ──
   function addRoutineEx() {
     const name = document.getElementById('rExName').value.trim();
@@ -1911,7 +2173,7 @@
     const btn = document.getElementById('createRoutineToggleBtn');
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
-    btn.textContent = isOpen ? '+ Créer une routine' : '✕ Fermer';
+    btn.textContent = isOpen ? '+ Créer une séance' : '✕ Fermer';
   }
 
   // ── Routine form autocomplete ──
@@ -2093,7 +2355,7 @@
     document.getElementById('saveRoutineBtn').textContent = 'Enregistrer la routine';
     document.getElementById('cancelEditRoutineBtn').style.display = 'none';
     document.getElementById('createRoutineForm').style.display = 'none';
-    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une routine';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une séance';
   }
 
   async function saveRoutine() {
@@ -2126,7 +2388,7 @@
     showSyncBadge('✓ Sync', true);
     draftRoutineExs=[]; document.getElementById('routineName').value='';
     document.getElementById('createRoutineForm').style.display = 'none';
-    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une routine';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une séance';
     renderDraftRoutineExs(); renderRoutinesList(); renderRoutinePicker();
     showToast(`"${name}" créée !`);
   }
@@ -2530,7 +2792,7 @@
     const matches = q ? exNames.filter(n=>n.toLowerCase().includes(q.toLowerCase())).slice(0,8) : exNames.slice(0,8);
     if (!matches.length) { box.style.display='none'; return; }
     box.style.display = 'block';
-    box.innerHTML = matches.map(n=>`<div style="padding:9px 14px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--text);border-bottom:1px solid var(--border)"
+    box.innerHTML = matches.map(n=>`<div style="padding:9px 14px;cursor:pointer;font-family:Cormorant Garamond,serif;font-size:15px;color:var(--text);border-bottom:1px solid var(--border)"
       onmousedown="selectProgExFromSearch('${n.replace(/'/g,"\'")}')">
       ${n}
     </div>`).join('');
@@ -2557,8 +2819,7 @@
     for(let i=0;i<startOffset;i++)html+=`<div class="cal-day"></div>`;
     for(let d=1;d<=daysInMonth;d++){const isToday=today.getDate()===d&&today.getMonth()===calMonth&&today.getFullYear()===calYear;const isTrained=trainedDays.has(d);html+=`<div class="cal-day ${isToday?'today':''} ${isTrained?'trained':''}">${d}</div>`;}
     document.getElementById('calGrid').innerHTML=html;
-    let streak=0;const check=new Date();
-    while(true){const key=check.toDateString();if(sessions.some(s=>new Date(s.date).toDateString()===key)){streak++;check.setDate(check.getDate()-1);}else break;}
+    const streak=computeSmartStreak();
     document.getElementById('streakVal').textContent=streak;
   }
   function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -2751,8 +3012,7 @@
     if(!sessions.length){grid.innerHTML='';prEl.innerHTML='<div style="padding:12px 0;font-size:11px;color:var(--muted2)">Aucun record encore.</div>';topEl.innerHTML=`<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Pas encore de données</div><div class="empty-sub">Tes statistiques apparaîtront après ta première séance.</div></div>`;renderProgSelector();return;}
     const n=sessions.length,totalSets=sessions.reduce((a,s)=>a+s.exercises.reduce((b,e)=>b+e.sets.length,0),0),avgDur=Math.round(sessions.reduce((a,s)=>a+s.duration,0)/n);
     const allMuscles=sessions.flatMap(s=>s.muscles||[]),topMuscle=allMuscles.length?[...allMuscles.reduce((m,v)=>m.set(v,(m.get(v)||0)+1),new Map())].sort((a,b)=>b[1]-a[1])[0][0]:'—';
-    let streak2=0;const chk=new Date();
-    while(true){const key=chk.toDateString();if(sessions.some(s=>new Date(s.date).toDateString()===key)){streak2++;chk.setDate(chk.getDate()-1);}else break;}
+    const streak2=computeSmartStreak();
     grid.innerHTML=`<div class="stat-box"><div class="stat-val">${n}</div><div class="stat-lbl">Séances</div></div><div class="stat-box"><div class="stat-val">${totalSets}</div><div class="stat-lbl">Séries</div></div><div class="stat-box"><div class="stat-val">${fmt(avgDur)}</div><div class="stat-lbl">Durée moy.</div></div><div class="stat-box"><div class="stat-val">${streak2}</div><div class="stat-lbl">Streak 🔥</div></div>`;
     const exNames=[...new Set(sessions.flatMap(s=>s.exercises.map(e=>e.name)))];
     const prQuery = (document.getElementById('prSearch')?.value||'').trim().toLowerCase();
@@ -3198,7 +3458,7 @@
       <button onclick="closeEditSession()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1">✕</button>
     </div>
     <div id="editSessionBody"></div>
-    <button onclick="saveEditSession()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:8px;">Sauvegarder</button>
+    <button onclick="saveEditSession()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:13px;font-family:Geist Mono,monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:8px;">Sauvegarder</button>
   </div>
 </div>
 
