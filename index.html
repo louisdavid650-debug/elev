@@ -957,7 +957,7 @@
   async function handleSession(data) {
     accessToken = data.access_token;
     currentUser = data.user;
-    localStorage.setItem('seance_session', JSON.stringify({ access_token: data.access_token, user: data.user }));
+    localStorage.setItem('seance_session', JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user }));
     document.getElementById('loginScreen').style.display = 'none';
     await loadAllData();
     initApp();
@@ -983,6 +983,22 @@
         const s = JSON.parse(saved);
         accessToken = s.access_token; currentUser = s.user;
         document.getElementById('loginScreen').style.display = 'none';
+        // Try to refresh token if we have a refresh_token
+        if (s.refresh_token) {
+          try {
+            const r = await fetch(SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
+              method: 'POST',
+              headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: s.refresh_token })
+            });
+            const rd = await r.json();
+            if (rd.access_token) {
+              accessToken = rd.access_token;
+              currentUser = rd.user;
+              localStorage.setItem('seance_session', JSON.stringify({ access_token: rd.access_token, refresh_token: rd.refresh_token, user: rd.user }));
+            }
+          } catch(e) { console.warn('Token refresh failed', e); }
+        }
         await loadAllData();
         initApp();
       } catch(e) {
@@ -1059,13 +1075,18 @@
           // Update cache
           if (CACHE_KEYS[table]) localStorage.setItem(CACHE_KEYS[table], JSON.stringify(result));
           return result;
+        } else {
+          console.warn('sbLoad: unexpected response', data);
         }
       } catch(e) { console.warn('sbLoad network fail, using cache', e); }
     }
-    // Fallback to cache
+    // Fallback to cache — only show toast if truly offline
     try {
       const cached = localStorage.getItem(CACHE_KEYS[table]);
-      if (cached) { showToast('Mode hors-ligne — données locales'); return JSON.parse(cached); }
+      if (cached) {
+        if (!isOnline()) showToast('Mode hors-ligne — données locales');
+        return JSON.parse(cached);
+      }
     } catch {}
     return [];
   }
