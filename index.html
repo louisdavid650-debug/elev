@@ -226,7 +226,11 @@
   .btn-ghost.danger:hover { border-color: var(--accent2); color: var(--accent2); }
   .create-routine-form { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 18px; margin-bottom: 18px; }
   .routine-ex-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-  .routine-ex-edit-row { background: var(--warm); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display:flex; flex-direction:column; gap:6px; }
+  .routine-ex-edit-row { background: var(--warm); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display:flex; flex-direction:column; gap:6px; transition: opacity 0.15s; }
+  .routine-ex-edit-row.ex-dragging { opacity: 0.4; }
+  .routine-ex-edit-row.ex-drag-over { border-color: var(--accent); background: var(--surface); }
+  .ex-drag-handle { cursor: grab; color: var(--muted); font-size: 16px; padding: 0 4px; flex-shrink: 0; touch-action: none; user-select: none; }
+  .ex-drag-handle:active { cursor: grabbing; }
   .routine-ex-edit-top { display:flex; gap:6px; align-items:center; }
   .routine-ex-edit-bot { display:flex; gap:6px; align-items:center; }
   .rex-inp { border:1px solid var(--border2); border-radius:6px; padding:6px 9px; font-size:13px; background:var(--surface); color:var(--text); outline:none; }
@@ -2121,8 +2125,8 @@
               ${_pr && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_pr.weight+'<br>kg</span>' : ''}
             </div>
             <div style="position:relative">
-              <input class="set-inp" type="number" placeholder="${prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
-              ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">${ex.repsTarget}<br>reps</span>` : ''}
+              <input class="set-inp" type="number" placeholder="${prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget ? 'padding-right:34px' : ''}"/>
+              ${ex.repsTarget ? `<span style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--accent);opacity:0.6;pointer-events:none;line-height:1.1;text-align:right;font-family:'Geist Mono',monospace;letter-spacing:0">${ex.repsTarget}<br><span style="font-size:7px;color:var(--muted)">reps</span></span>` : ''}
             </div>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
             <div style="display:flex;align-items:center;gap:4px">
@@ -2925,8 +2929,14 @@
     const el = document.getElementById('inlineDraftExList-' + routineId);
     if (!el) return;
     el.innerHTML = draftRoutineExs.map((ex, i) => `
-      <div class="routine-ex-edit-row">
+      <div class="routine-ex-edit-row" draggable="true"
+        ondragstart="inlineExDragSrc=${i};this.classList.add('ex-dragging');event.dataTransfer.effectAllowed='move'"
+        ondragend="this.classList.remove('ex-dragging');document.querySelectorAll('.routine-ex-edit-row').forEach(r=>r.classList.remove('ex-drag-over'))"
+        ondragover="event.preventDefault();this.classList.add('ex-drag-over')"
+        ondragleave="this.classList.remove('ex-drag-over')"
+        ondrop="event.preventDefault();this.classList.remove('ex-drag-over');if(inlineExDragSrc!==null&&inlineExDragSrc!==${i}){const moved=draftRoutineExs.splice(inlineExDragSrc,1)[0];draftRoutineExs.splice(${i},0,moved);inlineExDragSrc=null;renderInlineDraftExs('${routineId}');}">
         <div class="routine-ex-edit-top">
+          <span class="ex-drag-handle" title="Déplacer">⠿</span>
           <div class="rex-name-wrap">
             <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
               oninput="draftRoutineExs[${i}].name=this.value"
@@ -3053,6 +3063,7 @@
   }
   let openRoutineIds = new Set();
   let inlineEditRoutineId = null;
+  let inlineExDragSrc = null;
 
   function toggleRoutineExs(id) {
     if (openRoutineIds.has(id)) openRoutineIds.delete(id);
@@ -3088,7 +3099,7 @@
           </div>
         </div>
         ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
-        <div class="rc-exs-list ${isOpen?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
+        <div class="rc-exs-list ${(isOpen&&!isEditing)?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
         <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
     }).join('');
