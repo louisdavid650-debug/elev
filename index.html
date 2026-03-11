@@ -544,8 +544,11 @@
       }
 
       // Écoute les messages du SW
+      // Ignore REST_DONE pendant 3s après le chargement (évite les faux bips au démarrage)
+      const _swReadyAt = Date.now();
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data?.type === 'REST_DONE') {
+          if (Date.now() - _swReadyAt < 3000) return; // Trop tôt, ignorer
           if (typeof playBeep === 'function') playBeep();
           if (navigator.vibrate) navigator.vibrate([200,100,200]);
           if (typeof showToast === 'function') showToast("C'est reparti ! 💪");
