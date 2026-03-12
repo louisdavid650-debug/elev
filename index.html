@@ -1864,14 +1864,6 @@
     }, 50);
     renderRoutinePicker();
     renderProgramsList();
-    checkWeightOnboarding();
-    // Fullscreen onboarding — toute première connexion
-    if (!getUserProfile()) {
-      setTimeout(() => showFullscreenOnboarding(), 400);
-    } else if (shouldShowDailyGreeting()) {
-      // Daily greeting — première connexion du jour
-      setTimeout(() => showDailyGreeting(), 600);
-    }
     // Restore any in-progress session
     restoreDraft();
     // Toujours démarrer sur Accueil, sauf si séance en cours
@@ -1881,19 +1873,35 @@
     } else {
       switchTab('home');
     }
-    // Charger le profil depuis Supabase en arrière-plan et rafraîchir si nécessaire
-    // Charger le profil depuis Supabase (source de vérité) puis vérifier l'onboarding
+    // Charger le profil depuis Supabase EN PREMIER (source de vérité)
+    // puis décider si onboarding nécessaire — évite de demander les infos déjà connues
     loadUserProfileFromSupabase().then(profile => {
-      // Si Supabase a un profil → pas d'onboarding nécessaire
       if (profile) {
+        // Profil trouvé sur Supabase → pas d'onboarding
         checkWeightOnboarding();
-      } else if (!getUserProfile()) {
-        // Ni Supabase ni localStorage → premier lancement → onboarding
+        if (shouldShowDailyGreeting()) {
+          setTimeout(() => showDailyGreeting(), 600);
+        }
+      } else if (getUserProfile()) {
+        // Profil en localStorage seulement (offline) → pas d'onboarding
+        checkWeightOnboarding();
+        if (shouldShowDailyGreeting()) {
+          setTimeout(() => showDailyGreeting(), 600);
+        }
+      } else {
+        // Aucun profil nulle part → première utilisation → onboarding
         setTimeout(() => showFullscreenOnboarding(), 400);
       }
     }).catch(() => {
-      // Offline ou erreur → vérifier le localStorage
-      checkWeightOnboarding();
+      // Erreur réseau → fallback localStorage
+      if (getUserProfile()) {
+        checkWeightOnboarding();
+        if (shouldShowDailyGreeting()) {
+          setTimeout(() => showDailyGreeting(), 600);
+        }
+      } else {
+        setTimeout(() => showFullscreenOnboarding(), 400);
+      }
     });
   }
 
@@ -4110,10 +4118,7 @@
   let _fobStep = 0;
   let _fobData = {};
 
-  // Exposer sur window pour garantir l'accès depuis les onclick HTML
-  window.fobNext = async function() { await fobNextFn(); };
-  window.fobBack = function() { fobBackFn(); };
-  window.fobSkip = async function() { await fobSkipFn(); };
+
 
   function showFullscreenOnboarding() {
     _fobStep = 0;
@@ -4177,7 +4182,7 @@
         ${step.autocomplete ? `autocomplete="${step.autocomplete}"` : ''}
         ${step.type === 'number' ? `inputmode="decimal" min="${step.min}" max="${step.max}"` : ''}
         ${step.key === 'firstName' ? 'style="text-transform:capitalize"' : ''}
-        onkeydown="if(event.key==='Enter')window.fobNext()"
+        onkeydown="if(event.key==='Enter')fobNext()"
       />`;
       setTimeout(() => document.getElementById('fobInp')?.focus(), 100);
     }
@@ -4192,7 +4197,7 @@
     });
   }
 
-  async function fobNextFn() {
+  async function fobNext() {
     const step = FOB_STEPS[_fobStep];
 
     if (step.type === 'choice') {
@@ -4229,11 +4234,11 @@
     }
   }
 
-  function fobBackFn() {
+  function fobBack() {
     if (_fobStep > 0) { _fobStep--; fobRender(); }
   }
 
-  async function fobSkipFn() {
+  async function fobSkip() {
     _fobStep++;
     if (_fobStep < FOB_STEPS.length) fobRender();
     else await fobFinish();
@@ -4267,6 +4272,11 @@
     localStorage.setItem('elev_daily_greeting', new Date().toISOString().split('T')[0]);
     showToast(`Bienvenue ${profile.firstName || ''} 🎉`);
   }
+
+  // Exposer sur window après toutes les déclarations
+  window.fobNext = fobNext;
+  window.fobBack = fobBack;
+  window.fobSkip = fobSkip;
 
     // ── Daily greeting ──
   // Daily greeting — date stockée dans le profil Supabase pour sync multi-appareils
