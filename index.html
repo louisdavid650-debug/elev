@@ -216,10 +216,10 @@
   /* ── Routines ── */
   .routines-list { display: flex; flex-direction: column; gap: 12px; }
   .routine-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; animation: fadeUp 0.2s ease; box-shadow: var(--card-shadow); }
-  .rc-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+  .rc-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 14px; }
   .rc-name { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; }
   .rc-meta { font-size: 10px; color: var(--muted); margin-top: 4px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Geist Mono', monospace; }
-  .rc-chip-row { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 18px 14px; }
+  .rc-chip-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 18px 14px; border-top: 1px solid var(--border); margin-top: 0; }
   .rc-drag-handle { cursor: grab; color: var(--muted); font-size: 16px; padding: 0 8px 0 0; user-select: none; touch-action: none; }
   .rc-drag-handle:active { cursor: grabbing; }
   .routine-card { transition: opacity 0.15s; }
@@ -227,10 +227,9 @@
   .rc-inline-edit { border-top: 1px solid var(--border); padding: 16px; background: var(--warm); display: none; }
   .rc-inline-edit.open { display: block; }
   .rc-exs-list { display: none; }
-  .rc-exs-list.open { display: block; }
+  .rc-exs-list.open { display: block; border-top: 1px solid var(--border); }
   .rc-toggle-btn { background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 6px;transition:transform 0.2s; }
   .rc-toggle-btn.open { transform: rotate(180deg); }
-  .rc-exs-list { border-top: 1px solid var(--border); }
   .rc-ex-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; border-bottom: 1px solid var(--border); }
   .rc-ex-row:last-child { border-bottom: none; }
   .rc-ex-name { font-family: 'DM Serif Display', serif; font-size: 16px; }
@@ -437,7 +436,7 @@
   .h-date { font-family: 'DM Serif Display', serif; font-size: 19px; font-weight: 400; text-transform: capitalize; }
   .h-dur { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
   .h-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
-  .h-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 20px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 24px; box-sizing: border-box; font-weight: 500; }
+  .h-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 26px; box-sizing: border-box; font-weight: 500; }
   .h-routine-tag { background: var(--warm); border: 1px solid var(--border2); color: var(--muted); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 9px; border-radius: 1px; }
   .h-exs { font-size: 11px; color: var(--muted); line-height: 1.7; }
   .h-note { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 14px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.5; }
@@ -1100,10 +1099,7 @@
 
     <!-- Onboarding -->
     <div id="weightOnboarding" style="display:none">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;margin-top:8px">
-        <button id="weightOnboardingBack" onclick="cancelWeightOnboarding()" style="display:none;background:none;border:1px solid var(--border2);border-radius:8px;color:var(--muted);cursor:pointer;font-size:11px;padding:7px 12px;font-family:Geist Mono,monospace;letter-spacing:1px;white-space:nowrap">← Retour</button>
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:Geist Mono,monospace;">Élev · Poids</div>
-      </div>
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:Geist Mono,monospace;margin-bottom:28px;margin-top:8px">Élev · Poids</div>
       <div class="onboarding-dots" id="onboardingDots"></div>
       <div class="onboarding-wrap" id="onboardingSteps"></div>
     </div>
@@ -3729,16 +3725,13 @@
     _onboardingData = { age: profile.age, height: profile.height };
     _onboardingEditMode = true;
     showWeightOnboarding();
-    // Afficher bouton retour en mode édition
-    const backBtn = document.getElementById('weightOnboardingBack');
-    if (backBtn) backBtn.style.display = 'block';
+
   }
 
   function cancelWeightOnboarding() {
     document.getElementById('weightOnboarding').style.display = 'none';
     document.getElementById('weightMain').style.display = 'block';
-    const backBtn = document.getElementById('weightOnboardingBack');
-    if (backBtn) backBtn.style.display = 'none';
+
     _onboardingEditMode = false;
   }
   let _onboardingEditMode = false;
@@ -3749,8 +3742,7 @@
     _onboardingStep = 0;
     if (!_onboardingEditMode) {
       _onboardingData = {};
-      const backBtn = document.getElementById('weightOnboardingBack');
-      if (backBtn) backBtn.style.display = 'none';
+
     }
     renderOnboardingStep();
   }
@@ -3817,6 +3809,7 @@
         ${inputHtml}
         <button class="onboarding-btn" id="onboardingNextBtn" onclick="nextOnboardingStep()">${btnLabel}</button>
         ${step.optional ? `<button class="onboarding-back" onclick="skipOnboardingStep()" style="opacity:0.6">Passer →</button>` : (_onboardingStep > 0 ? `<button class="onboarding-back" onclick="prevOnboardingStep()">← Retour</button>` : '')}
+        ${_onboardingEditMode ? `<button class="onboarding-back" onclick="cancelWeightOnboarding()" style="margin-top:8px;opacity:0.5">✕ Annuler les modifications</button>` : ''}
       </div>
     `;
     if (step.type !== 'choice') setTimeout(() => document.getElementById('onboardingInp')?.focus(), 100);
