@@ -285,7 +285,7 @@
   .fob-choice-desc { font-size: 10px; font-family: 'Geist Mono', monospace; opacity: 0.7; margin-top: 1px; }
 
   /* ── Weight/Kcal local tabs ── */
-  .entry-tabs { display: flex; gap: 0; margin-bottom: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .entry-tabs { display: flex; gap: 0; margin-bottom: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .entry-tab { flex: 1; padding: 11px 0; text-align: center; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; background: var(--surface); color: var(--muted); border: none; transition: all 0.18s; }
   .entry-tab.active { background: var(--accent); color: #fff; }
   .entry-panel { display: none; }
@@ -337,7 +337,7 @@
   .weight-inp { flex: 1; background: var(--warm); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; color: var(--text); font-family: 'Geist Mono', monospace; font-size: 16px; transition: border-color 0.15s; -moz-appearance: textfield; }
   .weight-inp::-webkit-outer-spin-button, .weight-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
   .weight-inp:focus { outline: none; border-color: var(--accent); background: var(--surface); }
-  .weight-save { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .weight-save { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 14px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
   .weight-save:hover { background: #234830; }
 
   /* Weight chart */
@@ -475,10 +475,10 @@
   .home-next-card:active { background: var(--border); }
   .home-next-inner { flex: 1; min-width: 0; }
   .home-next-eyebrow { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: rgba(200,169,110,0.65); font-family: 'Geist Mono', monospace; margin-bottom: 6px; }
-  .home-next-name { font-family: 'DM Serif Display', serif; font-size: 21px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .home-next-name { font-family: 'DM Serif Display', serif; font-size: 21px; font-weight: 400; color: #F0EAE1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .home-next-meta { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(240,234,225,0.25); font-family: 'Geist Mono', monospace; margin-top: 4px; }
   .home-next-muscles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .home-next-arrow { color: var(--muted); font-size: 16px; padding-left: 12px; flex-shrink: 0; }
+  .home-next-arrow { color: rgba(240,234,225,0.2); font-size: 16px; padding-left: 12px; flex-shrink: 0; }
 
   /* CTA */
   .home-cta { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; margin-bottom: 24px; transition: background 0.15s, box-shadow 0.15s; box-shadow: 0 4px 16px rgba(44,95,74,0.3); }
@@ -1152,10 +1152,10 @@
           <!-- Objectif journalier -->
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
             <div class="label" style="margin-bottom:8px">Objectif journalier</div>
-            <div class="weight-input-row">
-              <input class="weight-inp" id="kcalTargetInput" type="number" step="50" placeholder="ex: 2200" style="flex:1"/>
-              <span style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted);align-self:center;padding:0 8px">kcal</span>
-              <button class="weight-save" onclick="saveKcalTarget()">Sauvegarder</button>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="weight-inp" id="kcalTargetInput" type="number" step="50" placeholder="ex: 2200" style="flex:1;min-width:0"/>
+              <span style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted);white-space:nowrap">kcal</span>
+              <button class="weight-save" onclick="saveKcalTarget()" style="flex-shrink:0">Sauvegarder</button>
             </div>
           </div>
         </div>
