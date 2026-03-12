@@ -69,7 +69,7 @@
   }
   html.dark header svg text { fill: var(--text); }
   html.dark header svg line { stroke: var(--text); }
-  html.dark body { background: var(--bg); color: var(--text); }
+  html.dark body { color: var(--text); }
   html.dark .bottom-nav { background: rgba(13,13,13,0.97); }
   html.dark input, html.dark textarea { color-scheme: dark; }
 
@@ -5577,31 +5577,28 @@
   function toggleDark() {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('elev_dark', isDark ? '1' : '0');
+    const bg = isDark ? '#0D0D0D' : '#F0EAE1';
+    document.documentElement.style.background = bg;
     const btn = document.getElementById('darkToggleBtn');
     if (btn) btn.textContent = isDark ? '☀' : '☽';
     const meta = document.getElementById('themeColorActive');
-    const bg = isDark ? '#0D0D0D' : '#F0EAE1';
     if (meta) meta.content = bg;
-    document.documentElement.style.background = bg;
-    document.body.style.background = bg;
   }
   function initDark() {
     const saved = localStorage.getItem('elev_dark');
     const btn = document.getElementById('darkToggleBtn');
     if (saved === '1') {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.background = '#0D0D0D';
       if (btn) btn.textContent = '☀';
       const meta = document.getElementById('themeColorActive');
       if (meta) meta.content = '#0D0D0D';
-      document.documentElement.style.background = '#0D0D0D';
-      document.body.style.background = '#0D0D0D';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.background = '#F0EAE1';
       if (btn) btn.textContent = '☽';
       const meta = document.getElementById('themeColorActive');
       if (meta) meta.content = '#F0EAE1';
-      document.documentElement.style.background = '#F0EAE1';
-      document.body.style.background = '#F0EAE1';
     }
   }
 
