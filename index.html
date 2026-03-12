@@ -116,13 +116,13 @@
   .chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 
   /* Routine picker */
-  .routine-pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer; transition: all 0.18s; animation: fadeUp 0.2s ease; margin-bottom: 10px; }
+  .routine-pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 20px 16px; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer; transition: all 0.18s; animation: fadeUp 0.2s ease; margin-bottom: 10px; }
   .routine-pick-card:hover { border-color: var(--accent); background: var(--accent-light); }
   .routine-pick-card.loaded { border-color: var(--accent); background: var(--accent-light); }
-  .rpc-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; }
-  .rpc-exs { font-size: 9px; color: var(--muted); margin-top: 5px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Geist Mono', monospace; }
-  .rpc-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
-  .rpc-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 20px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 24px; box-sizing: border-box; font-weight: 500; }
+  .rpc-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; line-height: 1.2; }
+  .rpc-exs { font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Geist Mono', monospace; }
+  .rpc-muscles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .rpc-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 26px; box-sizing: border-box; font-weight: 500; }
   .rpc-arrow { font-size: 18px; color: var(--muted); font-weight: 300; padding-top: 2px; flex-shrink: 0; }
   .routine-pick-card:hover .rpc-arrow, .routine-pick-card.loaded .rpc-arrow { color: var(--accent); }
   .no-routine-hint { font-size: 11px; color: var(--muted2); line-height: 1.7; padding: 14px 16px; background: var(--surface); border: 1px dashed var(--border2); border-radius: 4px; text-align: center; }
@@ -717,7 +717,7 @@
   <div class="daily-greeting-title">Comment tu te sens aujourd'hui ?</div>
   <div class="daily-greeting-sub" id="dailyGreetingDate"></div>
   <div class="daily-weight-row">
-    <input class="daily-weight-inp" id="dailyWeightInput" type="number" step="0.1" placeholder="—" min="20" max="300"/>
+    <input class="daily-weight-inp" id="dailyWeightInput" type="number" step="0.1" placeholder="Votre poids" min="20" max="300"/>
     <div class="daily-weight-unit">KG</div>
   </div>
   <button class="daily-save-btn" onclick="saveDailyWeight()">Enregistrer mon poids →</button>
@@ -1124,7 +1124,7 @@
             <input type="date" id="weightDate" class="inp" style="width:100%;box-sizing:border-box;max-width:100%;"/>
           </div>
           <div class="weight-input-row">
-            <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Ex: 78.5"/>
+            <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Votre poids"/>
             <button class="weight-save" onclick="logWeight()">Ajouter</button>
           </div>
         </div>
@@ -3642,11 +3642,11 @@
   }
 
   const ONBOARDING_STEPS = [
-    { key: 'firstName',    question: "Comment tu t'appelles ?",        hint: 'TON PRÉNOM',       placeholder: 'Louis', type: 'text' },
-    { key: 'age',          question: 'Quel est ton âge ?',             hint: 'EN ANNÉES',        placeholder: '25',  type: 'number', unit: 'ans', min: 10,  max: 100 },
-    { key: 'height',       question: 'Quelle est ta taille ?',         hint: 'EN CENTIMÈTRES',   placeholder: '175', type: 'number', unit: 'cm',  min: 100, max: 250 },
-    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: '80',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
-    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: '72',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
+    { key: 'firstName',    question: "Comment tu t'appelles ?",        hint: 'TON PRÉNOM',       placeholder: 'Votre prénom', type: 'text' },
+    { key: 'age',          question: 'Quel est ton âge ?',             hint: 'EN ANNÉES',        placeholder: 'Votre âge',  type: 'number', unit: 'ans', min: 10,  max: 100 },
+    { key: 'height',       question: 'Quelle est ta taille ?',         hint: 'EN CENTIMÈTRES',   placeholder: 'Votre taille', type: 'number', unit: 'cm',  min: 100, max: 250 },
+    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: 'Votre poids',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
+    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: 'Poids cible',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
     { key: 'goal',         question: 'Quel est ton objectif ?',        hint: 'CHOISIS TON MODE', placeholder: null,  type: 'choice',
       choices: [
         { value: 'seche',     label: 'Sèche',          icon: '🔥', desc: 'Perdre de la masse grasse' },
@@ -3654,7 +3654,7 @@
         { value: 'prise',     label: 'Prise de masse',  icon: '💪', desc: 'Gagner du muscle et du poids' },
       ]
     },
-    { key: 'kcalTarget',   question: 'Objectif calorique journalier ?', hint: 'EN KCAL (OPTIONNEL)', placeholder: '2200', type: 'number', unit: 'kcal', min: 500, max: 10000, optional: true },
+    { key: 'kcalTarget',   question: 'Objectif calorique journalier ?', hint: 'EN KCAL (OPTIONNEL)', placeholder: 'Votre objectif', type: 'number', unit: 'kcal', min: 500, max: 10000, optional: true },
   ];
 
   // Steps affichés uniquement lors de la création (âge + taille = une seule fois)
@@ -4127,11 +4127,11 @@
   // Affiché une seule fois à la première connexion, avant d'accéder à l'app
 
   const FOB_STEPS = [
-    { key: 'firstName',    question: "Comment tu t'appelles ?",          hint: 'TON PRÉNOM',              type: 'text',   placeholder: 'Louis',  autocomplete: 'given-name' },
-    { key: 'age',          question: 'Quel est ton âge ?',               hint: 'EN ANNÉES',               type: 'number', placeholder: '25',     unit: 'ans', min: 10, max: 100 },
-    { key: 'height',       question: 'Quelle est ta taille ?',           hint: 'EN CENTIMÈTRES',          type: 'number', placeholder: '175',    unit: 'cm',  min: 100, max: 250 },
-    { key: 'startWeight',  question: 'Quel est ton poids actuellement ?', hint: 'EN KILOGRAMMES',          type: 'number', placeholder: '80',     unit: 'kg',  min: 20, max: 300 },
-    { key: 'targetWeight', question: 'Quel est ton poids cible ?',       hint: 'EN KILOGRAMMES',          type: 'number', placeholder: '72',     unit: 'kg',  min: 20, max: 300 },
+    { key: 'firstName',    question: "Comment tu t'appelles ?",          hint: 'TON PRÉNOM',              type: 'text',   placeholder: 'Votre prénom',  autocomplete: 'given-name' },
+    { key: 'age',          question: 'Quel est ton âge ?',               hint: 'EN ANNÉES',               type: 'number', placeholder: 'Votre âge',     unit: 'ans', min: 10, max: 100 },
+    { key: 'height',       question: 'Quelle est ta taille ?',           hint: 'EN CENTIMÈTRES',          type: 'number', placeholder: 'Votre taille',    unit: 'cm',  min: 100, max: 250 },
+    { key: 'startWeight',  question: 'Quel est ton poids actuellement ?', hint: 'EN KILOGRAMMES',          type: 'number', placeholder: 'Votre poids',     unit: 'kg',  min: 20, max: 300 },
+    { key: 'targetWeight', question: 'Quel est ton poids cible ?',       hint: 'EN KILOGRAMMES',          type: 'number', placeholder: 'Poids cible',     unit: 'kg',  min: 20, max: 300 },
     { key: 'goal',         question: 'Quel est ton objectif principal ?', hint: 'CHOISIS TON MODE',        type: 'choice',
       choices: [
         { value: 'seche',    label: 'Sèche',         icon: '🔥', desc: 'Perdre de la masse grasse' },
@@ -4139,7 +4139,7 @@
         { value: 'prise',    label: 'Prise de masse', icon: '💪', desc: 'Gagner du muscle et du poids' },
       ]
     },
-    { key: 'kcalTarget',   question: 'Objectif calorique journalier ?',  hint: 'EN KCAL — OPTIONNEL',    type: 'number', placeholder: '2200',   unit: 'kcal', min: 500, max: 10000, optional: true },
+    { key: 'kcalTarget',   question: 'Objectif calorique journalier ?',  hint: 'EN KCAL — OPTIONNEL',    type: 'number', placeholder: 'Votre objectif',   unit: 'kcal', min: 500, max: 10000, optional: true },
   ];
 
   let _fobStep = 0;
@@ -4328,7 +4328,7 @@
     const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     document.getElementById('dailyGreetingDate').textContent = dateStr;
     if (bodyWeights.length) {
-      document.getElementById('dailyWeightInput').placeholder = bodyWeights[bodyWeights.length - 1].kg;
+      document.getElementById('dailyWeightInput').placeholder = bodyWeights[bodyWeights.length - 1].kg || 'Votre poids';
     }
     overlay.style.display = 'flex';
   }
