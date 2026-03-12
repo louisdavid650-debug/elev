@@ -158,6 +158,26 @@
   .add-set { flex: 1; background: none; border: none; border-right: 1px solid var(--border); padding: 12px 8px; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .add-set:hover { color: var(--accent); background: var(--accent-light); }
   .add-set:active { background: var(--accent-light); }
+
+  /* ── Warm-up ── */
+  .ex-card.has-warmup { border-color: rgba(184,134,11,0.3); }
+  .warmup-badge { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); background: var(--gold-light); border: 1px solid rgba(184,134,11,0.25); padding: 1px 7px; border-radius: 1px; animation: wuPulse 2.5s ease infinite; }
+  @keyframes wuPulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  .warmup-sep { display: flex; align-items: center; gap: 8px; padding: 6px 16px 2px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .warmup-sep::after { content:''; flex:1; height:1px; background: rgba(184,134,11,0.25); }
+  .work-sep { display: flex; align-items: center; gap: 8px; padding: 8px 16px 2px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); border-top: 1px solid var(--border); margin-top: 4px; }
+  .work-sep::after { content:''; flex:1; height:1px; background: var(--border); }
+  .set-row.wu-row { background: linear-gradient(90deg, rgba(253,246,227,0.65), transparent); }
+  html.dark .set-row.wu-row { background: linear-gradient(90deg, rgba(184,134,11,0.08), transparent); }
+  .set-n.wu-n { color: var(--gold); font-size: 10px; font-family: 'Geist Mono', monospace; letter-spacing: 0; }
+  .set-inp.wu-inp { background: var(--gold-light); border-color: rgba(184,134,11,0.3); color: #8a6508; }
+  html.dark .set-inp.wu-inp { background: rgba(184,134,11,0.1); color: var(--gold); }
+  .set-prev.wu-prev { color: var(--gold); opacity: 0.7; font-style: italic; font-size: 10px; }
+  .set-tick.wu-tick { border-color: rgba(184,134,11,0.3); background: var(--gold-light); color: var(--gold); font-size: 12px; }
+  html.dark .set-tick.wu-tick { background: rgba(184,134,11,0.1); }
+  .add-set.wu-btn { color: var(--gold); }
+  .add-set.wu-btn:hover { background: var(--gold-light); color: #8a6508; }
+  .add-set.wu-btn.wu-active { background: var(--gold-light); color: #8a6508; }
   @keyframes prFlash { 0%,100% { background: var(--surface); } 50% { background: var(--gold-light); } }
   .pr-flash { animation: prFlash 0.6s ease 2; }
 
@@ -327,7 +347,7 @@
   .goal-detail { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted2); font-family: Geist Mono, monospace; }
   .goal-detail span { color: var(--text); font-size: 11px; }
   .weight-big-display { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
-  .weight-current { font-family: 'Cormorant Garamond', serif; font-size: 46px; font-weight: 300; letter-spacing: -1px; color: var(--text); line-height: 1; }
+  .weight-current { font-family: 'DM Serif Display', serif; font-size: 56px; font-weight: 400; letter-spacing: -2px; color: var(--text); line-height: 1; }
   .weight-unit { font-size: 14px; color: var(--muted); }
   .weight-delta { font-size: 12px; padding: 2px 8px; border-radius: 6px; }
   .weight-delta.up { color: var(--accent2); background: #fdf0ef; }
@@ -2241,11 +2261,11 @@
     return w * r;
   }
   function getPR(exName) {
-    // Retourne la meilleure série toutes séances confondues (max volume = reps × poids)
+    // Retourne la meilleure série toutes séances confondues (max volume = reps × poids) — exclut warmup
     let maxVol = 0, bestSet = null, maxDate = null;
     for (const s of sessions) {
       const ex = s.exercises.find(e => e.name.toLowerCase() === exName.toLowerCase());
-      if (ex) ex.sets.forEach(set => {
+      if (ex) ex.sets.filter(st => !st.warmup).forEach(set => {
         const vol = setVolume(set);
         if (vol > maxVol) { maxVol = vol; bestSet = set; maxDate = s.date; }
       });
@@ -2491,7 +2511,7 @@
       const _isInSS = ex.supersetWith !== undefined && _ssPartnerIdx >= 0;
       const _ssFirstOfPair = _isInSS && ei < _ssPartnerIdx;
       const _connector = _ssFirstOfPair ? '<div class="ss-connector"><span class="ss-connector-label">⇄ superset</span></div>' : '';
-      return _connector + `<div class="ex-card ${_isInSS ? 'ss-card' : ''}" id="excard-${ei}"
+      return _connector + `<div class="ex-card ${_isInSS ? 'ss-card' : ''}${ex.sets.some(s=>s.warmup)?' has-warmup':''}" id="excard-${ei}"
         ondragover="onExDragOver(event)"
         ondragend="onExDragEnd(event)"
         ondrop="onExDrop(event,${ei})">
@@ -2504,7 +2524,7 @@
               ontouchmove="onExTouchMove(event,${ei})"
               ontouchend="onExTouchEnd(event,${ei})">⠿</span>
             <div><div class="ex-name">${ex.name}${_isInSS ? '<span class="ss-badge">SS</span>' : ''}</div>
-            <div class="ex-meta">${ex.muscle?'<span class="ex-muscle-tag">'+ex.muscle+'</span>':''}${pr?'<span class="ex-pr-badge">🏆 PR '+pr.weight+'kg × '+pr.reps+'reps</span>':''}</div></div>
+            <div class="ex-meta">${ex.muscle?'<span class="ex-muscle-tag">'+ex.muscle+'</span>':''}${pr?'<span class="ex-pr-badge">🏆 PR '+pr.weight+'kg × '+pr.reps+'reps</span>':''}${ex.sets.some(s=>s.warmup)?'<span class="warmup-badge">🔥 Échauff.</span>':''}</div></div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:11px;letter-spacing:0.5px;font-family:Geist Mono,monospace;" onclick="openSSPicker(${ei})" title="Superset">⇄</button>
@@ -2512,49 +2532,68 @@
             <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div></div>
         <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div>Dernière</div><div>✓</div></div>
-        ${ex.sets.map((s,si)=>{
-          const prev=lastSets&&lastSets[si]?lastSets[si]:null;
-          const prevW=prev?(prev.w||prev.weight||''):'';
-          const prevR=prev?(prev.r||prev.reps||''):'';
-
-          const _w = parseFloat(s.w||0);
-          const _r = parseFloat(s.r||0);
-          const _vol = _w * (_r || 1);
-          const _pr = getPR(ex.name);
-          const _histBestVol = _pr ? _pr.volume : 0;
-          // Meilleur volume de la session en cours
-          const _sessionBestVol = Math.max(0, ...ex.sets.map(ss => parseFloat(ss.w||0) * (parseFloat(ss.r||0)||1)));
-          // Série avec le meilleur volume dans la session
-          const _lastBestIdx = ex.sets.reduce((best, ss, idx) => {
-            const vol = parseFloat(ss.w||0) * (parseFloat(ss.r||0)||1);
-            const bestVol = parseFloat(ex.sets[best]?.w||0) * (parseFloat(ex.sets[best]?.r||0)||1);
-            return vol >= bestVol ? idx : best;
-          }, 0);
-          const _isTopSet = si === _lastBestIdx && _w > 0 && _r > 0;
-          const _isAllTimePR = _isTopSet && _vol > _histBestVol;
-          const _isSessionBest = _isTopSet && _vol >= _sessionBestVol;
-          const _medal = _isAllTimePR ? '🥇' : '';
-          const _medalHtml = _medal ? '<span class="set-medal">' + _medal + '</span>' : '';
-          return `<div class="set-row ${_isAllTimePR ? 'set-row-pr' : ''}">
-            <div class="set-n">${si+1}</div>
-            <div style="position:relative">
-              <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${si},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
-              ${_pr && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_pr.weight+'<br>kg</span>' : ''}
-            </div>
-            <div style="position:relative">
-              <input class="set-inp" type="number" placeholder="${prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget ? 'padding-right:34px' : ''}"/>
-              ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent);opacity:0.75;pointer-events:none;line-height:1.2;text-align:right;font-family:'Geist Mono',monospace;letter-spacing:0;font-weight:500">${ex.repsTarget}<br><span style="font-size:9px;color:var(--muted)">reps</span></span>` : ''}
-            </div>
-            <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${si})">${s.done?'✓':''}</button>
-              ${_medalHtml}
-            </div>
-            <button onclick="delSet(${ei},${si})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
-          </div>`;
-        }).join('')}
+        ${(() => {
+          const wuSets = ex.sets.filter(s => s.warmup);
+          const workSets = ex.sets.filter(s => !s.warmup);
+          const pctLabels = ['50%','70%','85%'];
+          let html = '';
+          if (wuSets.length) {
+            html += '<div class="warmup-sep">🔥 Échauffement</div>';
+            html += wuSets.map((s, wi) => `<div class="set-row wu-row">
+              <div class="set-n wu-n">W${wi+1}</div>
+              <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+              <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+              <div class="set-prev wu-prev">${pctLabels[wi]||''}<span>× ${s.r||'?'}</span></div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <button class="set-tick wu-tick ${s.done?'done':''}" onclick="tickWU(${ei},${wi})">${s.done?'✓':'·'}</button>
+              </div>
+              <span></span>
+            </div>`).join('');
+            html += '<div class="work-sep">Travail</div>';
+          }
+          html += workSets.map((s, si) => {
+            const realSi = ex.sets.indexOf(s);
+            const prev = lastSets && lastSets[si] ? lastSets[si] : null;
+            const prevW = prev ? (prev.w||prev.weight||'') : '';
+            const prevR = prev ? (prev.r||prev.reps||'') : '';
+            const _w = parseFloat(s.w||0);
+            const _r = parseFloat(s.r||0);
+            const _vol = _w * (_r || 1);
+            const _pr = getPR(ex.name);
+            const _histBestVol = _pr ? _pr.volume : 0;
+            const workOnly = ex.sets.filter(ss => !ss.warmup);
+            const _lastBestIdx = workOnly.reduce((best, ss, idx) => {
+              const vol = parseFloat(ss.w||0) * (parseFloat(ss.r||0)||1);
+              const bestVol = parseFloat(workOnly[best]?.w||0) * (parseFloat(workOnly[best]?.r||0)||1);
+              return vol >= bestVol ? idx : best;
+            }, 0);
+            const _isTopSet = si === _lastBestIdx && _w > 0 && _r > 0;
+            const _isAllTimePR = _isTopSet && _vol > _histBestVol;
+            const _medal = _isAllTimePR ? '🥇' : '';
+            const _medalHtml = _medal ? '<span class="set-medal">' + _medal + '</span>' : '';
+            return `<div class="set-row ${_isAllTimePR ? 'set-row-pr' : ''}">
+              <div class="set-n">${si+1}</div>
+              <div style="position:relative">
+                <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${realSi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+                ${_pr && !_isAllTimePR ? '<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">'+_pr.weight+'<br>kg</span>' : ''}
+              </div>
+              <div style="position:relative">
+                <input class="set-inp" type="number" placeholder="${prevR || '—'}" value="${s.r}" onchange="upd(${ei},${realSi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget ? 'padding-right:34px' : ''}"/>
+                ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent);opacity:0.75;pointer-events:none;line-height:1.2;text-align:right;font-family:'Geist Mono',monospace;letter-spacing:0;font-weight:500">${ex.repsTarget}<br><span style="font-size:9px;color:var(--muted)">reps</span></span>` : ''}
+              </div>
+              <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${realSi})">${s.done?'✓':''}</button>
+                ${_medalHtml}
+              </div>
+              <button onclick="delSet(${ei},${realSi})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
+            </div>`;
+          }).join('');
+          return html;
+        })()}
         <div class="ex-actions-row">
           <button class="add-set" onclick="addSet(${ei})">+ Série</button>
+          <button class="add-set wu-btn${ex.sets.some(s=>s.warmup)?' wu-active':''}" onclick="toggleWarmup(${ei})">${ex.sets.some(s=>s.warmup)?'🔥 Retirer':'🔥 Échauff.'}</button>
           <button class="ex-note-toggle" onclick="toggleExNote(${ei})" id="ex-note-btn-${ei}">${ex.note ? '📝 Note' : '+ Note'}</button>
         </div>
         <textarea class="ex-note-area" id="ex-note-${ei}" placeholder="Note sur cet exercice..." style="display:${ex.note ? 'block' : 'none'}" onchange="updExNote(${ei},this.value)" onblur="updExNote(${ei},this.value)">${ex.note || ''}</textarea>
@@ -2639,10 +2678,64 @@
   function delEx(ei) { exercises.splice(ei,1); renderExercises(); autosaveDraft(); }
   function addSet(ei) { exercises[ei].sets.push({w:'',r:'',done:false}); renderExercises(); autosaveDraft(); }
   function delSet(ei, si) { if (exercises[ei].sets.length <= 1) { showToast('Minimum 1 série'); return; } exercises[ei].sets.splice(si, 1); renderExercises(); autosaveDraft(); }
+
+  function toggleWarmup(ei) {
+    const ex = exercises[ei];
+    const hasWU = ex.sets.some(s => s.warmup);
+    if (hasWU) {
+      // Retirer toutes les séries warmup
+      ex.sets = ex.sets.filter(s => !s.warmup);
+      showToast('Échauffement retiré');
+    } else {
+      // Trouver le poids de référence : 1er set non-warmup avec poids, sinon historique
+      let refW = 0;
+      const workSets = ex.sets.filter(s => !s.warmup);
+      const firstWithW = workSets.find(s => parseFloat(s.w) > 0);
+      if (firstWithW) {
+        refW = parseFloat(firstWithW.w);
+      } else {
+        const lastData = getLastSessionData(ex.name);
+        if (lastData) {
+          const best = lastData.reduce((max, s) => parseFloat(s.w||0) > max ? parseFloat(s.w||0) : max, 0);
+          refW = best;
+        }
+      }
+      // Calcul des 3 séries (arrondi à 0.25 kg le plus proche)
+      const round = v => Math.round(v * 4) / 4;
+      const wu = [
+        { pct: 0.50, reps: 8 },
+        { pct: 0.70, reps: 5 },
+        { pct: 0.85, reps: 3 },
+      ].map(({ pct, reps }) => ({
+        w: refW > 0 ? String(round(refW * pct)) : '',
+        r: String(reps),
+        done: false,
+        warmup: true
+      }));
+      // Insérer les séries warmup au début
+      ex.sets = [...wu, ...ex.sets];
+      showToast('🔥 Échauffement ajouté');
+    }
+    renderExercises();
+    autosaveDraft();
+  }
   function upd(ei,si,f,v) {
     exercises[ei].sets[si][f]=v;
     autosaveDraft();
     if (f==='w'&&v) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);if(navigator.vibrate)navigator.vibrate([80,40,120]);} }
+  }
+  function updWU(ei, wi, f, v) {
+    // wi = index dans les séries warmup uniquement
+    const wuSets = exercises[ei].sets.filter(s => s.warmup);
+    if (wuSets[wi]) { wuSets[wi][f] = v; autosaveDraft(); }
+  }
+  function tickWU(ei, wi) {
+    const wuSets = exercises[ei].sets.filter(s => s.warmup);
+    if (wuSets[wi]) {
+      wuSets[wi].done = !wuSets[wi].done;
+      // Pas de timer repos pour le warm-up
+      renderExercises(); autosaveDraft();
+    }
   }
   function tick(ei,si) {
     exercises[ei].sets[si].done = !exercises[ei].sets[si].done;
@@ -5562,10 +5655,10 @@
     const h = d.getHours();
     document.getElementById('recapTitle').textContent = h < 12 ? 'Matinée accomplie' : h < 18 ? 'Séance terminée' : 'Soirée productive';
 
-    // Stats
+    // Stats — exclure les séries warmup
     const dur = sessionData.duration > 0 ? fmt(sessionData.duration) : '—';
-    const totalSets = sessionData.exercises.reduce((a, e) => a + e.sets.filter(s => s.done || s.w).length, 0);
-    const totalVol = sessionData.exercises.reduce((a, e) => a + e.sets.reduce((b, s) => {
+    const totalSets = sessionData.exercises.reduce((a, e) => a + e.sets.filter(s => !s.warmup && (s.done || s.w)).length, 0);
+    const totalVol = sessionData.exercises.reduce((a, e) => a + e.sets.filter(s => !s.warmup).reduce((b, s) => {
       const w = parseFloat(s.w||0), r = parseFloat(s.r||0);
       return b + (w * r);
     }, 0), 0);
@@ -5575,17 +5668,17 @@
       <div class="recap-stat"><div class="recap-stat-val">${totalVol > 0 ? Math.round(totalVol) : '—'}</div><div class="recap-stat-lbl">Volume kg</div></div>
     `;
 
-    // PRs battus
+    // PRs battus — exclure les séries warmup
     const newPRs = [];
     sessionData.exercises.forEach(ex => {
-      ex.sets.forEach(s => {
+      ex.sets.filter(s => !s.warmup).forEach(s => {
         const w = parseFloat(s.w||0);
         if (w > 0) {
           const oldSessions = sessions.filter(sess => sess.id !== sessionData.id);
           let prevMax = 0;
           oldSessions.forEach(sess => {
             const e = sess.exercises.find(e => e.name === ex.name);
-            if (e) e.sets.forEach(set => { const sw = parseFloat(set.w||0); if (sw > prevMax) prevMax = sw; });
+            if (e) e.sets.filter(st => !st.warmup).forEach(set => { const sw = parseFloat(set.w||0); if (sw > prevMax) prevMax = sw; });
           });
           if (w > prevMax && !newPRs.find(p => p.name === ex.name)) {
             newPRs.push({ name: ex.name, weight: w });
@@ -5606,7 +5699,8 @@
     // Exercices
     document.getElementById('recapExercises').innerHTML = sessionData.exercises.map(function(ex) {
       const muscleBadge = ex.muscle ? ' <span style="font-size:11px;color:var(--muted)">' + ex.muscle + '</span>' : '';
-      const setsHtml = ex.sets.map(function(s, i) {
+      const workSets = ex.sets.filter(s => !s.warmup);
+      const setsHtml = workSets.map(function(s, i) {
         const w = s.w||s.weight||'—'; const r = s.r||s.reps||'—';
         return 'Série ' + (i+1) + ' · ' + w + 'kg × ' + r + ' reps';
       }).join('  ·  ');
