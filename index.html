@@ -296,9 +296,9 @@
   /* ── Daily greeting overlay ── */
   .daily-overlay { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; }
   .daily-overlay { background: var(--bg); }
-  .daily-greeting-name { font-family: 'Cormorant Garamond', serif; font-size: 13px; letter-spacing: 5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .daily-greeting-title { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--text); line-height: 1.2; margin-bottom: 10px; }
-  .daily-greeting-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-bottom: 48px; }
+  .daily-greeting-name { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 4px; letter-spacing: 2px; }
+  .daily-greeting-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; font-style: italic; color: var(--muted); line-height: 1.4; margin-bottom: 8px; }
+  .daily-greeting-sub { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-bottom: 48px; }
   .daily-weight-row { display: flex; gap: 10px; width: 100%; max-width: 320px; margin-bottom: 16px; }
   .daily-weight-inp { flex: 1; background: var(--surface); border: none; border-bottom: 2px solid var(--border2); padding: 12px 8px; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--text); outline: none; text-align: center; border-radius: 0; }
   .daily-weight-inp:focus { border-bottom-color: var(--accent); }
@@ -706,8 +706,8 @@
 
 <!-- ══ DAILY GREETING OVERLAY ══ -->
 <div id="dailyGreetingOverlay" class="daily-overlay" style="display:none">
-  <div class="daily-greeting-name" id="dailyGreetingName">BONJOUR</div>
-  <div class="daily-greeting-title">Comment tu<br>te sens aujourd'hui ?</div>
+  <div class="daily-greeting-name" id="dailyGreetingName">Bonjour.</div>
+  <div class="daily-greeting-title">Comment tu te sens aujourd'hui ?</div>
   <div class="daily-greeting-sub" id="dailyGreetingDate"></div>
   <div class="daily-weight-row">
     <input class="daily-weight-inp" id="dailyWeightInput" type="number" step="0.1" placeholder="—" min="20" max="300"/>
@@ -4278,7 +4278,7 @@
     const overlay = document.getElementById('dailyGreetingOverlay');
     if (!overlay) return;
     const name = profile?.firstName || '';
-    document.getElementById('dailyGreetingName').textContent = name ? 'BONJOUR ' + name.toUpperCase() : 'BONJOUR';
+    document.getElementById('dailyGreetingName').textContent = name ? 'Bonjour, ' + name + '.' : 'Bonjour.';
     const dateStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     document.getElementById('dailyGreetingDate').textContent = dateStr;
     if (bodyWeights.length) {
@@ -4289,13 +4289,13 @@
 
   async function closeDailyGreeting() {
     const today = new Date().toISOString().split('T')[0];
-    // Sauvegarder dans localStorage (immédiat, offline)
     localStorage.setItem('elev_daily_greeting', today);
-    // Sauvegarder dans le profil Supabase (sync multi-appareils)
     const profile = getUserProfile() || {};
     profile.lastDailyGreeting = today;
     await saveUserProfile(profile);
     document.getElementById('dailyGreetingOverlay').style.display = 'none';
+    switchTab('home');
+    renderHome();
   }
 
   async function saveDailyWeight() {
