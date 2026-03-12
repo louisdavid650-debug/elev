@@ -4581,7 +4581,7 @@
       const exCount = (nextRoutine.exercises || []).length;
       document.getElementById('homeNextMeta').textContent = (nextDayLabel ? nextDayLabel + ' · ' : '') + exCount + ' exercice' + (exCount > 1 ? 's' : '');
       const muscles = [...new Set((nextRoutine.exercises || []).map(e => e.muscle).filter(Boolean))].slice(0, 4);
-      document.getElementById('homeNextMuscles').innerHTML = muscles.map(m => `<span class="rpc-chip" style="background:rgba(44,95,74,0.25);border-color:rgba(44,95,74,0.35);color:#7EC89A">${m}</span>`).join('');
+      document.getElementById('homeNextMuscles').innerHTML = muscles.map(m => `<span class="rpc-chip" style="background:rgba(44,95,74,0.18);border-color:rgba(44,95,74,0.45);color:var(--accent)">${m}</span>`).join('');
       document.getElementById('homeNextSession').dataset.routineId = nextRoutine.id;
     } else {
       document.getElementById('homeNextName').textContent = 'Aucun programme actif';
