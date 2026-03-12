@@ -15,7 +15,17 @@
 <script>
   (function(){
     var d = localStorage.getItem('elev_dark');
-    if (d === '1') document.documentElement.classList.add('dark');
+    if (d === '1') {
+      document.documentElement.classList.add('dark');
+      // Met à jour le meta theme-color avant le premier paint
+      var metas = document.getElementsByTagName('meta');
+      for (var i = 0; i < metas.length; i++) {
+        if (metas[i].id === 'themeColorActive') {
+          metas[i].content = '#0D0D0D';
+          break;
+        }
+      }
+    }
   })();
 </script>
 <title>Élev</title>
@@ -65,8 +75,6 @@
     --warm: #141412;
     --card-shadow: 0 2px 12px rgba(0,0,0,0.25), 0 1px 3px rgba(0,0,0,0.2);
   }
-  html { background: #F0EAE1; }
-  html.dark { background: #0D0D0D; }
   html.dark header svg text { fill: var(--text); }
   html.dark header svg line { stroke: var(--text); }
   html.dark body { color: var(--text); }
