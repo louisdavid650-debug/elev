@@ -12,6 +12,14 @@
 <meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme: dark)" id="themeColorDark">
 <meta name="theme-color" content="#F0EAE1" id="themeColorActive">
 <meta name="apple-mobile-web-app-title" content="Élev">
+<script>
+  (function(){
+    var d = localStorage.getItem('elev_dark');
+    var bg = d === '1' ? '#0D0D0D' : '#F0EAE1';
+    document.documentElement.style.background = bg;
+    if (d === '1') document.documentElement.classList.add('dark');
+  })();
+</script>
 <title>Élev</title>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjE4IiBmaWxsPSIjZjdmNWYyIi8+PHRleHQgeD0iNTAiIHk9IjcyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI1NiIgZm9udC13ZWlnaHQ9IjMwMCIgZmlsbD0iIzFhMWExYSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Serif+Display:ital@0;1&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -5572,7 +5580,10 @@
     const btn = document.getElementById('darkToggleBtn');
     if (btn) btn.textContent = isDark ? '☀' : '☽';
     const meta = document.getElementById('themeColorActive');
-    if (meta) meta.content = isDark ? '#0D0D0D' : '#F0EAE1';
+    const bg = isDark ? '#0D0D0D' : '#F0EAE1';
+    if (meta) meta.content = bg;
+    document.documentElement.style.background = bg;
+    document.body.style.background = bg;
   }
   function initDark() {
     const saved = localStorage.getItem('elev_dark');
@@ -5582,11 +5593,15 @@
       if (btn) btn.textContent = '☀';
       const meta = document.getElementById('themeColorActive');
       if (meta) meta.content = '#0D0D0D';
+      document.documentElement.style.background = '#0D0D0D';
+      document.body.style.background = '#0D0D0D';
     } else {
       document.documentElement.classList.remove('dark');
       if (btn) btn.textContent = '☽';
       const meta = document.getElementById('themeColorActive');
-      if (meta) meta.content = '#F7F5F2';
+      if (meta) meta.content = '#F0EAE1';
+      document.documentElement.style.background = '#F0EAE1';
+      document.body.style.background = '#F0EAE1';
     }
   }
 
