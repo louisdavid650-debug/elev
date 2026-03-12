@@ -143,14 +143,14 @@
   .ex-pr-badge { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); background: var(--gold-light); border: 1px solid rgba(184,134,11,0.2); padding: 1px 6px; border-radius: 1px; }
   .ex-del { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 2px; transition: all 0.15s; }
   .ex-del:hover { color: var(--accent2); background: #fdf0ef; }
-  .sets-head { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px; gap: 6px; padding: 8px 16px 4px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted2); }
+  .sets-head { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px; gap: 6px; padding: 8px 16px 4px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
   .set-row { display: grid; grid-template-columns: 22px 1fr 1fr 60px 32px 20px; gap: 6px; padding: 4px 16px; align-items: center; }
   .set-n { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--muted2); text-align: center; }
   .set-inp { background: var(--warm); border: 1px solid var(--border); border-radius: 2px; padding: 6px 4px; color: var(--text); font-family: 'Geist Mono', monospace; font-size: 13px; text-align: center; width: 100%; transition: border-color 0.15s; -moz-appearance: textfield; }
   .set-inp::-webkit-outer-spin-button, .set-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
   .set-inp:focus { outline: none; border-color: var(--accent); background: var(--surface); }
-  .set-prev { font-size: 10px; color: var(--muted2); text-align: center; line-height: 1.2; }
-  .set-prev span { display: block; font-size: 9px; color: var(--muted2); }
+  .set-prev { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.3; font-family: 'Geist Mono', monospace; }
+  .set-prev span { display: block; font-size: 11px; color: var(--muted); }
   .set-tick { width: 26px; height: 26px; border-radius: 2px; border: 1px solid var(--border2); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; margin: auto; color: transparent; }
   .set-tick.done { background: var(--accent); border-color: var(--accent); color: #fff; }
   .ex-actions-row { display: flex; gap: 0; border-top: 1px solid var(--border); }
@@ -2507,7 +2507,7 @@
             <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button>
             <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div></div>
-        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:8px">Dernière</div><div>✓</div></div>
+        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div>Dernière</div><div>✓</div></div>
         ${ex.sets.map((s,si)=>{
           const prev=lastSets&&lastSets[si]?lastSets[si]:null;
           const prevW=prev?(prev.w||prev.weight||''):'';
@@ -2539,7 +2539,7 @@
             </div>
             <div style="position:relative">
               <input class="set-inp" type="number" placeholder="${prevR || '—'}" value="${s.r}" onchange="upd(${ei},${si},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget ? 'padding-right:34px' : ''}"/>
-              ${ex.repsTarget ? `<span style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--accent);opacity:0.6;pointer-events:none;line-height:1.1;text-align:right;font-family:'Geist Mono',monospace;letter-spacing:0">${ex.repsTarget}<br><span style="font-size:7px;color:var(--muted)">reps</span></span>` : ''}
+              ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent);opacity:0.75;pointer-events:none;line-height:1.2;text-align:right;font-family:'Geist Mono',monospace;letter-spacing:0;font-weight:500">${ex.repsTarget}<br><span style="font-size:9px;color:var(--muted)">reps</span></span>` : ''}
             </div>
             <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
             <div style="display:flex;align-items:center;gap:4px">
