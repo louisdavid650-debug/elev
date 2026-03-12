@@ -823,7 +823,7 @@
     <div class="home-dashboard">
       <!-- Poids & Calories -->
       <div class="home-snap">
-        <div class="home-snap-card" onclick="switchTab('poids')">
+        <div class="home-snap-card" onclick="switchTab('poids'); setTimeout(()=>switchEntryTab('weight'),50)">
           <div class="home-snap-icon">⚖️</div>
           <div class="home-snap-label">Poids du jour</div>
           <div>
