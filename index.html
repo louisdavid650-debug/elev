@@ -8,8 +8,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#F0EAE1" media="(prefers-color-scheme: light)" id="themeColorLight">
-<meta name="theme-color" content="#0D0D0D" media="(prefers-color-scheme: dark)" id="themeColorDark">
 <meta name="theme-color" content="#F0EAE1" id="themeColorActive">
 <meta name="apple-mobile-web-app-title" content="Élev">
 <script>
@@ -17,14 +15,7 @@
     var d = localStorage.getItem('elev_dark');
     if (d === '1') {
       document.documentElement.classList.add('dark');
-      // Met à jour le meta theme-color avant le premier paint
-      var metas = document.getElementsByTagName('meta');
-      for (var i = 0; i < metas.length; i++) {
-        if (metas[i].id === 'themeColorActive') {
-          metas[i].content = '#0D0D0D';
-          break;
-        }
-      }
+      document.querySelector('meta[id="themeColorActive"]').content = '#0D0D0D';
     }
   })();
 </script>
