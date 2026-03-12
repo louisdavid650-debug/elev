@@ -116,14 +116,14 @@
   .chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
 
   /* Routine picker */
-  .routine-pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.18s; animation: fadeUp 0.2s ease; margin-bottom: 10px; }
+  .routine-pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer; transition: all 0.18s; animation: fadeUp 0.2s ease; margin-bottom: 10px; }
   .routine-pick-card:hover { border-color: var(--accent); background: var(--accent-light); }
   .routine-pick-card.loaded { border-color: var(--accent); background: var(--accent-light); }
   .rpc-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; }
   .rpc-exs { font-size: 9px; color: var(--muted); margin-top: 5px; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Geist Mono', monospace; }
-  .rpc-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .rpc-muscles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
   .rpc-chip { background: var(--terra-light); border: 1px solid var(--terra-border); color: var(--terra); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 10px; border-radius: 20px; font-family: 'Geist Mono', monospace; line-height: 1; display: inline-flex; align-items: center; height: 24px; box-sizing: border-box; font-weight: 500; }
-  .rpc-arrow { font-size: 18px; color: var(--muted); font-weight: 300; }
+  .rpc-arrow { font-size: 18px; color: var(--muted); font-weight: 300; padding-top: 2px; flex-shrink: 0; }
   .routine-pick-card:hover .rpc-arrow, .routine-pick-card.loaded .rpc-arrow { color: var(--accent); }
   .no-routine-hint { font-size: 11px; color: var(--muted2); line-height: 1.7; padding: 14px 16px; background: var(--surface); border: 1px dashed var(--border2); border-radius: 4px; text-align: center; }
   .no-routine-hint span { color: var(--accent); cursor: pointer; text-decoration: underline; }
@@ -2306,7 +2306,7 @@
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isLoaded = loadedRoutineId === r.id;
       return `<div class="routine-pick-card ${isLoaded?'loaded':''}" ontouchstart="_rpcTouchStart(event)" ontouchend="_rpcTouchEnd(event,${r.id})" onclick="loadRoutine(${r.id})">
-        <div><div class="rpc-name">${r.name}</div><div class="rpc-exs">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
+        <div style="flex:1;min-width:0"><div class="rpc-name">${r.name}</div><div class="rpc-exs">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
         ${muscles.length?`<div class="rpc-muscles">${muscles.map(m=>`<span class="rpc-chip">${m}</span>`).join('')}</div>`:''}</div>
         <div class="rpc-arrow">${isLoaded?'✓':'→'}</div></div>`;
     }).join('');
