@@ -149,8 +149,10 @@
   .set-prev span { display: block; font-size: 9px; color: var(--muted2); }
   .set-tick { width: 26px; height: 26px; border-radius: 2px; border: 1px solid var(--border2); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; margin: auto; color: transparent; }
   .set-tick.done { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .add-set { width: 100%; background: none; border: none; border-top: 1px solid var(--border); padding: 8px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted2); cursor: pointer; transition: all 0.15s; }
+  .ex-actions-row { display: flex; gap: 0; border-top: 1px solid var(--border); }
+  .add-set { flex: 1; background: none; border: none; border-right: 1px solid var(--border); padding: 12px 8px; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .add-set:hover { color: var(--accent); background: var(--accent-light); }
+  .add-set:active { background: var(--accent-light); }
   @keyframes prFlash { 0%,100% { background: var(--surface); } 50% { background: var(--gold-light); } }
   .pr-flash { animation: prFlash 0.6s ease 2; }
 
@@ -527,8 +529,9 @@
   .ex-card.ex-drag-over { border-color: var(--accent); border-style: dashed; }
 
   /* ── Notes exercice ── */
-  .ex-note-toggle { background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 8px;letter-spacing:1px;font-family:Geist Mono,monospace;text-align:left; }
-  .ex-note-toggle:hover { color:var(--accent); }
+  .ex-note-toggle { flex: 1; background: none; border: none; color: var(--muted); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; padding: 12px 8px; font-family: 'Geist Mono', monospace; text-align: center; transition: all 0.15s; }
+  .ex-note-toggle:hover { color: var(--accent); background: var(--accent-light); }
+  .ex-note-toggle:active { background: var(--accent-light); }
   .ex-note-area { width:100%;background:var(--warm);border:none;border-top:1px solid var(--border);padding:10px 14px;font-family:Cormorant Garamond,serif;font-size:14px;font-style:italic;color:var(--text);resize:none;min-height:52px;line-height:1.5;box-sizing:border-box; }
   .ex-note-area:focus { outline:none;background:#f0ece6; }
   /* ── Récap modal ── */
@@ -2524,8 +2527,10 @@
             <button onclick="delSet(${ei},${si})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
           </div>`;
         }).join('')}
-        <button class="add-set" onclick="addSet(${ei})">+ série</button>
-        <button class="ex-note-toggle" onclick="toggleExNote(${ei})" id="ex-note-btn-${ei}">${ex.note ? '📝 ' + ex.note.substring(0,20) + (ex.note.length>20?'...':'') : '+ Note'}</button>
+        <div class="ex-actions-row">
+          <button class="add-set" onclick="addSet(${ei})">+ Série</button>
+          <button class="ex-note-toggle" onclick="toggleExNote(${ei})" id="ex-note-btn-${ei}">${ex.note ? '📝 Note' : '+ Note'}</button>
+        </div>
         <textarea class="ex-note-area" id="ex-note-${ei}" placeholder="Note sur cet exercice..." style="display:${ex.note ? 'block' : 'none'}" onchange="updExNote(${ei},this.value)" onblur="updExNote(${ei},this.value)">${ex.note || ''}</textarea>
       </div>`;
     }).join('');
