@@ -754,11 +754,11 @@
   @keyframes set-validate { 0%{background:rgba(44,95,74,0.18)} 100%{background:transparent} }
   .set-row.validating { animation: set-validate 0.6s ease-out forwards; }
   /* ── Nutrition ── */
-  .nutri-macro-row { display:flex;align-items:center;gap:8px;margin-bottom:7px; }
-  .nutri-macro-name { font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;width:66px;flex-shrink:0;letter-spacing:0.3px; }
-  .nutri-bar-wrap { flex:1;height:5px;background:var(--border2);border-radius:3px;overflow:hidden; }
-  .nutri-bar { height:100%;border-radius:3px;width:0%;transition:width 0.5s ease; }
-  .nutri-macro-val { font-size:10px;font-weight:500;color:var(--text);width:36px;text-align:right;font-family:'Geist Mono',monospace; }
+  .nutri-macro-row { display:flex;align-items:center;gap:8px;margin-bottom:10px; }
+  .nutri-macro-name { font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;width:66px;flex-shrink:0;letter-spacing:0.3px; }
+  .nutri-bar-wrap { flex:1;height:7px;background:var(--border2);border-radius:4px;overflow:hidden; }
+  .nutri-bar { height:100%;border-radius:4px;width:0%;transition:width 0.5s ease; }
+  .nutri-macro-val { font-size:11px;font-weight:500;color:var(--text);width:36px;text-align:right;font-family:'Geist Mono',monospace; }
   .nutri-meal-block { margin-bottom:14px; }
   .nutri-accordion { margin-bottom:14px !important; }
   .nutri-meal-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px; }
@@ -1503,7 +1503,7 @@
         </div>
       </div>
     </div>
-    <div id="nutriJournal"></div>
+    <div id="nutriJournal" style="margin-top:20px"></div>
   </div>
 
   <!-- ══ OVERLAY RÉGLAGES NUTRITION ══ -->
