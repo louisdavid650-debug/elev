@@ -6041,28 +6041,51 @@
     document.getElementById('sessionFsName').textContent = name;
     document.getElementById('minibarName').textContent = name;
 
-    // Corps = copie du contenu de la séance (muscles + exercices + notes)
     const body = document.getElementById('sessionFsBody');
 
-    // Groupes musculaires
-    const muscles = [...document.querySelectorAll('.chip.on')].map(c => c.textContent);
+    // Groupes musculaires (depuis les chips cochés OU depuis exercises)
+    const selectedMuscles = [...document.querySelectorAll('.chip.on')].map(c => c.textContent);
     const muscleChips = ['Pectoraux','Dos','Épaules','Biceps','Triceps','Jambes','Abdos','Fessiers'];
     const muscleHtml = `
       <div style="margin-bottom:18px">
         <div class="label" style="margin-bottom:8px">Groupes musculaires</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${muscleChips.map(m => `<div class="chip ${muscles.includes(m)?'on':''}" onclick="fsMuscleToggle(this,'${m}')">${m}</div>`).join('')}
+          ${muscleChips.map(m => `<div class="chip ${selectedMuscles.includes(m)?'on':''}" onclick="fsMuscleToggle(this,'${m}')">${m}</div>`).join('')}
         </div>
       </div>`;
 
-    // Exercices (réutiliser le même HTML que renderExercises)
-    const exerciseHtml = document.getElementById('exerciseList')?.innerHTML || '';
+    // Exercices construits directement depuis le state `exercises`
+    const exHtml = exercises.length ? exercises.map((ex, ei) => {
+      const workSets = ex.sets.filter(s => !s.warmup);
+      const warmSets = ex.sets.filter(s => s.warmup);
+      const setsHtml = ex.sets.map((s, si) => {
+        const isWarm = s.warmup;
+        const isDone = s.done;
+        return `<div class="set-row ${isDone?'done':''} ${isWarm?'warmup-set':''}" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted);width:22px;text-align:center">${isWarm?'W':(si - warmSets.length + 1)}</div>
+          <input class="inp" type="number" placeholder="kg" value="${s.w||''}" step="0.5" style="flex:1;text-align:center;padding:7px 4px"
+            oninput="exercises[${ei}].sets[${si}].w=this.value;autosaveDraft()"/>
+          <input class="inp" type="number" placeholder="reps" value="${s.r||''}" style="flex:1;text-align:center;padding:7px 4px"
+            oninput="exercises[${ei}].sets[${si}].r=this.value;autosaveDraft()"/>
+          <button onclick="upd(${ei},${si})" style="width:32px;height:32px;border-radius:50%;border:2px solid ${isDone?'var(--accent)':'var(--border2)'};background:${isDone?'var(--accent)':'none'};color:${isDone?'#fff':'var(--muted)'};cursor:pointer;font-size:13px;flex-shrink:0">✓</button>
+        </div>`;
+      }).join('');
+      return `<div class="ex-card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px 10px ${ex.sets.length?'0 0':'10px 10px'}">
+          <div>
+            <div style="font-weight:600;font-size:15px;color:var(--text)">${ex.name}</div>
+            ${ex.muscle?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${ex.muscle}</div>`:''}
+          </div>
+          <div style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted)">${workSets.length} série${workSets.length>1?'s':''}</div>
+        </div>
+        ${ex.sets.length?`<div style="background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:0 14px 8px">${setsHtml}</div>`:''}
+      </div>`;
+    }).join('') : `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucun exercice — ajoute-en un ci-dessous</div>`;
 
-    // Bouton ajouter exercice + notes + actions
     body.innerHTML = muscleHtml + `
       <div class="label" style="margin-bottom:8px">Exercices</div>
-      <div class="exercise-list" id="exerciseListFs">${exerciseHtml}</div>
-      <div class="add-form" style="margin-bottom:18px">
+      <div id="exerciseListFs">${exHtml}</div>
+      <div class="add-form" style="margin-bottom:18px;margin-top:12px">
         <button id="addExToggleBtnFs" class="btn-add" style="width:100%" onclick="toggleAddExFormFs()">+ Ajouter un exercice</button>
         <div id="addExFormFs" style="display:none;margin-top:12px">
           <div class="form-row">
@@ -6178,14 +6201,12 @@
     _origSaveSession();
   }
 
-  // Re-render les exercices dans le FS quand renderExercises est appelé
+  // Re-render le FS quand renderExercises est appelé
   const _origRenderExercises = renderExercises;
   function renderExercises() {
     _origRenderExercises();
     if (_sessionFsOpen) {
-      const fsBody = document.getElementById('exerciseListFs');
-      const mainList = document.getElementById('exerciseList');
-      if (fsBody && mainList) fsBody.innerHTML = mainList.innerHTML;
+      renderSessionFs();
       syncFsTimer();
     }
     if (_sessionMinibarVisible) syncMinibarTimer();
