@@ -188,7 +188,7 @@
   /* Forms */
   .add-form { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 18px; margin-bottom: 22px; box-shadow: var(--card-shadow); }
   .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-  .inp { flex: 1; background: var(--warm); border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; color: var(--text); font-family: 'Geist Mono', monospace; font-size: 12px; transition: border-color 0.15s; touch-action: auto; box-sizing: border-box; max-width: 100%; }
+  .inp { flex: 1; background: var(--warm); border: 1px solid var(--border); border-radius: 6px; padding: 9px 8px; color: var(--text); font-family: 'Geist Mono', monospace; font-size: 11px; transition: border-color 0.15s; touch-action: auto; box-sizing: border-box; max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .inp:focus { outline: none; border-color: var(--accent); background: var(--surface); }
   .inp::placeholder { color: var(--muted2); }
   input:-webkit-autofill,
@@ -749,10 +749,10 @@
     <div class="daily-greeting-sub" id="dailyGreetingDate"></div>
   </div>
   <div class="daily-weight-row">
-    <input class="daily-weight-inp" id="dailyWeightInput" type="number" step="0.1" placeholder="Votre poids" min="20" max="300"/>
+    <input class="daily-weight-inp" id="dailyWeightInput" type="number" step="0.1" placeholder="Votre poids" min="20" max="300" onkeydown="if(event.key==='Enter'){this.blur();saveDailyWeight();}"/>
     <div class="daily-weight-unit">KG</div>
   </div>
-  <button class="daily-save-btn" onclick="saveDailyWeight()">Enregistrer mon poids →</button>
+  <button class="daily-save-btn" id="dailySaveBtn">Enregistrer mon poids →</button>
   <button class="daily-skip-btn" onclick="closeDailyGreeting()">Passer pour aujourd'hui</button>
 </div>
 
@@ -4427,6 +4427,13 @@
   window.fobBack = fobBack;
   window.fobSkip = fobSkip;
 
+  // Daily greeting buttons — addEventListener plus fiable que onclick sur iOS PWA
+  document.getElementById('dailySaveBtn').addEventListener('click', saveDailyWeight);
+  document.getElementById('dailySaveBtn').addEventListener('touchend', function(e) {
+    e.preventDefault();
+    saveDailyWeight();
+  }, { passive: false });
+
     // ── Daily greeting ──
   // Daily greeting — date stockée dans le profil Supabase pour sync multi-appareils
 
@@ -4467,7 +4474,9 @@
   }
 
   async function saveDailyWeight() {
-    const val = parseFloat(document.getElementById('dailyWeightInput').value);
+    const inp = document.getElementById('dailyWeightInput');
+    inp?.blur();
+    const val = parseFloat(inp?.value);
     if (val && val > 20 && val < 300) {
       const today = new Date().toISOString().split('T')[0];
       const entry = { date: today, kg: val };
