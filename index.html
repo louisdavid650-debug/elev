@@ -5634,31 +5634,52 @@
     const body = document.getElementById('nutriAddBody');
     if (!body) return;
     const q = document.getElementById('nutriSearch')?.value.trim();
-    if (q && q.length >= 2) return; // résultats gérés par la recherche
+    if (q && q.length >= 2) return;
 
-    // Aliments récents du même repas (hier)
     const recent = getYesterdayNutriByMeal(_nutriActiveMeal);
     const todayNames = new Set(getTodayNutri().filter(e => e.meal === _nutriActiveMeal).map(e => e.name));
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 
-    if (!recent.length) {
-      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'DM Serif Display',serif;font-style:italic">Recherche un aliment ci-dessus<br>ou scanne un code-barres.</div>`;
-      return;
-    }
+    const SUGGESTIONS = {
+      'Petit-déjeuner': ['flocons','yaourt','oeuf','lait','pain','banane','skyr'],
+      'Déjeuner': ['poulet','riz','pates','thon','saumon','lentilles','boeuf'],
+      'En-cas': ['amandes','banane','pomme','whey','barre','yaourt','noix'],
+      'Diner': ['saumon','boeuf','poulet','pates','riz','tofu'],
+    };
+    const kwList = SUGGESTIONS[_nutriActiveMeal] || [];
+    const suggestions = kwList
+      .flatMap(kw => NUTRI_LOCAL.filter(f => norm(f.name).includes(kw)).slice(0,1))
+      .slice(0, 6);
 
-    body.innerHTML = `
-      <div class="label" style="margin:12px 0 8px">Repris d'hier</div>
-      <div class="card" style="padding:4px 14px">
-        ${recent.map(e => {
+    let html = '';
+    if (recent.length) {
+      html += `<div class="label" style="margin:12px 0 8px">Repris d'hier</div><div class="card" style="padding:4px 14px;margin-bottom:12px">` +
+        recent.map(e => {
           const already = todayNames.has(e.name);
           return `<div class="nutri-search-item">
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
               <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${e.qty}g · ${e.kcal} kcal · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
             </div>
-            <button class="nutri-add-btn" style="${already ? 'background:var(--border2);' : ''}" onclick="reuseNutriEntry(${e.id})" title="${already ? 'Déjà ajouté' : 'Ajouter'}">${already ? '✓' : '+'}</button>
+            <button class="nutri-add-btn" style="${already?'background:var(--border2);':''}" onclick="reuseNutriEntry(${e.id})">${already?'✓':'+'}</button>
           </div>`;
-        }).join('')}
-      </div>`;
+        }).join('') + `</div>`;
+    }
+    if (suggestions.length) {
+      html += `<div class="label" style="margin:4px 0 8px">Suggestions</div><div class="card" style="padding:4px 14px">` +
+        suggestions.map(f => {
+          const enc = encodeURIComponent(f.name);
+          return `<div class="nutri-search-item">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+            </div>
+            <button class="nutri-add-btn" onclick="openNutriQtyModal('${enc}',${f.kcal},${f.prot},${f.gluc},${f.lip})">+</button>
+          </div>`;
+        }).join('') + `</div>`;
+    }
+    if (!html) html = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-style:italic">Recherche un aliment ci-dessus.</div>`;
+    body.innerHTML = html;
   }
 
   async function reuseNutriEntry(sourceId) {
@@ -5694,11 +5715,13 @@
     const body = document.getElementById('nutriAddBody');
     if (!body || !q || q.length < 2) return;
 
-    // 1. Résultats locaux immédiats
-    const qLow = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const localMatches = NUTRI_LOCAL.filter(f =>
-      f.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(qLow)
-    );
+    // Recherche par mots-clés — chaque mot doit être présent (ordre libre)
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const words = norm(q).split(/\s+/).filter(w => w.length > 1);
+    const localMatches = NUTRI_LOCAL.filter(f => {
+      const n = norm(f.name);
+      return words.every(w => n.includes(w));
+    }).slice(0, 15);
 
     const renderResults = (items, fromApi) => {
       if (!items.length) {
