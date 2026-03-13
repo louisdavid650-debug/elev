@@ -1484,14 +1484,26 @@
         </div>
       </div>
     </div>
-    <div class="label" style="margin-top:4px">Ajouter un aliment</div>
-    <div style="position:relative;margin-bottom:10px">
-      <input class="inp" id="nutriSearch" placeholder="Rechercher un aliment…" oninput="nutriSearchDebounce()" autocomplete="off" style="width:100%;padding-left:36px;padding-right:44px"/>
-      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none">⌕</span>
-      <button onclick="startBarcodeScanner()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);padding:4px" title="Scanner code-barres">▦</button>
-    </div>
-    <div id="nutriSearchResults" style="display:none;margin-bottom:12px"></div>
     <div id="nutriJournal"></div>
+  </div>
+
+  <!-- OVERLAY AJOUT ALIMENT -->
+  <div id="nutriAddOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:960;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <button onclick="closeNutriAdd()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:0;line-height:1">&#8592;</button>
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="nutriAddMealTitle">Ajouter</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace" id="nutriAddMealSub"></div>
+      </div>
+    </div>
+    <div style="padding:12px 16px;flex-shrink:0">
+      <div style="position:relative">
+        <input class="inp" id="nutriSearch" placeholder="Rechercher un aliment…" oninput="nutriSearchDebounce()" autocomplete="off" style="width:100%;padding-left:36px;padding-right:44px"/>
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none">&#9901;</span>
+        <button onclick="startBarcodeScanner()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);padding:4px" title="Scanner">&#9638;</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 16px 24px" id="nutriAddBody"></div>
   </div>
 
   <div class="section" id="tab-stats">
@@ -5558,17 +5570,13 @@
   // ══════════════════════════════════════════
   // ── NUTRITION ──
   // ══════════════════════════════════════════
-  let nutriEntries = []; // { id, date, meal, name, qty, kcal, prot, gluc, lip }
+  let nutriEntries = [];
   let _nutriSearchTimer = null;
-  let _nutriPendingFood = null; // aliment en attente de quantité
-  const MEALS = ['Petit-déjeuner', 'Déjeuner', 'Collation', 'Dîner'];
-
-  async function loadNutriEntries() {
-    try {
-      const data = await sbLoad('nutrition_entries');
-      nutriEntries = data || [];
-    } catch(e) { nutriEntries = []; }
-  }
+  let _nutriPendingFood = null;
+  let _nutriActiveMeal = null;
+  let _nutriAccordionOpen = {};
+  const MEALS = ['Petit-déjeuner', 'Déjeuner', 'En-cas', 'Dîner'];
+  const MEAL_ICONS = { 'Petit-déjeuner': '☀️', 'Déjeuner': '🍽️', 'En-cas': '🍎', 'Dîner': '🌙' };
 
   async function saveNutriEntry(entry) {
     nutriEntries.push(entry);
@@ -5589,53 +5597,159 @@
     return nutriEntries.filter(e => e.date === today);
   }
 
+  function getYesterdayNutriByMeal(meal) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    const yesterday = d.toISOString().split('T')[0];
+    return nutriEntries.filter(e => e.date === yesterday && e.meal === meal);
+  }
+
+  // ── Overlay ajout ──
+  function openNutriAdd(meal) {
+    _nutriActiveMeal = meal;
+    const overlay = document.getElementById('nutriAddOverlay');
+    const titleEl = document.getElementById('nutriAddMealTitle');
+    const subEl = document.getElementById('nutriAddMealSub');
+    const searchEl = document.getElementById('nutriSearch');
+    if (titleEl) titleEl.textContent = (MEAL_ICONS[meal] || '') + ' ' + meal;
+    const todayEntries = getTodayNutri().filter(e => e.meal === meal);
+    const mealKcal = todayEntries.reduce((s, e) => s + e.kcal, 0);
+    if (subEl) subEl.textContent = mealKcal ? mealKcal + ' kcal enregistrés' : 'Aucun aliment encore';
+    if (searchEl) { searchEl.value = ''; }
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      renderNutriAddBody();
+      setTimeout(() => searchEl && searchEl.focus(), 150);
+    });
+  }
+
+  function closeNutriAdd() {
+    const overlay = document.getElementById('nutriAddOverlay');
+    overlay.style.display = 'none';
+    _nutriActiveMeal = null;
+    clearTimeout(_nutriSearchTimer);
+  }
+
+  function renderNutriAddBody() {
+    const body = document.getElementById('nutriAddBody');
+    if (!body) return;
+    const q = document.getElementById('nutriSearch')?.value.trim();
+    if (q && q.length >= 2) return; // résultats gérés par la recherche
+
+    // Aliments récents du même repas (hier)
+    const recent = getYesterdayNutriByMeal(_nutriActiveMeal);
+    const todayNames = new Set(getTodayNutri().filter(e => e.meal === _nutriActiveMeal).map(e => e.name));
+
+    if (!recent.length) {
+      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'DM Serif Display',serif;font-style:italic">Recherche un aliment ci-dessus<br>ou scanne un code-barres.</div>`;
+      return;
+    }
+
+    body.innerHTML = `
+      <div class="label" style="margin:12px 0 8px">Repris d'hier</div>
+      <div class="card" style="padding:4px 14px">
+        ${recent.map(e => {
+          const already = todayNames.has(e.name);
+          return `<div class="nutri-search-item">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
+              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${e.qty}g · ${e.kcal} kcal · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
+            </div>
+            <button class="nutri-add-btn" style="${already ? 'background:var(--border2);' : ''}" onclick="reuseNutriEntry(${e.id})" title="${already ? 'Déjà ajouté' : 'Ajouter'}">${already ? '✓' : '+'}</button>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  async function reuseNutriEntry(sourceId) {
+    const src = nutriEntries.find(e => e.id === sourceId);
+    if (!src) return;
+    // Ouvrir modal quantité pré-rempli avec les valeurs de la veille
+    openNutriQtyModal(
+      encodeURIComponent(src.name),
+      Math.round(src.kcal / src.qty * 100),
+      Math.round(src.prot / src.qty * 1000) / 10,
+      Math.round(src.gluc / src.qty * 1000) / 10,
+      Math.round(src.lip  / src.qty * 1000) / 10,
+      src.qty
+    );
+  }
+
+  // ── Recherche OFF ──
   function nutriSearchDebounce() {
     clearTimeout(_nutriSearchTimer);
-    _nutriSearchTimer = setTimeout(doNutriSearch, 400);
+    const q = document.getElementById('nutriSearch')?.value.trim();
+    if (!q || q.length < 2) { renderNutriAddBody(); return; }
+    _nutriSearchTimer = setTimeout(doNutriSearch, 500);
+    // Afficher "Recherche..." immédiatement
+    const body = document.getElementById('nutriAddBody');
+    if (body) body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace;letter-spacing:1px">RECHERCHE EN COURS…</div>`;
   }
 
   async function doNutriSearch() {
     const q = document.getElementById('nutriSearch')?.value.trim();
-    const box = document.getElementById('nutriSearchResults');
-    if (!box) return;
-    if (!q || q.length < 2) { box.style.display = 'none'; return; }
-    box.style.display = 'block';
-    box.innerHTML = `<div class="card" style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Recherche en cours…</div>`;
+    const body = document.getElementById('nutriAddBody');
+    if (!body || !q || q.length < 2) return;
+
+    // Essayer d'abord l'API FR, puis monde si peu de résultats
+    const tryFetch = async (lang) => {
+      const url = `https://${lang}.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,product_name_fr,brands,nutriments`;
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 8000);
+      try {
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(timeout);
+        return await res.json();
+      } catch(e) {
+        clearTimeout(timeout);
+        throw e;
+      }
+    };
+
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=6&fields=product_name,brands,nutriments,product_name_fr`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const products = (data.products || []).filter(p => p.product_name || p.product_name_fr);
+      let data = await tryFetch('fr');
+      let products = (data.products || []).filter(p => (p.product_name_fr || p.product_name) && p.nutriments);
+      if (products.length < 3) {
+        try { const d2 = await tryFetch('world'); products = [...products, ...(d2.products || []).filter(p => (p.product_name_fr || p.product_name) && p.nutriments)]; } catch(e) {}
+      }
+      // Dédupliq
+      const seen = new Set();
+      products = products.filter(p => { const n = (p.product_name_fr || p.product_name || '').toLowerCase(); if (seen.has(n)) return false; seen.add(n); return true; });
+
       if (!products.length) {
-        box.innerHTML = `<div class="card" style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Aucun résultat. Essaie un autre terme.</div>`;
+        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour <em>${q}</em>.<br>Essaie un terme différent.</div>`;
         return;
       }
-      box.innerHTML = `<div class="card" style="padding:4px 14px">${products.map((p, i) => {
-        const name = p.product_name_fr || p.product_name || '—';
-        const brand = p.brands ? `<span style="color:var(--muted);font-size:10px"> · ${p.brands.split(',')[0]}</span>` : '';
+
+      body.innerHTML = `<div class="card" style="padding:4px 14px;margin-top:8px">${products.map(p => {
+        const name = (p.product_name_fr || p.product_name || '—').slice(0, 60);
+        const brand = p.brands ? `<span style="color:var(--muted)"> · ${p.brands.split(',')[0]}</span>` : '';
         const n = p.nutriments || {};
-        const kcal = Math.round(n['energy-kcal_100g'] || n['energy-kcal'] || 0);
+        const kcal = Math.round(n['energy-kcal_100g'] || n['energy-kcal'] || (n['energy_100g'] || 0) / 4.184 || 0);
         const prot = Math.round((n.proteins_100g || 0) * 10) / 10;
         const gluc = Math.round((n.carbohydrates_100g || 0) * 10) / 10;
         const lip  = Math.round((n.fat_100g || 0) * 10) / 10;
+        if (!kcal && !prot && !gluc && !lip) return '';
         return `<div class="nutri-search-item">
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}${brand}</div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${prot}g P · ${gluc}g G · ${lip}g L · ${kcal} kcal/100g</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${prot}P · ${gluc}G · ${lip}L · ${kcal} kcal/100g</div>
           </div>
           <button class="nutri-add-btn" onclick="openNutriQtyModal('${encodeURIComponent(name)}',${kcal},${prot},${gluc},${lip})">+</button>
         </div>`;
-      }).join('')}</div>`;
+      }).filter(Boolean).join('')}</div>`;
     } catch(e) {
-      box.innerHTML = `<div class="card" style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Erreur réseau. Vérifie ta connexion.</div>`;
+      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Erreur réseau.<br>Vérifie ta connexion.</div>`;
     }
   }
 
   async function searchByBarcode(code) {
+    const body = document.getElementById('nutriAddBody');
+    if (body) body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace">SCAN EN COURS…</div>`;
     try {
       const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
       const data = await res.json();
-      if (data.status !== 1) { showToast('Produit non trouvé'); return; }
+      if (data.status !== 1) { showToast('Produit non trouvé'); renderNutriAddBody(); return; }
       const p = data.product;
       const name = p.product_name_fr || p.product_name || '—';
       const n = p.nutriments || {};
@@ -5644,53 +5758,40 @@
       const gluc = Math.round((n.carbohydrates_100g || 0) * 10) / 10;
       const lip  = Math.round((n.fat_100g || 0) * 10) / 10;
       openNutriQtyModal(encodeURIComponent(name), kcal, prot, gluc, lip);
-    } catch(e) { showToast('Erreur de scan'); }
+    } catch(e) { showToast('Erreur de scan'); renderNutriAddBody(); }
   }
 
   function startBarcodeScanner() {
-    // Utiliser l'input file camera sur mobile
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    const code = prompt('Entre le code-barres du produit :');
+    const code = prompt('Code-barres du produit :');
     if (code && code.trim()) searchByBarcode(code.trim());
   }
 
-  function openNutriQtyModal(encodedName, kcal100, prot100, gluc100, lip100) {
+  function openNutriQtyModal(encodedName, kcal100, prot100, gluc100, lip100, defaultQty) {
     const name = decodeURIComponent(encodedName);
     _nutriPendingFood = { name, kcal100, prot100, gluc100, lip100 };
-    // Fermer les résultats
-    const box = document.getElementById('nutriSearchResults');
-    if (box) box.style.display = 'none';
-    const inp = document.getElementById('nutriSearch');
-    if (inp) inp.value = '';
+    const qty0 = defaultQty || 100;
 
     const existing = document.getElementById('nutriQtyModal');
     if (existing) existing.remove();
 
-    const mealOpts = MEALS.map((m, i) => `<option value="${m}">${m}</option>`).join('');
     const modal = document.createElement('div');
     modal.className = 'nutri-qty-modal';
     modal.id = 'nutriQtyModal';
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    const ratio0 = qty0 / 100;
     modal.innerHTML = `
       <div class="nutri-qty-sheet">
         <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px">${name}</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${prot100}g P · ${gluc100}g G · ${lip100}g L · ${kcal100} kcal/100g</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-          <div>
-            <div class="label" style="margin-bottom:6px">Quantité (g)</div>
-            <input class="inp" id="nutriQtyInput" type="number" value="100" min="1" max="2000" style="width:100%;text-align:center;font-size:18px" oninput="updateNutriPreview()"/>
-          </div>
-          <div>
-            <div class="label" style="margin-bottom:6px">Repas</div>
-            <select class="inp" id="nutriMealSelect" style="width:100%">${mealOpts}</select>
-          </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${prot100}P · ${gluc100}G · ${lip100}L · ${kcal100} kcal/100g</div>
+        <div style="margin-bottom:16px">
+          <div class="label" style="margin-bottom:6px">Quantité (g)</div>
+          <input class="inp" id="nutriQtyInput" type="number" value="${qty0}" min="1" max="2000" style="width:100%;text-align:center;font-size:24px;font-family:'DM Serif Display',serif" oninput="updateNutriPreview()"/>
         </div>
-        <div id="nutriQtyPreview" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;text-align:center">
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewKcal">${kcal100}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">kcal</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)" id="previewProt">${prot100}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">protéines</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewGluc">${gluc100}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">glucides</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewLip">${lip100}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">lipides</div></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;text-align:center">
+          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">kcal</div></div>
+          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">prot.</div></div>
+          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">gluc.</div></div>
+          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">lip.</div></div>
         </div>
         <button onclick="confirmNutriEntry()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:600">Ajouter →</button>
       </div>`;
@@ -5711,13 +5812,12 @@
   async function confirmNutriEntry() {
     if (!_nutriPendingFood) return;
     const qty  = parseFloat(document.getElementById('nutriQtyInput')?.value) || 100;
-    const meal = document.getElementById('nutriMealSelect')?.value || 'Déjeuner';
     const f = _nutriPendingFood;
     const ratio = qty / 100;
     const entry = {
       id: Date.now(),
       date: new Date().toISOString().split('T')[0],
-      meal,
+      meal: _nutriActiveMeal || 'Déjeuner',
       name: f.name,
       qty: Math.round(qty),
       kcal: Math.round(f.kcal100 * ratio),
@@ -5727,12 +5827,15 @@
     };
     document.getElementById('nutriQtyModal')?.remove();
     _nutriPendingFood = null;
+    closeNutriAdd();
     await saveNutriEntry(entry);
-    showToast(`${f.name} ajouté ✓`);
+    showToast(f.name.slice(0, 30) + ' ajouté ✓');
+    // Rouvrir l'accordéon du repas
+    _nutriAccordionOpen[entry.meal] = true;
   }
 
+  // ── Rendu principal ──
   function renderNutritionTab() {
-    const today = new Date().toISOString().split('T')[0];
     const dateLabel = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
     const el = document.getElementById('nutri-date-label');
     if (el) el.textContent = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
@@ -5750,9 +5853,8 @@
     const goalLip  = Math.round(goalKcal * 0.25 / 9);
 
     // Anneau
-    const pct = Math.min(totalKcal / goalKcal, 1);
     const circumference = 232;
-    const offset = circumference - pct * circumference;
+    const offset = circumference - Math.min(totalKcal / goalKcal, 1) * circumference;
     const ring = document.getElementById('nutriRingProgress');
     if (ring) ring.style.strokeDashoffset = offset;
     const kcalEl = document.getElementById('nutriKcalConsumed');
@@ -5760,7 +5862,6 @@
     const goalEl = document.getElementById('nutriKcalGoal');
     if (goalEl) goalEl.textContent = goalKcal.toLocaleString('fr-FR');
 
-    // Macros barres
     const setPct = (barId, valId, val, goal, unit) => {
       const b = document.getElementById(barId);
       const v = document.getElementById(valId);
@@ -5771,36 +5872,49 @@
     setPct('barGluc', 'valGluc', totalGluc, goalGluc, 'g');
     setPct('barLip',  'valLip',  totalLip,  goalLip,  'g');
 
-    // Journal
+    // Accordéons
     const journal = document.getElementById('nutriJournal');
     if (!journal) return;
-    if (!todayEntries.length) {
-      journal.innerHTML = `<div style="text-align:center;padding:32px 0"><div style="font-size:28px;margin-bottom:10px">🥗</div><div style="font-size:13px;color:var(--muted);font-family:'DM Serif Display',serif;font-style:italic">Aucun aliment enregistré aujourd'hui.</div></div>`;
-      return;
-    }
     journal.innerHTML = MEALS.map(meal => {
       const items = todayEntries.filter(e => e.meal === meal);
-      if (!items.length) return '';
       const mealKcal = items.reduce((s, e) => s + e.kcal, 0);
-      return `<div class="nutri-meal-block">
-        <div class="nutri-meal-header">
-          <div class="nutri-meal-title">${meal}</div>
-          <div class="nutri-meal-kcal">${mealKcal} kcal</div>
+      const mealProt = Math.round(items.reduce((s, e) => s + e.prot, 0) * 10) / 10;
+      const mealGluc = Math.round(items.reduce((s, e) => s + e.gluc, 0) * 10) / 10;
+      const mealLip  = Math.round(items.reduce((s, e) => s + e.lip,  0) * 10) / 10;
+      const isOpen = !!_nutriAccordionOpen[meal];
+      const icon = MEAL_ICONS[meal] || '';
+      return `<div class="nutri-accordion" id="acc-${meal.replace(/[^a-z]/gi,'')}" style="margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="display:flex;align-items:center;padding:13px 14px;cursor:pointer;gap:10px" onclick="toggleNutriAccordion('${meal}')">
+          <span style="font-size:16px">${icon}</span>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:500;color:var(--text)">${meal}</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">
+              ${mealKcal ? `${mealKcal} kcal · ${mealProt}P ${mealGluc}G ${mealLip}L` : 'Aucun aliment'}
+            </div>
+          </div>
+          <button onclick="event.stopPropagation();openNutriAdd('${meal}')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">+</button>
+          <span style="color:var(--muted);font-size:11px;margin-left:4px;transition:transform 0.2s;transform:rotate(${isOpen?'180':'0'}deg)">▾</span>
         </div>
-        ${items.map(e => `
-          <div class="nutri-food-item">
-            <div style="flex:1;min-width:0">
-              <div class="nutri-food-name">${e.name}</div>
-              <div class="nutri-food-qty">${e.qty}g</div>
-            </div>
-            <div class="nutri-food-right">
-              <div class="nutri-food-kcal">${e.kcal} kcal</div>
-              <div class="nutri-food-macros">${e.prot}P · ${e.gluc}G · ${e.lip}L</div>
-            </div>
-            <button onclick="deleteNutriEntry(${e.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 10px;flex-shrink:0" title="Supprimer">✕</button>
-          </div>`).join('')}
+        ${isOpen ? `<div style="padding:0 14px 12px;border-top:1px solid var(--border)">
+          ${items.length ? items.map(e => `
+            <div style="display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border)">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
+                <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
+              </div>
+              <div style="text-align:right;margin-left:10px;flex-shrink:0">
+                <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace">${e.kcal} kcal</div>
+              </div>
+              <button onclick="deleteNutriEntry(${e.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 12px;flex-shrink:0">✕</button>
+            </div>`).join('') : `<div style="padding:14px 0;text-align:center;font-size:12px;color:var(--muted)">Aucun aliment pour ce repas.</div>`}
+        </div>` : ''}
       </div>`;
     }).join('');
+  }
+
+  function toggleNutriAccordion(meal) {
+    _nutriAccordionOpen[meal] = !_nutriAccordionOpen[meal];
+    renderNutritionTab();
   }
 
   // Widget accueil nutrition
@@ -5828,8 +5942,6 @@
         <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width 0.5s ease"></div>
       </div>`;
   }
-
-
 
   async function deleteSession(id) {
     if (!confirm('Supprimer cette séance ?')) return;
