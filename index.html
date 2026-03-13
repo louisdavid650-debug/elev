@@ -479,10 +479,77 @@
 
   /* Bottom nav */
   /* ── Home tab — système 8px ── */
-  .home-greeting { margin-bottom: 24px; }
+  .home-greeting { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .home-greeting-text { flex: 1; min-width: 0; }
   .home-greeting-name { font-family: 'DM Serif Display', serif; font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.05; }
   .home-greeting-phrase { font-family: 'DM Serif Display', serif; font-size: 15px; font-style: italic; color: var(--terra); margin-top: 4px; opacity: 0.9; }
   .home-date { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-top: 8px; }
+  .home-profile-btn {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; cursor: pointer; margin-top: 4px;
+    box-shadow: var(--card-shadow); transition: all 0.18s;
+  }
+  .home-profile-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+
+  /* ── Profile overlay ── */
+  .profile-overlay {
+    position: fixed; inset: 0; z-index: 950;
+    background: var(--bg);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.34, 1.05, 0.64, 1);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    max-width: 460px; left: 50%; translate: -50% 0;
+  }
+  .profile-overlay.open { transform: translateX(0); }
+  .profile-header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(240,234,225,0.97); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  html.dark .profile-header { background: rgba(13,13,13,0.97); }
+  .profile-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; flex-shrink: 0; color: var(--muted);
+    transition: all 0.15s;
+  }
+  .profile-back:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+  .profile-header-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-style: italic; color: var(--text); }
+  .profile-body { padding: 24px 20px 100px; }
+  .profile-avatar {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--accent-light); border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin: 0 auto 20px; color: var(--accent);
+  }
+  .profile-name-big { font-family: 'DM Serif Display', serif; font-size: 28px; text-align: center; margin-bottom: 4px; color: var(--text); }
+  .profile-goal-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); border: 1px solid var(--accent); color: var(--accent); border-radius: 20px; padding: 4px 14px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; margin: 0 auto 28px; }
+  .profile-section-title { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; margin-bottom: 12px; margin-top: 24px; }
+  .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 10px; box-shadow: var(--card-shadow); }
+  .profile-field { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
+  .profile-field:last-child { border-bottom: none; }
+  .profile-field-icon { font-size: 16px; flex-shrink: 0; width: 24px; text-align: center; }
+  .profile-field-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; flex: 1; }
+  .profile-field-inp { background: none; border: none; text-align: right; font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); width: 120px; outline: none; padding: 0; }
+  .profile-field-inp:focus { color: var(--accent); }
+  .profile-field-unit { font-size: 10px; color: var(--muted); font-family: 'Geist Mono', monospace; margin-left: 4px; flex-shrink: 0; }
+  .profile-goal-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .profile-goal-opt { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+  .profile-goal-opt.selected { background: var(--accent-light); border-color: var(--accent); }
+  .profile-goal-opt-icon { font-size: 20px; flex-shrink: 0; }
+  .profile-goal-opt-text { flex: 1; }
+  .profile-goal-opt-label { font-family: 'Geist Mono', monospace; font-size: 11px; letter-spacing: 1px; color: var(--text); font-weight: 500; }
+  .profile-goal-opt-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .profile-goal-opt-check { font-size: 16px; color: var(--accent); opacity: 0; transition: opacity 0.15s; }
+  .profile-goal-opt.selected .profile-goal-opt-check { opacity: 1; }
+  .profile-save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 14px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; margin-top: 24px; transition: all 0.18s; }
+  .profile-save-btn:hover { background: var(--accent-hover); }
+  .profile-danger-btn { width: 100%; background: none; color: var(--accent2); border: 1px solid rgba(192,57,43,0.3); border-radius: 20px; padding: 12px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: all 0.18s; }
 
   /* Dashboard */
   .home-dashboard { margin-bottom: 32px; display: flex; flex-direction: column; gap: 8px; }
@@ -519,7 +586,7 @@
   .home-last-meta { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-family: 'Geist Mono', monospace; }
   .home-last-exercises { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
 
-  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; background: rgba(240,234,225,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); }
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 460px; background: rgba(240,234,225,0.97); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 895; }
   .bn-btn { flex: 1; background: none; border: none; color: var(--muted2); padding: 10px 4px 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: color 0.2s; font-family: 'Geist Mono', monospace; position: relative; }
   .bn-btn.active { color: var(--accent); }
   .bn-btn.active::after { content: ''; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
@@ -934,9 +1001,12 @@
 
     <!-- Greeting -->
     <div class="home-greeting">
-      <div class="home-greeting-name" id="homeGreetingName">Bonjour</div>
-      <div class="home-greeting-phrase" id="homeGreetingPhrase"></div>
-      <div class="home-date" id="homeDate"></div>
+      <div class="home-greeting-text">
+        <div class="home-greeting-name" id="homeGreetingName">Bonjour</div>
+        <div class="home-greeting-phrase" id="homeGreetingPhrase"></div>
+        <div class="home-date" id="homeDate"></div>
+      </div>
+      <button class="home-profile-btn" onclick="openProfileOverlay()" title="Mon profil">👤</button>
     </div>
 
     <!-- ── Dashboard critique : poids + calories + prochaine séance ── -->
@@ -2024,10 +2094,8 @@
     }, 50);
     renderRoutinePicker();
     renderProgramsList();
-    // Restore any in-progress session
-    restoreDraft();
-    // Toujours démarrer sur Accueil, sauf si séance en cours
-    const hasDraft = !!localStorage.getItem('seance_draft');
+    // Restore any in-progress session — returns true only if draft had exercises
+    const hasDraft = restoreDraft();
     if (hasDraft) {
       switchTab('session');
       setTimeout(() => openSessionFullscreen(), 300);
@@ -2338,7 +2406,10 @@
       const raw = localStorage.getItem('seance_draft');
       if (!raw) return false;
       const draft = JSON.parse(raw);
-      if (!draft.exercises?.length) return false;
+      if (!draft.exercises?.length) {
+        localStorage.removeItem('seance_draft'); // Nettoyer draft vide/corrompu
+        return false;
+      }
       exercises = draft.exercises;
       loadedRoutineId = draft.loadedRoutineId || null;
       // Compute elapsed time since last save and add it
@@ -5899,6 +5970,7 @@
   }
 
   function showMinibar() {
+    if (!exercises.length) return; // Pas de séance active = pas de minibar
     _sessionMinibarVisible = true;
     const name = loadedRoutineId
       ? (routines.find(r => r.id === loadedRoutineId)?.name || 'Séance en cours')
@@ -6044,18 +6116,26 @@
 
   function abandonSessionFs() {
     if (exercises.length && !confirm('Annuler la séance en cours ?')) return;
+    // Fermer l'overlay + minibar
     closeSessionFs();
-    exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
+    // Nettoyer tout l'état de séance
+    exercises = []; loadedRoutineId = null; timerSec = 0; resetTimer(); skipRest(); clearDraft();
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    if (document.getElementById('sessionNotes')) document.getElementById('sessionNotes').value = '';
-    renderExercises(); renderRoutinePicker();
+    const notesEl = document.getElementById('sessionNotes');
+    if (notesEl) notesEl.value = '';
+    // Remettre l'onglet session en état initial
     hideSessionContent();
+    renderExercises();
+    renderRoutinePicker();
+    // Retourner sur l'accueil
+    switchTab('home');
   }
 
   function closeSessionFs() {
     _sessionFsOpen = false;
+    _sessionMinibarVisible = false;
     document.getElementById('sessionFsOverlay').classList.remove('open');
-    hideMinibar();
+    document.getElementById('sessionMinibar').classList.remove('show');
     if (_minibarTimerInterval) { clearInterval(_minibarTimerInterval); _minibarTimerInterval = null; }
   }
 
@@ -6080,6 +6160,65 @@
       syncFsTimer();
     }
     if (_sessionMinibarVisible) syncMinibarTimer();
+  }
+
+  // ══ PROFILE OVERLAY ══
+  let _selectedProfileGoal = null;
+
+  function openProfileOverlay() {
+    const profile = getUserProfile() || {};
+    // Remplir les champs
+    document.getElementById('pFirstName').value = profile.firstName || '';
+    document.getElementById('pAge').value = profile.age || '';
+    document.getElementById('pHeight').value = profile.height || '';
+    document.getElementById('pStartWeight').value = profile.startWeight || '';
+    document.getElementById('pTargetWeight').value = profile.targetWeight || '';
+    document.getElementById('pKcalTarget').value = profile.kcalTarget || '';
+    _selectedProfileGoal = profile.goal || null;
+    // Update goal options
+    ['seche','maintien','prise'].forEach(g => {
+      document.getElementById('pgopt-' + g).classList.toggle('selected', g === _selectedProfileGoal);
+    });
+    updateProfilePreview();
+    document.getElementById('profileOverlay').classList.add('open');
+  }
+
+  function closeProfileOverlay() {
+    document.getElementById('profileOverlay').classList.remove('open');
+  }
+
+  function selectProfileGoal(goal) {
+    _selectedProfileGoal = goal;
+    ['seche','maintien','prise'].forEach(g => {
+      document.getElementById('pgopt-' + g).classList.toggle('selected', g === goal);
+    });
+    updateProfilePreview();
+  }
+
+  function updateProfilePreview() {
+    const name = document.getElementById('pFirstName').value.trim();
+    document.getElementById('profileNameBig').textContent = name || '—';
+    const goalLabels = { seche: '🔥 Sèche', maintien: '⚖️ Maintien', prise: '💪 Prise de masse' };
+    document.getElementById('profileGoalBadge').textContent = _selectedProfileGoal ? goalLabels[_selectedProfileGoal] : '— Objectif';
+  }
+
+  async function saveProfileOverlay() {
+    const existing = getUserProfile() || {};
+    const updated = {
+      ...existing,
+      firstName:    document.getElementById('pFirstName').value.trim() || existing.firstName,
+      age:          parseFloat(document.getElementById('pAge').value) || existing.age || null,
+      height:       parseFloat(document.getElementById('pHeight').value) || existing.height || null,
+      startWeight:  parseFloat(document.getElementById('pStartWeight').value) || existing.startWeight || null,
+      targetWeight: parseFloat(document.getElementById('pTargetWeight').value) || existing.targetWeight || null,
+      kcalTarget:   parseFloat(document.getElementById('pKcalTarget').value) || existing.kcalTarget || null,
+      goal:         _selectedProfileGoal || existing.goal || null,
+    };
+    await saveUserProfile(updated);
+    closeProfileOverlay();
+    renderHome();
+    renderWeightTab();
+    showToast('Profil mis à jour ✓');
   }
 
   function showToast(msg) {
@@ -6133,6 +6272,109 @@
     <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Exercices</div>
     <div id="recapExercises"></div>
     <button class="recap-close" onclick="closeRecap()">Fermer</button>
+  </div>
+</div>
+
+<!-- ══ PROFILE OVERLAY ══ -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-header">
+    <button class="profile-back" onclick="closeProfileOverlay()">←</button>
+    <div class="profile-header-title">Mon profil</div>
+  </div>
+  <div class="profile-body">
+
+    <!-- Avatar + nom -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div class="profile-avatar">👤</div>
+      <div class="profile-name-big" id="profileNameBig">—</div>
+      <div style="display:flex;justify-content:center;margin-top:8px">
+        <div class="profile-goal-badge" id="profileGoalBadge">—</div>
+      </div>
+    </div>
+
+    <!-- Identité -->
+    <div class="profile-section-title">Identité</div>
+    <div class="profile-card">
+      <div class="profile-field">
+        <div class="profile-field-icon">✏️</div>
+        <div class="profile-field-label">Prénom</div>
+        <input class="profile-field-inp" id="pFirstName" type="text" placeholder="Votre prénom" maxlength="30" oninput="updateProfilePreview()"/>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-icon">🎂</div>
+        <div class="profile-field-label">Âge</div>
+        <input class="profile-field-inp" id="pAge" type="number" placeholder="—" min="10" max="100"/>
+        <div class="profile-field-unit">ans</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-icon">📏</div>
+        <div class="profile-field-label">Taille</div>
+        <input class="profile-field-inp" id="pHeight" type="number" placeholder="—" min="100" max="250"/>
+        <div class="profile-field-unit">cm</div>
+      </div>
+    </div>
+
+    <!-- Poids -->
+    <div class="profile-section-title">Poids</div>
+    <div class="profile-card">
+      <div class="profile-field">
+        <div class="profile-field-icon">⚖️</div>
+        <div class="profile-field-label">Poids de départ</div>
+        <input class="profile-field-inp" id="pStartWeight" type="number" step="0.1" placeholder="—" min="20" max="300"/>
+        <div class="profile-field-unit">kg</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-icon">🎯</div>
+        <div class="profile-field-label">Poids cible</div>
+        <input class="profile-field-inp" id="pTargetWeight" type="number" step="0.1" placeholder="—" min="20" max="300"/>
+        <div class="profile-field-unit">kg</div>
+      </div>
+    </div>
+
+    <!-- Objectif -->
+    <div class="profile-section-title">Objectif</div>
+    <div class="profile-goal-options">
+      <div class="profile-goal-opt" id="pgopt-seche" onclick="selectProfileGoal('seche')">
+        <div class="profile-goal-opt-icon">🔥</div>
+        <div class="profile-goal-opt-text">
+          <div class="profile-goal-opt-label">Sèche</div>
+          <div class="profile-goal-opt-desc">Perdre de la masse grasse</div>
+        </div>
+        <div class="profile-goal-opt-check">✓</div>
+      </div>
+      <div class="profile-goal-opt" id="pgopt-maintien" onclick="selectProfileGoal('maintien')">
+        <div class="profile-goal-opt-icon">⚖️</div>
+        <div class="profile-goal-opt-text">
+          <div class="profile-goal-opt-label">Maintien</div>
+          <div class="profile-goal-opt-desc">Garder ton poids actuel</div>
+        </div>
+        <div class="profile-goal-opt-check">✓</div>
+      </div>
+      <div class="profile-goal-opt" id="pgopt-prise" onclick="selectProfileGoal('prise')">
+        <div class="profile-goal-opt-icon">💪</div>
+        <div class="profile-goal-opt-text">
+          <div class="profile-goal-opt-label">Prise de masse</div>
+          <div class="profile-goal-opt-desc">Gagner du muscle et du poids</div>
+        </div>
+        <div class="profile-goal-opt-check">✓</div>
+      </div>
+    </div>
+
+    <!-- Nutrition -->
+    <div class="profile-section-title">Nutrition</div>
+    <div class="profile-card">
+      <div class="profile-field">
+        <div class="profile-field-icon">🔥</div>
+        <div class="profile-field-label">Objectif calorique</div>
+        <input class="profile-field-inp" id="pKcalTarget" type="number" step="50" placeholder="—" min="500" max="10000"/>
+        <div class="profile-field-unit">kcal</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <button class="profile-save-btn" onclick="saveProfileOverlay()">Sauvegarder les modifications</button>
+    <button class="profile-danger-btn" onclick="if(confirm('Déconnecter et supprimer la session ?'))signOut()">Se déconnecter</button>
+
   </div>
 </div>
 
