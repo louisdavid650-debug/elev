@@ -1501,6 +1501,24 @@
     setTimeout(() => el.style.display = 'none', 3000);
   }
 
+  // ── Helpers cache ──
+  function loadFromCache() {
+    const getCache = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } };
+    sessions    = getCache('elev_cache_sessions');
+    routines    = getCache('elev_cache_routines');
+    programs    = getCache('elev_cache_programs');
+    bodyWeights = getCache('elev_cache_body_weights');
+    kcalEntries = getCache('elev_cache_kcal');
+    sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
+    kcalEntries.sort((a, b) => a.date.localeCompare(b.date));
+    routines.sort((a, b) => {
+      const getDay = name => { const m = (name||'').match(/J(\d+)/i); return m ? parseInt(m[1]) : 999; };
+      return getDay(a.name) - getDay(b.name);
+    });
+    activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
+  }
+
   // ── Démarrage ──
   (async () => {
     const saved = localStorage.getItem('seance_session');
@@ -1509,13 +1527,21 @@
       return;
     }
 
-    try {
-      const s = JSON.parse(saved);
-      accessToken = s.access_token;
-      currentUser = s.user;
-      document.getElementById('loginScreen').style.display = 'none';
+    const s = JSON.parse(saved);
+    accessToken = s.access_token;
+    currentUser = s.user;
+    document.getElementById('loginScreen').style.display = 'none';
 
-      // Refresh token silencieux
+    // ── Mode hors-ligne : démarrage instantané depuis le cache ──
+    if (!isOnline()) {
+      loadFromCache();
+      initApp();
+      updateOfflineBanner();
+      return;
+    }
+
+    try {
+      // Refresh token silencieux (timeout 4s)
       if (s.refresh_token) {
         try {
           const r = await Promise.race([
@@ -1524,7 +1550,7 @@
               headers: { 'apikey': SUPA_KEY, 'Content-Type': 'application/json' },
               body: JSON.stringify({ refresh_token: s.refresh_token })
             }),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
           ]);
           const rd = await r.json();
           if (rd.access_token) {
@@ -1535,27 +1561,19 @@
         } catch(e) { console.warn('Token refresh skipped:', e.message); }
       }
 
-      // Vider la queue offline en premier (séances en attente)
+      // Vider la queue offline en premier (données en attente)
       await flushQueue();
 
-      // Charger depuis Supabase (avec fallback cache)
+      // Charger depuis Supabase (avec fallback cache automatique dans sbLoad)
       await loadAllData();
 
       // Afficher l'app
       initApp();
 
     } catch(e) {
-      console.warn('Init error:', e);
-      // En cas d'erreur réseau, essayer quand même avec le cache
+      console.warn('Init error, falling back to cache:', e);
       try {
-        const getCache = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } };
-        sessions    = getCache('elev_cache_sessions');
-        routines    = getCache('elev_cache_routines');
-        programs    = getCache('elev_cache_programs');
-        bodyWeights = getCache('elev_cache_body_weights');
-        sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
-        bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
-        activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
+        loadFromCache();
         document.getElementById('loginScreen').style.display = 'none';
         initApp();
       } catch(e2) {
@@ -1818,26 +1836,25 @@
   async function loadAllData() {
     showSyncBadge('Chargement...');
     const timeout = ms => new Promise(resolve => setTimeout(resolve, ms));
-
     const loadWithTimeout = async (table) => {
-      try {
-        return await Promise.race([sbLoad(table), timeout(5000).then(() => [])]);
-      } catch { return []; }
+      try { return await Promise.race([sbLoad(table), timeout(3000).then(() => [])]); }
+      catch { return []; }
     };
 
-    sessions = await loadWithTimeout('sessions');
-    sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
-    routines = await loadWithTimeout('routines');
-    programs = await loadWithTimeout('programs');
-    activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
-    routines.sort((a, b) => {
-      const getDay = name => { const m = (name||'').match(/J(\d+)/i); return m ? parseInt(m[1]) : 999; };
-      return getDay(a.name) - getDay(b.name);
-    });
-    bodyWeights = await loadWithTimeout('body_weights');
-    bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
-    kcalEntries = await loadWithTimeout('kcal_entries');
-    kcalEntries.sort((a, b) => a.date.localeCompare(b.date));
+    // Chargement en parallèle — max 3s au lieu de 5s × 5 tables
+    const [s, r, p, bw, kc] = await Promise.all([
+      loadWithTimeout('sessions'),
+      loadWithTimeout('routines'),
+      loadWithTimeout('programs'),
+      loadWithTimeout('body_weights'),
+      loadWithTimeout('kcal_entries'),
+    ]);
+
+    sessions    = s; sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    routines    = r; routines.sort((a, b) => { const g = n => { const m = (n||'').match(/J(\d+)/i); return m ? parseInt(m[1]) : 999; }; return g(a.name) - g(b.name); });
+    programs    = p; activeProgId = parseInt(localStorage.getItem('elev_active_prog')) || (programs[0]?.id || null);
+    bodyWeights = bw; bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
+    kcalEntries = kc; kcalEntries.sort((a, b) => a.date.localeCompare(b.date));
     showSyncBadge('✓ Sync', true);
   }
 
