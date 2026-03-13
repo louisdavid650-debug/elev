@@ -5967,25 +5967,43 @@
   }
 
   let _html5QrScanner = null;
+  let _barcodeVideoStream = null;
 
   function stopBarcodeStream() {
     if (_html5QrScanner) {
-      _html5QrScanner.stop().catch(()=>{});
-      _html5QrScanner.clear();
+      try { Quagga.stop(); } catch(e) {}
       _html5QrScanner = null;
+    }
+    if (_barcodeVideoStream) {
+      _barcodeVideoStream.getTracks().forEach(t => t.stop());
+      _barcodeVideoStream = null;
     }
   }
 
   function startBarcodeScanner() {
-    // Créer overlay
     const overlay = document.createElement('div');
     overlay.id = 'barcodeOverlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0';
+    overlay.style.cssText = 'position:fixed;inset:0;background:#000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center';
     overlay.innerHTML = `
-      <div id="barcodeScannerContainer" style="width:100%;max-width:480px;position:relative"></div>
-      <div style="color:rgba(255,255,255,0.75);font-family:Geist Mono,monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:16px">Pointez vers un code-barres</div>
-      <button id="barcodeCancelBtn" style="margin-top:16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:10px;padding:12px 28px;font-family:Geist Mono,monospace;font-size:11px;letter-spacing:2px;cursor:pointer">ANNULER</button>
-      <div id="barcodeScanStatus" style="color:rgba(255,255,255,0.4);font-family:Geist Mono,monospace;font-size:10px;margin-top:10px">Chargement…</div>
+      <div id="quaggaContainer" style="position:relative;width:100%;max-width:480px;overflow:hidden;background:#000">
+        <div id="barcodeScanTarget" style="width:100%"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+          <div style="position:relative;width:270px;height:155px">
+            <div style="position:absolute;top:-2px;left:-2px;width:28px;height:28px;border-top:3px solid #4ade80;border-left:3px solid #4ade80;border-radius:8px 0 0 0"></div>
+            <div style="position:absolute;top:-2px;right:-2px;width:28px;height:28px;border-top:3px solid #4ade80;border-right:3px solid #4ade80;border-radius:0 8px 0 0"></div>
+            <div style="position:absolute;bottom:-2px;left:-2px;width:28px;height:28px;border-bottom:3px solid #4ade80;border-left:3px solid #4ade80;border-radius:0 0 0 8px"></div>
+            <div style="position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-bottom:3px solid #4ade80;border-right:3px solid #4ade80;border-radius:0 0 8px 0"></div>
+            <div id="scanLine" style="position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,#4ade80,transparent);animation:scanAnim 1.8s ease-in-out infinite"></div>
+          </div>
+        </div>
+      </div>
+      <style>
+        #barcodeScanTarget video { width:100%!important; height:auto!important; display:block; }
+        #barcodeScanTarget canvas { display:none!important; }
+        @keyframes scanAnim { 0%{top:8px;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{top:142px;opacity:0} }
+      </style>
+      <div id="barcodeScanStatus" style="color:rgba(255,255,255,0.75);font-family:Geist Mono,monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:18px">Chargement…</div>
+      <button id="barcodeCancelBtn" style="margin-top:14px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:10px;padding:11px 28px;font-family:Geist Mono,monospace;font-size:11px;letter-spacing:2px;cursor:pointer">ANNULER</button>
     `;
     document.body.appendChild(overlay);
     document.getElementById('barcodeCancelBtn').onclick = () => {
@@ -5993,61 +6011,78 @@
       overlay.remove();
     };
 
-    const loadAndInit = () => {
+    const initQuagga = () => {
       const statusEl = document.getElementById('barcodeScanStatus');
       if (statusEl) statusEl.textContent = 'Accès caméra…';
+      _html5QrScanner = true;
 
-      _html5QrScanner = new Html5Qrcode('barcodeScannerContainer');
-
-      const config = {
-        fps: 15,
-        qrbox: { width: 280, height: 160 },
-        aspectRatio: 1.5,
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-        ],
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-      };
-
-      _html5QrScanner.start(
-        { facingMode: 'environment' },
-        config,
-        (decodedText) => {
-          // Succès !
-          stopBarcodeStream();
-          document.getElementById('barcodeOverlay')?.remove();
-          searchByBarcode(decodedText);
+      Quagga.init({
+        inputStream: {
+          name: 'Live',
+          type: 'LiveStream',
+          target: document.getElementById('barcodeScanTarget'),
+          constraints: {
+            facingMode: 'environment',
+            width:  { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720,  max: 1080 },
+          },
+          area: { top: '20%', right: '5%', left: '5%', bottom: '20%' },
         },
-        () => { /* scan en cours, pas d'erreur à afficher */ }
-      ).then(() => {
-        // Masquer les éléments UI par défaut de html5-qrcode
-        const style = document.createElement('style');
-        style.textContent = `
-          #barcodeScannerContainer img { display:none!important; }
-          #barcodeScannerContainer select { display:none!important; }
-          #barcodeScannerContainer button { display:none!important; }
-          #barcodeScannerContainer { background:#000; }
-        `;
-        document.head.appendChild(style);
-        if (statusEl) statusEl.textContent = 'Cherche un code-barres…';
-      }).catch(err => {
+        locator: {
+          patchSize: 'medium',
+          halfSample: false,
+        },
+        numOfWorkers: 0, // iOS ne supporte pas les workers
+        frequency: 15,
+        decoder: {
+          readers: [
+            'ean_reader',
+            'ean_8_reader',
+            'upc_reader',
+            'upc_e_reader',
+            'code_128_reader',
+          ],
+          multiple: false,
+        },
+        locate: true,
+      }, err => {
+        if (err) {
+          stopBarcodeStream();
+          overlay.remove();
+          const code = prompt('Caméra non disponible. Saisissez le code-barres :');
+          if (code && code.trim()) searchByBarcode(code.trim());
+          return;
+        }
+        Quagga.start();
+        if (statusEl) statusEl.textContent = 'Pointez vers le code-barres';
+      });
+
+      // Résultats avec filtre de confiance
+      const _lastCodes = [];
+      Quagga.onDetected(result => {
+        const code = result.codeResult?.code;
+        const confidence = result.codeResult?.decodedCodes
+          ?.filter(c => c.error !== undefined)
+          ?.reduce((acc, c) => acc + (1 - c.error), 0) || 0;
+
+        if (!code || confidence < 2) return; // Seuil de confiance
+
+        // Confirmer avec 2 lectures identiques consécutives
+        _lastCodes.push(code);
+        if (_lastCodes.length > 3) _lastCodes.shift();
+        const confirmed = _lastCodes.filter(c => c === code).length >= 2;
+        if (!confirmed) return;
+
         stopBarcodeStream();
-        overlay.remove();
-        const code = prompt('Caméra non disponible. Saisissez le code-barres :');
-        if (code && code.trim()) searchByBarcode(code.trim());
+        document.getElementById('barcodeOverlay')?.remove();
+        searchByBarcode(code);
       });
     };
 
-    // Charger html5-qrcode si pas encore chargé
-    if (!window.Html5Qrcode) {
+    if (!window.Quagga) {
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-      script.onload = loadAndInit;
+      script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js';
+      script.onload = initQuagga;
       script.onerror = () => {
         overlay.remove();
         const code = prompt('Code-barres du produit :');
@@ -6055,7 +6090,7 @@
       };
       document.head.appendChild(script);
     } else {
-      loadAndInit();
+      initQuagga();
     }
   }
 
