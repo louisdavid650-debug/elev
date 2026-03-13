@@ -5747,7 +5747,7 @@
           return `<div class="nutri-search-item">
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
-              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L${f.fib ? ' · ' + f.fib + 'F' : ''} · ${f.kcal} kcal/100g</div>
             </div>
             <button class="nutri-add-btn" onclick="openNutriFromCache(${i})">+</button>
           </div>`;
@@ -5825,7 +5825,7 @@
           ${img}
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}${brand}</div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L${f.fib ? ' · ' + f.fib + 'F' : ''} · ${f.kcal} kcal/100g</div>
           </div>
           <button class="nutri-add-btn" onclick="openNutriFromSearchCache(${i})">+</button>
         </div>`;
