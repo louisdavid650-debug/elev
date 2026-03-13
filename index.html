@@ -5760,25 +5760,25 @@
   function openNutriFromCache(i) {
     const f = (window._nutriSuggCache || [])[i];
     if (!f) return;
-    openNutriQtyModal(encodeURIComponent(f.name), f.kcal, f.prot, f.gluc, f.lip);
+    openNutriQtyModal(encodeURIComponent(f.name), f.kcal, f.prot, f.gluc, f.lip, f.fib || 0);
   }
 
   function openNutriFromSearchCache(i) {
     const f = (window._nutriSearchCache || [])[i];
     if (!f) return;
-    openNutriQtyModal(encodeURIComponent(f.name), f.kcal, f.prot, f.gluc, f.lip);
+    openNutriQtyModal(encodeURIComponent(f.name), f.kcal, f.prot, f.gluc, f.lip, f.fib || 0);
   }
 
   async function reuseNutriEntry(sourceId) {
     const src = nutriEntries.find(e => e.id === sourceId);
     if (!src) return;
-    // Ouvrir modal quantité pré-rempli avec les valeurs de la veille
     openNutriQtyModal(
       encodeURIComponent(src.name),
       Math.round(src.kcal / src.qty * 100),
       Math.round(src.prot / src.qty * 1000) / 10,
       Math.round(src.gluc / src.qty * 1000) / 10,
       Math.round(src.lip  / src.qty * 1000) / 10,
+      Math.round((src.fib || 0) / src.qty * 1000) / 10,
       src.qty
     );
   }
@@ -5859,6 +5859,7 @@
           prot:      Math.round((r.proteins || 0) * 10) / 10,
           gluc:      Math.round((r.carbs    || 0) * 10) / 10,
           lip:       Math.round((r.fat      || 0) * 10) / 10,
+          fib:       Math.round((r.fiber    || 0) * 10) / 10,
         }));
       }
     } catch(e) { /* Supabase inaccessible */ }
@@ -5927,7 +5928,7 @@
     // 1. Lookup dans Supabase d'abord (barcode = id)
     try {
       const supaRes = await fetch(
-        `${SUPA_URL}/rest/v1/foods?select=name,brand,image_url,kcal,proteins,carbs,fat&id=eq.${code}`,
+        `${SUPA_URL}/rest/v1/foods?select=name,brand,image_url,kcal,proteins,carbs,fat,fiber&id=eq.${code}`,
         { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Accept': 'application/json' } }
       );
       if (supaRes.ok) {
@@ -5942,7 +5943,8 @@
             Math.round(r.kcal || 0),
             Math.round((r.proteins || 0) * 10) / 10,
             Math.round((r.carbs    || 0) * 10) / 10,
-            Math.round((r.fat      || 0) * 10) / 10
+            Math.round((r.fat      || 0) * 10) / 10,
+            Math.round((r.fiber    || 0) * 10) / 10
           );
           return;
         }
@@ -5967,7 +5969,8 @@
           Math.round(n['energy-kcal_100g'] || 0),
           Math.round((n.proteins_100g      || 0) * 10) / 10,
           Math.round((n.carbohydrates_100g || 0) * 10) / 10,
-          Math.round((n.fat_100g           || 0) * 10) / 10
+          Math.round((n.fat_100g           || 0) * 10) / 10,
+          Math.round((n.fiber_100g         || 0) * 10) / 10
         );
         return;
       }
@@ -6125,9 +6128,9 @@
     }
   }
 
-  function openNutriQtyModal(encodedName, kcal100, prot100, gluc100, lip100, defaultQty) {
+  function openNutriQtyModal(encodedName, kcal100, prot100, gluc100, lip100, fib100, defaultQty) {
     const name = decodeURIComponent(encodedName);
-    _nutriPendingFood = { name, kcal100, prot100, gluc100, lip100 };
+    _nutriPendingFood = { name, kcal100, prot100, gluc100, lip100, fib100: fib100 || 0 };
     const qty0 = defaultQty || 100;
 
     const existing = document.getElementById('nutriQtyModal');
@@ -6141,16 +6144,17 @@
     modal.innerHTML = `
       <div class="nutri-qty-sheet">
         <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px">${name}</div>
-        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${prot100}P · ${gluc100}G · ${lip100}L · ${kcal100} kcal/100g</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${prot100}P · ${gluc100}G · ${lip100}L · ${fib100||0}F · ${kcal100} kcal/100g</div>
         <div style="margin-bottom:16px">
           <div class="label" style="margin-bottom:6px">Quantité (g)</div>
           <input class="inp" id="nutriQtyInput" type="number" value="${qty0}" min="1" max="2000" style="width:100%;text-align:center;font-size:24px;font-family:'DM Serif Display',serif" oninput="updateNutriPreview()"/>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;text-align:center">
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">kcal</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">prot.</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">gluc.</div></div>
-          <div class="card" style="padding:10px 6px"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}</div><div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px">lip.</div></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:20px;text-align:center">
+          <div class="card" style="padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div><div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px">kcal</div></div>
+          <div class="card" style="padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10}</div><div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px">prot.</div></div>
+          <div class="card" style="padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}</div><div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px">gluc.</div></div>
+          <div class="card" style="padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}</div><div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px">lip.</div></div>
+          <div class="card" style="padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:#7ab893" id="previewFib">${Math.round((fib100||0)*ratio0*10)/10}</div><div style="font-size:7px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px">fibres</div></div>
         </div>
         <button onclick="confirmNutriEntry()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:600">Ajouter →</button>
       </div>`;
@@ -6166,6 +6170,7 @@
     document.getElementById('previewProt').textContent = Math.round(f.prot100 * ratio * 10) / 10;
     document.getElementById('previewGluc').textContent = Math.round(f.gluc100 * ratio * 10) / 10;
     document.getElementById('previewLip').textContent  = Math.round(f.lip100  * ratio * 10) / 10;
+    document.getElementById('previewFib').textContent  = Math.round((f.fib100 || 0) * ratio * 10) / 10;
   }
 
   async function confirmNutriEntry() {
@@ -6183,13 +6188,13 @@
       prot: Math.round(f.prot100 * ratio * 10) / 10,
       gluc: Math.round(f.gluc100 * ratio * 10) / 10,
       lip:  Math.round(f.lip100  * ratio * 10) / 10,
+      fib:  Math.round((f.fib100 || 0) * ratio * 10) / 10,
     };
     document.getElementById('nutriQtyModal')?.remove();
     _nutriPendingFood = null;
     closeNutriAdd();
     await saveNutriEntry(entry);
     showToast(f.name.slice(0, 30) + ' ajouté ✓');
-    // Rouvrir l'accordéon du repas
     _nutriAccordionOpen[entry.meal] = true;
   }
 
@@ -6264,7 +6269,7 @@
             <div style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
               <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
-                <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
+                <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L${e.fib ? ' ' + e.fib + 'F' : ''}</div>
               </div>
               <div style="text-align:right;margin-left:10px;flex-shrink:0">
                 <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace">${e.kcal} kcal</div>
