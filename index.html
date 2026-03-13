@@ -1116,8 +1116,8 @@
           <option value="custom">Personnalisé...</option>
         </select>
         <input class="inp" id="rExRestCustom" type="number" placeholder="Sec." style="max-width:70px;display:none;" min="5" max="600"/>
-        <button class="btn-ghost" onclick="addRoutineEx()">+</button>
       </div>
+      <button class="btn-add" style="width:100%;margin-bottom:12px" onclick="addRoutineEx()">+ Ajouter un exercice</button>
       <div style="display:flex;gap:10px">
         <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la séance</button>
         <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
@@ -3481,8 +3481,8 @@
             <option value="0">Sans</option><option value="custom">Perso.</option>
           </select>
           <input class="inp" id="inlineRExRestCustom-${routineId}" type="number" placeholder="Sec." style="max-width:70px;display:none" min="5" max="600"/>
-          <button class="btn-ghost" onclick="addInlineRoutineEx('${routineId}')">+</button>
         </div>
+        <button class="btn-add" style="width:100%;margin-top:10px" onclick="addInlineRoutineEx('${routineId}')">+ Ajouter un exercice</button>
       </div>
       <div style="display:flex;gap:10px">
         <button class="btn-add" onclick="saveInlineRoutine('${routineId}')" style="flex:1">💾 Sauvegarder</button>
