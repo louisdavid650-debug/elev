@@ -5686,72 +5686,109 @@
     if (body) body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace;letter-spacing:1px">RECHERCHE EN COURS…</div>`;
   }
 
+  // Base locale des aliments courants (fallback si API lente)
+  const NUTRI_LOCAL = [
+    {name:'Blanc de poulet cuit',kcal:165,prot:31,gluc:0,lip:3.6},
+    {name:'Riz blanc cuit',kcal:130,prot:2.7,gluc:28,lip:0.3},
+    {name:'Riz basmati cuit',kcal:135,prot:2.8,gluc:29,lip:0.3},
+    {name:'Pâtes cuites',kcal:158,prot:5.5,gluc:31,lip:0.9},
+    {name:'Œuf entier (1 unité)',kcal:72,prot:6.3,gluc:0.4,lip:5},
+    {name:'Blanc d\'œuf',kcal:17,prot:3.6,gluc:0.2,lip:0.1},
+    {name:'Bœuf haché 5%',kcal:137,prot:21,gluc:0,lip:5.7},
+    {name:'Saumon cuit',kcal:206,prot:20,gluc:0,lip:13},
+    {name:'Thon en boîte (eau)',kcal:103,prot:22,gluc:0,lip:1.5},
+    {name:'Whey protéine',kcal:380,prot:75,gluc:7,lip:5},
+    {name:'Flocons d\'avoine',kcal:367,prot:13,gluc:58,lip:7},
+    {name:'Pain complet (1 tranche)',kcal:69,prot:2.8,gluc:13,lip:1},
+    {name:'Banane',kcal:89,prot:1.1,gluc:23,lip:0.3},
+    {name:'Pomme',kcal:52,prot:0.3,gluc:14,lip:0.2},
+    {name:'Lait demi-écrémé',kcal:46,prot:3.2,gluc:4.8,lip:1.6},
+    {name:'Yaourt nature 0%',kcal:39,prot:4.5,gluc:4.7,lip:0.1},
+    {name:'Fromage blanc 0%',kcal:45,prot:7.4,gluc:4,lip:0.2},
+    {name:'Beurre de cacahuète',kcal:597,prot:22,gluc:20,lip:51},
+    {name:'Amandes',kcal:575,prot:21,gluc:10,lip:50},
+    {name:'Huile d\'olive',kcal:900,prot:0,gluc:0,lip:100},
+    {name:'Patate douce cuite',kcal:90,prot:2,gluc:21,lip:0.1},
+    {name:'Brocoli cuit',kcal:34,prot:3.7,gluc:4,lip:0.5},
+    {name:'Épinards cuits',kcal:23,prot:2.5,gluc:1.4,lip:0.4},
+    {name:'Lentilles cuites',kcal:116,prot:9,gluc:20,lip:0.4},
+    {name:'Fromage (emmental)',kcal:380,prot:28,gluc:0,lip:29},
+    {name:'Jambon blanc',kcal:107,prot:18,gluc:1,lip:3.5},
+    {name:'Skyr nature',kcal:63,prot:11,gluc:4,lip:0.2},
+    {name:'Cottage cheese',kcal:98,prot:11,gluc:3.4,lip:4.3},
+    {name:'Quinoa cuit',kcal:120,prot:4.4,gluc:22,lip:1.9},
+    {name:'Pain de mie',kcal:265,prot:7.9,gluc:47,lip:3.4},
+  ];
+
   async function doNutriSearch() {
     const q = document.getElementById('nutriSearch')?.value.trim();
     const body = document.getElementById('nutriAddBody');
     if (!body || !q || q.length < 2) return;
 
-    // API v2 world.openfoodfacts.org — seule URL qui accepte CORS
-    // lc=fr pour prioriser noms français, cc=fr pour produits français en premier
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=10&lc=fr&cc=fr&fields=product_name,product_name_fr,brands,nutriments`;
+    // 1. Résultats locaux immédiats
+    const qLow = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const localMatches = NUTRI_LOCAL.filter(f =>
+      f.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(qLow)
+    );
 
+    const renderResults = (items, fromApi) => {
+      if (!items.length) {
+        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour «&nbsp;${q}&nbsp;».</div>`;
+        return;
+      }
+      const src = fromApi ? '' : `<div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">BASE LOCALE · API EN COURS…</div>`;
+      body.innerHTML = src + `<div class="card" style="padding:4px 14px;margin-top:4px">${items.map(f => {
+        const enc = encodeURIComponent(f.name);
+        return `<div class="nutri-search-item">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+          </div>
+          <button class="nutri-add-btn" onclick="openNutriQtyModal('${enc}',${f.kcal},${f.prot},${f.gluc},${f.lip})">+</button>
+        </div>`;
+      }).join('')}</div>`;
+    };
+
+    // Afficher résultats locaux immédiatement
+    if (localMatches.length) renderResults(localMatches, false);
+
+    // 2. Requête API en parallèle (sans bloquer l'UI)
     const ctrl = new AbortController();
-    const timeout = setTimeout(() => {
-      ctrl.abort();
-      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Délai dépassé.<br>Réessaie dans un instant.</div>`;
-    }, 10000);
-
+    const timeout = setTimeout(() => ctrl.abort(), 12000);
     try {
-      const res = await fetch(url, {
-        signal: ctrl.signal,
-        headers: { 'Accept': 'application/json' }
-      });
+      const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}&page_size=8&lc=fr&fields=product_name,product_name_fr,brands,nutriments`;
+      const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } });
       clearTimeout(timeout);
-
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
 
-      let products = (data.products || []).filter(p =>
+      let products = (data.products || data.hits || []).filter(p =>
         (p.product_name_fr || p.product_name) && p.nutriments
       );
-
-      // Dédoublonner par nom
-      const seen = new Set();
-      products = products.filter(p => {
-        const n = (p.product_name_fr || p.product_name || '').toLowerCase().trim();
-        if (!n || seen.has(n)) return false;
-        seen.add(n); return true;
-      });
-
-      if (!products.length) {
-        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour «&nbsp;${q}&nbsp;».<br>Essaie un terme plus simple.</div>`;
-        return;
-      }
-
-      body.innerHTML = `<div class="card" style="padding:4px 14px;margin-top:8px">${products.map(p => {
-        const name = (p.product_name_fr || p.product_name || '—').slice(0, 60);
-        const brand = p.brands ? `<span style="color:var(--muted)"> · ${p.brands.split(',')[0].trim()}</span>` : '';
+      const seen = new Set(localMatches.map(f => f.name.toLowerCase()));
+      const apiItems = products.map(p => {
+        const name = (p.product_name_fr || p.product_name || '').slice(0, 60);
         const n = p.nutriments || {};
-        const kcal = Math.round(n['energy-kcal_100g'] || n['energy-kcal'] || (n['energy_100g'] || 0) / 4.184 || 0);
-        const prot = Math.round((n.proteins_100g || 0) * 10) / 10;
-        const gluc = Math.round((n.carbohydrates_100g || 0) * 10) / 10;
-        const lip  = Math.round((n.fat_100g || 0) * 10) / 10;
-        if (!kcal && !prot && !gluc && !lip) return '';
-        const enc = encodeURIComponent(name);
-        return `<div class="nutri-search-item">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}${brand}</div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${prot}P · ${gluc}G · ${lip}L · ${kcal} kcal/100g</div>
-          </div>
-          <button class="nutri-add-btn" onclick="openNutriQtyModal('${enc}',${kcal},${prot},${gluc},${lip})">+</button>
-        </div>`;
-      }).filter(Boolean).join('')}</div>`;
+        return {
+          name,
+          kcal: Math.round(n['energy-kcal_100g'] || (n['energy_100g']||0)/4.184 || 0),
+          prot: Math.round((n.proteins_100g||0)*10)/10,
+          gluc: Math.round((n.carbohydrates_100g||0)*10)/10,
+          lip:  Math.round((n.fat_100g||0)*10)/10,
+        };
+      }).filter(f => f.name && (f.kcal||f.prot) && !seen.has(f.name.toLowerCase()));
 
+      // Vérifier que la recherche est toujours pertinente
+      const currentQ = document.getElementById('nutriSearch')?.value.trim();
+      if (currentQ !== q) return;
+
+      renderResults([...localMatches, ...apiItems], true);
     } catch(e) {
       clearTimeout(timeout);
-      if (e.name === 'AbortError') return; // timeout déjà géré
-      console.error('OFF search error:', e);
-      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Impossible de joindre Open Food Facts.<br><small style="font-family:'Geist Mono',monospace;font-size:10px">${e.message}</small></div>`;
+      // Si on avait des résultats locaux, pas d'erreur affichée
+      if (!localMatches.length) {
+        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat local.<br><span style="font-size:11px">L'API Open Food Facts est inaccessible.</span></div>`;
+      }
     }
   }
 
