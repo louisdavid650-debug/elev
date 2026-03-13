@@ -380,7 +380,7 @@
   .weight-hist-del:hover { color: var(--accent2); }
 
   /* Exercise replace modal */
-  .ex-replace-modal { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:flex-end;justify-content:center; }
+  .ex-replace-modal { position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:960;display:flex;align-items:flex-end;justify-content:center; }
   .ex-replace-sheet { background:var(--surface);border-radius:18px 18px 0 0;padding:28px 22px 36px;width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,.12); }
   .ex-replace-title { font-family:DM Serif Display,serif;font-size:20px;margin-bottom:16px;color:var(--text); }
   .ex-search-wrap { position:relative;margin-bottom:8px; }
@@ -500,7 +500,10 @@
     transform: translateX(100%);
     transition: transform 0.35s cubic-bezier(0.34, 1.05, 0.64, 1);
     overflow-y: auto; -webkit-overflow-scrolling: touch;
-    max-width: 460px; left: 50%; translate: -50% 0;
+    max-width: 460px; left: 50%; margin-left: -230px;
+  }
+  @media (max-width: 460px) {
+    .profile-overlay { left: 0; margin-left: 0; max-width: 100%; }
   }
   .profile-overlay.open { transform: translateX(0); }
   .profile-header {
@@ -549,7 +552,13 @@
   .profile-goal-opt.selected .profile-goal-opt-check { opacity: 1; }
   .profile-save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 14px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; margin-top: 24px; transition: all 0.18s; }
   .profile-save-btn:hover { background: var(--accent-hover); }
+  .profile-cancel-btn { width: 100%; background: none; color: var(--muted); border: 1px solid var(--border2); border-radius: 20px; padding: 12px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: 8px; transition: all 0.18s; }
+  .profile-cancel-btn:hover { color: var(--text); border-color: var(--text); }
   .profile-danger-btn { width: 100%; background: none; color: var(--accent2); border: 1px solid rgba(192,57,43,0.3); border-radius: 20px; padding: 12px; font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: all 0.18s; }
+  .profile-avatar-wrap { position: relative; width: 80px; margin: 0 auto 20px; cursor: pointer; }
+  .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-light); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--accent); overflow: hidden; }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-avatar-edit { position: absolute; bottom: 0; right: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
   /* Dashboard */
   .home-dashboard { margin-bottom: 32px; display: flex; flex-direction: column; gap: 8px; }
@@ -632,7 +641,10 @@
     display: flex; flex-direction: column;
     transform: translateY(100%);
     transition: transform 0.38s cubic-bezier(0.34, 1.05, 0.64, 1);
-    max-width: 460px; left: 50%; translate: -50% 0;
+    max-width: 460px; left: 50%; margin-left: -230px;
+  }
+  @media (max-width: 460px) {
+    .session-fs-overlay { left: 0; margin-left: 0; max-width: 100%; }
   }
   .session-fs-overlay.open { transform: translateY(0); }
 
@@ -676,7 +688,7 @@
 
   /* ── Mini-bar séance réduite ── */
   .session-minibar {
-    position: fixed; bottom: 70px; left: 50%; translate: -50% 0;
+    position: fixed; bottom: 70px; left: 50%; margin-left: -218px;
     width: calc(100% - 24px); max-width: 436px;
     background: var(--accent); color: #fff;
     border-radius: 14px;
@@ -1006,7 +1018,7 @@
         <div class="home-greeting-phrase" id="homeGreetingPhrase"></div>
         <div class="home-date" id="homeDate"></div>
       </div>
-      <button class="home-profile-btn" onclick="openProfileOverlay()" title="Mon profil">👤</button>
+      <button class="home-profile-btn" id="homeProfileBtn" onclick="openProfileOverlay()" title="Mon profil">👤</button>
     </div>
 
     <!-- ── Dashboard critique : poids + calories + prochaine séance ── -->
@@ -4725,6 +4737,21 @@
     document.getElementById('homeGreetingPhrase').textContent = phrase;
     document.getElementById('homeDate').textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+    // Avatar dans le bouton profil
+    const profileBtn = document.getElementById('homeProfileBtn');
+    if (profileBtn) {
+      const photo = profile?.photo;
+      if (photo) {
+        profileBtn.innerHTML = `<img src="${photo}" alt="Profil" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+        profileBtn.style.padding = '0';
+        profileBtn.style.overflow = 'hidden';
+      } else {
+        profileBtn.innerHTML = '👤';
+        profileBtn.style.padding = '';
+        profileBtn.style.overflow = '';
+      }
+    }
+
     // Poids du jour
     const todayWeight = bodyWeights.find(w => w.date === today);
     const lastWeight = bodyWeights.length ? bodyWeights[bodyWeights.length - 1] : null;
@@ -6164,27 +6191,86 @@
 
   // ══ PROFILE OVERLAY ══
   let _selectedProfileGoal = null;
+  let _profilePhotoDataUrl = null;
+  let _profileSnapshot = null; // Pour annuler les modifications
 
   function openProfileOverlay() {
     const profile = getUserProfile() || {};
+    // Snapshot pour annulation
+    _profileSnapshot = {
+      firstName: profile.firstName || '',
+      age: profile.age || '',
+      height: profile.height || '',
+      startWeight: profile.startWeight || '',
+      targetWeight: profile.targetWeight || '',
+      kcalTarget: profile.kcalTarget || '',
+      goal: profile.goal || null,
+      photo: profile.photo || null,
+    };
     // Remplir les champs
-    document.getElementById('pFirstName').value = profile.firstName || '';
-    document.getElementById('pAge').value = profile.age || '';
-    document.getElementById('pHeight').value = profile.height || '';
-    document.getElementById('pStartWeight').value = profile.startWeight || '';
-    document.getElementById('pTargetWeight').value = profile.targetWeight || '';
-    document.getElementById('pKcalTarget').value = profile.kcalTarget || '';
-    _selectedProfileGoal = profile.goal || null;
+    document.getElementById('pFirstName').value = _profileSnapshot.firstName;
+    document.getElementById('pAge').value = _profileSnapshot.age;
+    document.getElementById('pHeight').value = _profileSnapshot.height;
+    document.getElementById('pStartWeight').value = _profileSnapshot.startWeight;
+    document.getElementById('pTargetWeight').value = _profileSnapshot.targetWeight;
+    document.getElementById('pKcalTarget').value = _profileSnapshot.kcalTarget;
+    _selectedProfileGoal = _profileSnapshot.goal;
+    _profilePhotoDataUrl = _profileSnapshot.photo || null;
     // Update goal options
     ['seche','maintien','prise'].forEach(g => {
       document.getElementById('pgopt-' + g).classList.toggle('selected', g === _selectedProfileGoal);
     });
+    // Afficher la photo
+    renderProfileAvatar();
     updateProfilePreview();
     document.getElementById('profileOverlay').classList.add('open');
   }
 
+  function renderProfileAvatar() {
+    const avatar = document.getElementById('profileAvatar');
+    const emoji = document.getElementById('profileAvatarEmoji');
+    if (_profilePhotoDataUrl) {
+      avatar.innerHTML = `<img src="${_profilePhotoDataUrl}" alt="Photo de profil"/>`;
+    } else {
+      avatar.innerHTML = '<span id="profileAvatarEmoji">👤</span>';
+    }
+  }
+
+  function handleProfilePhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      _profilePhotoDataUrl = e.target.result;
+      renderProfileAvatar();
+    };
+    reader.readAsDataURL(file);
+    // Reset input pour pouvoir rechoisir la même image
+    event.target.value = '';
+  }
+
   function closeProfileOverlay() {
     document.getElementById('profileOverlay').classList.remove('open');
+  }
+
+  function cancelProfileOverlay() {
+    // Restaurer le snapshot
+    if (_profileSnapshot) {
+      _profilePhotoDataUrl = _profileSnapshot.photo || null;
+      renderProfileAvatar();
+      document.getElementById('pFirstName').value = _profileSnapshot.firstName;
+      document.getElementById('pAge').value = _profileSnapshot.age;
+      document.getElementById('pHeight').value = _profileSnapshot.height;
+      document.getElementById('pStartWeight').value = _profileSnapshot.startWeight;
+      document.getElementById('pTargetWeight').value = _profileSnapshot.targetWeight;
+      document.getElementById('pKcalTarget').value = _profileSnapshot.kcalTarget;
+      _selectedProfileGoal = _profileSnapshot.goal;
+      ['seche','maintien','prise'].forEach(g => {
+        document.getElementById('pgopt-' + g).classList.toggle('selected', g === _selectedProfileGoal);
+      });
+      updateProfilePreview();
+    }
+    closeProfileOverlay();
   }
 
   function selectProfileGoal(goal) {
@@ -6213,6 +6299,7 @@
       targetWeight: parseFloat(document.getElementById('pTargetWeight').value) || existing.targetWeight || null,
       kcalTarget:   parseFloat(document.getElementById('pKcalTarget').value) || existing.kcalTarget || null,
       goal:         _selectedProfileGoal || existing.goal || null,
+      photo:        _profilePhotoDataUrl || existing.photo || null,
     };
     await saveUserProfile(updated);
     closeProfileOverlay();
@@ -6285,7 +6372,11 @@
 
     <!-- Avatar + nom -->
     <div style="text-align:center;margin-bottom:28px">
-      <div class="profile-avatar">👤</div>
+      <input type="file" id="profilePhotoInput" accept="image/*" style="display:none" onchange="handleProfilePhoto(event)"/>
+      <div class="profile-avatar-wrap" onclick="document.getElementById('profilePhotoInput').click()" title="Changer la photo">
+        <div class="profile-avatar" id="profileAvatar"><span id="profileAvatarEmoji">👤</span></div>
+        <div class="profile-avatar-edit">✏️</div>
+      </div>
       <div class="profile-name-big" id="profileNameBig">—</div>
       <div style="display:flex;justify-content:center;margin-top:8px">
         <div class="profile-goal-badge" id="profileGoalBadge">—</div>
@@ -6373,6 +6464,7 @@
 
     <!-- Actions -->
     <button class="profile-save-btn" onclick="saveProfileOverlay()">Sauvegarder les modifications</button>
+    <button class="profile-cancel-btn" onclick="cancelProfileOverlay()">Annuler les modifications</button>
     <button class="profile-danger-btn" onclick="if(confirm('Déconnecter et supprimer la session ?'))signOut()">Se déconnecter</button>
 
   </div>
