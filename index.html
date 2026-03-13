@@ -2579,11 +2579,33 @@
       loadedRoutineId = null; exercises = [];
       renderExercises(); renderRoutinePicker(); showToast('Routine retirée'); return;
     }
-    // Show confirm modal
-    document.getElementById('routineConfirmName').textContent = routine.name;
-    document.getElementById('routineConfirmExs').textContent = routine.exercises.length + ' exercice' + (routine.exercises.length > 1 ? 's' : '') + ' · ' + [...new Set(routine.exercises.map(e=>e.muscle).filter(Boolean))].join(', ');
-    document.getElementById('routineConfirmModal').style.display = 'flex';
-    document.getElementById('routineConfirmModal').dataset.pendingId = id;
+    // Lancer directement sans modal intermédiaire
+    loadedRoutineId = id;
+    exercises = routine.exercises.map(ex => {
+      const nSets = Array.isArray(ex.sets) ? ex.sets.length : (parseInt(ex.sets) || 3);
+      const restTime = ex.restTime ?? ex.rest ?? 90;
+      return {
+        id: Date.now() + Math.random(),
+        name: ex.name,
+        muscle: ex.muscle || '',
+        restTime,
+        repsTarget: ex.repsTarget || (ex.reps ? String(ex.reps) : ''),
+        sets: Array.from({ length: nSets }, () => ({ w: '', r: '', done: false }))
+      };
+    });
+    const muscles = [...new Set(routine.exercises.map(e => e.muscle).filter(Boolean))];
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', muscles.includes(c.textContent)));
+    if (!timerRunning) {
+      timerStartedAt = Date.now();
+      timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
+      timerRunning = true;
+      const btn = document.getElementById('timerBtn');
+      if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
+    }
+    renderExercises(); renderRoutinePicker();
+    autosaveDraft();
+    showToast(`"${routine.name}" lancée ! ⏱`);
+    openSessionFullscreen();
   }
 
   function confirmLoadRoutine() {
