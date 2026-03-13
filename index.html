@@ -6144,8 +6144,7 @@
     if (!el) return;
     const m = Math.floor(timerSec / 60), s = timerSec % 60;
     const timeStr = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-    const n = exercises.length;
-    el.textContent = timeStr + (n > 0 ? ' · ' + n + ' exercice' + (n > 1 ? 's' : '') : '');
+    el.textContent = 'Entraînement · ' + timeStr;
   }
 
   function renderSessionFs() {
@@ -6684,7 +6683,7 @@
   <div class="session-minibar-dot"></div>
   <div class="session-minibar-info">
     <div class="session-minibar-name" id="minibarName">Séance en cours</div>
-    <div class="session-minibar-timer" id="minibarTimer">00:00 · 0 exercice</div>
+    <div class="session-minibar-timer" id="minibarTimer">Entraînement · 00:00</div>
   </div>
   <div class="session-minibar-expand">↑</div>
 </div>
