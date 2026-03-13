@@ -2948,7 +2948,21 @@
     showToast(`Exercice remplacé par "${newName}"`);
   }
 
-  function _rerender() { if (_sessionFsOpen) { renderSessionFs(); syncFsTimer(); } else { renderExercises(); } autosaveDraft(); }
+  // Flush all unsaved input values from the FS DOM into exercises[] state before re-rendering
+  function flushFsInputs() {
+    if (!_sessionFsOpen) return;
+    const body = document.getElementById('sessionFsBody');
+    if (!body) return;
+    body.querySelectorAll('input.set-inp[data-ei][data-si][data-f]').forEach(inp => {
+      const ei = parseInt(inp.dataset.ei);
+      const si = parseInt(inp.dataset.si);
+      const f = inp.dataset.f;
+      if (exercises[ei] && exercises[ei].sets[si] !== undefined) {
+        exercises[ei].sets[si][f] = inp.value;
+      }
+    });
+  }
+  function _rerender() { if (_sessionFsOpen) { flushFsInputs(); renderSessionFs(); syncFsTimer(); } else { renderExercises(); } autosaveDraft(); }
   function delEx(ei) { exercises.splice(ei,1); _rerender(); }
   function addSet(ei) { exercises[ei].sets.push({w:'',r:'',done:false}); _rerender(); }
   function delSet(ei, si) { if (exercises[ei].sets.length <= 1) { showToast('Minimum 1 série'); return; } exercises[ei].sets.splice(si, 1); _rerender(); }
@@ -2995,12 +3009,10 @@
   function upd(ei,si,f,v) {
     exercises[ei].sets[si][f]=v;
     autosaveDraft();
-    // Ne pas détecter de PR sur les séries warmup
     const isWarmup = exercises[ei].sets[si].warmup;
     if (f==='w'&&v&&!isWarmup) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);if(navigator.vibrate)navigator.vibrate([80,40,120]);} }
   }
   function updWU(ei, wi, f, v) {
-    // wi = index dans les séries warmup uniquement
     const wuSets = exercises[ei].sets.filter(s => s.warmup);
     if (wuSets[wi]) { wuSets[wi][f] = v; autosaveDraft(); }
   }
@@ -3008,19 +3020,16 @@
     const wuSets = exercises[ei].sets.filter(s => s.warmup);
     if (wuSets[wi]) {
       wuSets[wi].done = !wuSets[wi].done;
-      // Pas de timer repos pour le warm-up
-      renderExercises(); autosaveDraft();
+      _rerender();
     }
   }
   function tick(ei,si) {
     exercises[ei].sets[si].done = !exercises[ei].sets[si].done;
     if (exercises[ei].sets[si].done) {
       const ex = exercises[ei];
-      // Superset: only start rest after BOTH exercises' set is done
       if (ex.supersetWith !== undefined) {
         const partnerIdx = exercises.findIndex(e => e.id === ex.supersetWith);
         if (partnerIdx >= 0) {
-          // Trouver l'index réel dans les work sets (hors warmup) pour comparer avec le partenaire
           const myWorkSets = ex.sets.filter(s => !s.warmup);
           const myWorkIdx = myWorkSets.indexOf(ex.sets[si]);
           const partnerWorkSets = exercises[partnerIdx].sets.filter(s => !s.warmup);
@@ -3030,13 +3039,12 @@
             const restTime = Math.max(ex.restTime || restDur, exercises[partnerIdx].restTime || restDur);
             startRest(restTime, ex.name + ' + ' + exercises[partnerIdx].name);
           }
-          // else wait for partner set
         }
       } else {
         startRest(ex.restTime !== undefined ? ex.restTime : restDur, ex.name);
       }
     }
-    renderExercises(); autosaveDraft();
+    _rerender();
   }
   function getSelectedMuscles() { return [...document.querySelectorAll('.chip.on')].map(c=>c.textContent); }
 
@@ -6169,11 +6177,11 @@
         return `<div class="set-row ${_isAllTimePR?'set-row-pr':''}">
           <div class="set-n">${si+1}</div>
           <div style="position:relative">
-            <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${realSi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+            <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" data-ei="${ei}" data-si="${realSi}" data-f="w" onchange="upd(${ei},${realSi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
             ${_pr && !_isAllTimePR ? `<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">${_pr.weight}<br>kg</span>` : ''}
           </div>
           <div style="position:relative">
-            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${realSi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget?'padding-right:34px':''}"/>
+            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" data-ei="${ei}" data-si="${realSi}" data-f="r" onchange="upd(${ei},${realSi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget?'padding-right:34px':''}"/>
             ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent);opacity:0.75;pointer-events:none;line-height:1.2;text-align:right;font-family:'Geist Mono',monospace;font-weight:500">${ex.repsTarget}<br><span style="font-size:9px;color:var(--muted)">reps</span></span>` : ''}
           </div>
           <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
