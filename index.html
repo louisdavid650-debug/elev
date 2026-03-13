@@ -5919,8 +5919,10 @@
   }
 
   async function searchByBarcode(code) {
-    const body = document.getElementById('nutriAddBody');
-    if (body) body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace">SCAN EN COURS…</div>`;
+    // Afficher "recherche en cours" dans l'overlay scanner si encore ouvert, sinon dans nutriAddBody
+    const scanOverlay = document.getElementById('barcodeOverlay');
+    const statusEl = document.getElementById('barcodeScanStatus');
+    if (statusEl) statusEl.textContent = 'Recherche du produit…';
 
     // 1. Lookup dans Supabase d'abord (barcode = id)
     try {
@@ -5933,6 +5935,8 @@
         if (rows && rows.length > 0) {
           const r = rows[0];
           const name = r.brand ? `${r.name} — ${r.brand}` : r.name;
+          stopBarcodeStream();
+          document.getElementById('barcodeOverlay')?.remove();
           openNutriQtyModal(
             encodeURIComponent(name),
             Math.round(r.kcal || 0),
@@ -5943,7 +5947,7 @@
           return;
         }
       }
-    } catch(e) { /* fallback OFF API */ }
+    } catch(e) {}
 
     // 2. Fallback : API Open Food Facts
     try {
@@ -5952,18 +5956,41 @@
         { headers: { 'Accept': 'application/json' } }
       );
       const data = await res.json();
-      if (data.status !== 1 || !data.product) { showToast('Produit non trouvé'); renderNutriAddBody(); return; }
-      const p = data.product;
-      const name = p.product_name_fr || p.product_name || '—';
-      const n = p.nutriments || {};
-      openNutriQtyModal(
-        encodeURIComponent(name),
-        Math.round(n['energy-kcal_100g'] || 0),
-        Math.round((n.proteins_100g      || 0) * 10) / 10,
-        Math.round((n.carbohydrates_100g || 0) * 10) / 10,
-        Math.round((n.fat_100g           || 0) * 10) / 10
-      );
-    } catch(e) { showToast('Erreur de scan'); renderNutriAddBody(); }
+      if (data.status === 1 && data.product) {
+        const p = data.product;
+        const name = p.product_name_fr || p.product_name || '—';
+        const n = p.nutriments || {};
+        stopBarcodeStream();
+        document.getElementById('barcodeOverlay')?.remove();
+        openNutriQtyModal(
+          encodeURIComponent(name),
+          Math.round(n['energy-kcal_100g'] || 0),
+          Math.round((n.proteins_100g      || 0) * 10) / 10,
+          Math.round((n.carbohydrates_100g || 0) * 10) / 10,
+          Math.round((n.fat_100g           || 0) * 10) / 10
+        );
+        return;
+      }
+    } catch(e) {}
+
+    // Produit non trouvé → rester dans le scanner et afficher un message
+    if (document.getElementById('barcodeOverlay')) {
+      if (statusEl) {
+        statusEl.textContent = '❌ Produit non trouvé — réessayez';
+        statusEl.style.color = 'rgba(255,100,100,0.9)';
+        setTimeout(() => {
+          if (statusEl) {
+            statusEl.textContent = 'Pointez vers le code-barres';
+            statusEl.style.color = 'rgba(255,255,255,0.75)';
+          }
+        }, 2000);
+      }
+      // Reprendre le scan Quagga
+      try { Quagga.start(); } catch(e) {}
+    } else {
+      showToast('Produit non trouvé');
+      renderNutriAddBody();
+    }
   }
 
   let _html5QrScanner = null;
@@ -6013,7 +6040,9 @@
 
     const initQuagga = () => {
       const statusEl = document.getElementById('barcodeScanStatus');
-      if (statusEl) statusEl.textContent = 'Accès caméra…';
+      // Si permission déjà accordée, pas besoin d'afficher "Accès caméra"
+      const camGranted = localStorage.getItem('elev_cam_granted') === '1';
+      if (statusEl) statusEl.textContent = camGranted ? 'Pointez vers le code-barres' : 'Accès caméra…';
       _html5QrScanner = true;
 
       Quagga.init({
@@ -6053,6 +6082,8 @@
           if (code && code.trim()) searchByBarcode(code.trim());
           return;
         }
+        // Mémoriser que la caméra a été autorisée
+        localStorage.setItem('elev_cam_granted', '1');
         Quagga.start();
         if (statusEl) statusEl.textContent = 'Pointez vers le code-barres';
       });
