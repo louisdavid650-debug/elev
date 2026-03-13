@@ -2632,6 +2632,10 @@
     document.getElementById('freeSessionToggleBtn').textContent = 'Démarrer une séance libre';
   }
   function toggleFreeSessionBlock() {
+    // Si une séance fullscreen est active, l'ouvrir plutôt que lancer l'ancien système
+    if (_sessionFsOpen || _sessionMinibarVisible) { expandSession(); return; }
+    // Si une séance est en cours mais fullscreen fermé (ne devrait pas arriver), rouvrir
+    if (exercises.length && !_sessionFsOpen) { openSessionFullscreen(); return; }
     const isOpen = document.getElementById('freeSessionContent').style.display !== 'none';
     if (isOpen) {
       if (exercises.length && !confirm('Annuler la séance en cours ?')) return;
@@ -6054,31 +6058,75 @@
         </div>
       </div>`;
 
-    // Exercices construits directement depuis le state `exercises`
+    // Exercices construits directement depuis le state — rendu complet identique à l'original
     const exHtml = exercises.length ? exercises.map((ex, ei) => {
+      const lastSets = getLastSessionData(ex.name);
+      const pr = getPR(ex.name);
+      const wuSets = ex.sets.filter(s => s.warmup);
       const workSets = ex.sets.filter(s => !s.warmup);
-      const warmSets = ex.sets.filter(s => s.warmup);
-      const setsHtml = ex.sets.map((s, si) => {
-        const isWarm = s.warmup;
-        const isDone = s.done;
-        return `<div class="set-row ${isDone?'done':''} ${isWarm?'warmup-set':''}" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted);width:22px;text-align:center">${isWarm?'W':(si - warmSets.length + 1)}</div>
-          <input class="inp" type="number" placeholder="kg" value="${s.w||''}" step="0.5" style="flex:1;text-align:center;padding:7px 4px"
-            oninput="exercises[${ei}].sets[${si}].w=this.value;autosaveDraft()"/>
-          <input class="inp" type="number" placeholder="reps" value="${s.r||''}" style="flex:1;text-align:center;padding:7px 4px"
-            oninput="exercises[${ei}].sets[${si}].r=this.value;autosaveDraft()"/>
-          <button onclick="upd(${ei},${si})" style="width:32px;height:32px;border-radius:50%;border:2px solid ${isDone?'var(--accent)':'var(--border2)'};background:${isDone?'var(--accent)':'none'};color:${isDone?'#fff':'var(--muted)'};cursor:pointer;font-size:13px;flex-shrink:0">✓</button>
+      const pctLabels = ['50%','70%','85%'];
+      let setsHtml = '';
+      if (wuSets.length) {
+        setsHtml += '<div class="warmup-sep">🔥 Échauffement</div>';
+        setsHtml += wuSets.map((s, wi) => `<div class="set-row wu-row">
+          <div class="set-n wu-n">W${wi+1}</div>
+          <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+          <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+          <div class="set-prev wu-prev">${pctLabels[wi]||''}<span>× ${s.r||'?'}</span></div>
+          <div><button class="set-tick wu-tick ${s.done?'done':''}" onclick="tickWU(${ei},${wi})">${s.done?'✓':'·'}</button></div>
+          <span></span>
+        </div>`).join('');
+        setsHtml += '<div class="work-sep">Travail</div>';
+      }
+      setsHtml += workSets.map((s, si) => {
+        const realSi = ex.sets.indexOf(s);
+        const prev = lastSets && lastSets[si] ? lastSets[si] : null;
+        const prevW = prev ? (prev.w||prev.weight||'') : '';
+        const prevR = prev ? (prev.r||prev.reps||'') : '';
+        const _w = parseFloat(s.w||0), _r = parseFloat(s.r||0), _vol = _w * (_r||1);
+        const _pr = getPR(ex.name), _histBestVol = _pr ? _pr.volume : 0;
+        const workOnly = ex.sets.filter(ss => !ss.warmup);
+        const _lastBestIdx = workOnly.reduce((best, ss, idx) => {
+          const vol = parseFloat(ss.w||0) * (parseFloat(ss.r||0)||1);
+          const bestVol = parseFloat(workOnly[best]?.w||0) * (parseFloat(workOnly[best]?.r||0)||1);
+          return vol >= bestVol ? idx : best;
+        }, 0);
+        const _isTopSet = si === _lastBestIdx && _w > 0 && _r > 0;
+        const _isAllTimePR = _isTopSet && _vol > _histBestVol;
+        const _medal = _isAllTimePR ? '<span class="set-medal">🥇</span>' : '';
+        return `<div class="set-row ${_isAllTimePR?'set-row-pr':''}">
+          <div class="set-n">${si+1}</div>
+          <div style="position:relative">
+            <input class="set-inp" type="number" placeholder="${prevW||'—'}" value="${s.w}" onchange="upd(${ei},${realSi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>
+            ${_pr && !_isAllTimePR ? `<span style="position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:8px;color:var(--muted);pointer-events:none;line-height:1;text-align:right">${_pr.weight}<br>kg</span>` : ''}
+          </div>
+          <div style="position:relative">
+            <input class="set-inp" type="number" placeholder="${prevR||'—'}" value="${s.r}" onchange="upd(${ei},${realSi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="${ex.repsTarget?'padding-right:34px':''}"/>
+            ${ex.repsTarget ? `<span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--accent);opacity:0.75;pointer-events:none;line-height:1.2;text-align:right;font-family:'Geist Mono',monospace;font-weight:500">${ex.repsTarget}<br><span style="font-size:9px;color:var(--muted)">reps</span></span>` : ''}
+          </div>
+          <div class="set-prev">${prevW?`${prevW}kg`:'—'}${prevR?`<span>${prevR} reps</span>`:''}</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button class="set-tick ${s.done?'done':''}" onclick="tick(${ei},${realSi})">${s.done?'✓':''}</button>
+            ${_medal}
+          </div>
+          <button onclick="delSet(${ei},${realSi})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;padding:0;line-height:1;" title="Supprimer">✕</button>
         </div>`;
       }).join('');
-      return `<div class="ex-card" style="margin-bottom:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px 10px ${ex.sets.length?'0 0':'10px 10px'}">
-          <div>
-            <div style="font-weight:600;font-size:15px;color:var(--text)">${ex.name}</div>
-            ${ex.muscle?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${ex.muscle}</div>`:''}
+      return `<div class="ex-card${ex.sets.some(s=>s.warmup)?' has-warmup':''}" id="fsexcard-${ei}" style="margin-bottom:12px">
+        <div class="ex-head">
+          <div><div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}${pr?`<span class="ex-pr-badge">🏆 PR ${pr.weight}kg × ${pr.reps}reps</span>`:''}${ex.sets.some(s=>s.warmup)?'<span class="warmup-badge">🔥 Échauff.</span>':''}</div></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div>
-          <div style="font-family:Geist Mono,monospace;font-size:10px;color:var(--muted)">${workSets.length} série${workSets.length>1?'s':''}</div>
         </div>
-        ${ex.sets.length?`<div style="background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:0 14px 8px">${setsHtml}</div>`:''}
+        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div>Dernière</div><div>✓</div></div>
+        ${setsHtml}
+        <div class="ex-actions-row">
+          <button class="add-set" onclick="addSet(${ei});renderSessionFs()">+ Série</button>
+          <button class="add-set wu-btn${ex.sets.some(s=>s.warmup)?' wu-active':''}" onclick="toggleWarmup(${ei});renderSessionFs()">${ex.sets.some(s=>s.warmup)?'🔥 Retirer':'🔥 Échauff.'}</button>
+        </div>
+        ${ex.note !== undefined ? `<textarea class="ex-note-area" placeholder="Note sur l'exercice..." oninput="exercises[${ei}].note=this.value">${ex.note||''}</textarea>` : ''}
       </div>`;
     }).join('') : `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucun exercice — ajoute-en un ci-dessous</div>`;
 
