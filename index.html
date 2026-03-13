@@ -537,12 +537,12 @@
   .edit-modal { background:var(--bg);border-radius:12px 12px 0 0;padding:24px 20px 40px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.34,1.1,0.64,1); }
   .edit-modal-overlay.show .edit-modal { transform:translateY(0); }
   .edit-modal-title { font-family:DM Serif Display,serif;font-size:22px;font-weight:400;margin-bottom:16px; }
-  .edit-ex-block { border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden; }
+  .edit-ex-block { border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden;box-shadow:var(--card-shadow); }
   .edit-ex-name { padding:10px 14px;background:var(--warm);font-size:13px;font-weight:500;border-bottom:1px solid var(--border); }
-  .edit-set-row { display:grid;grid-template-columns:24px 1fr 1fr 28px;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--border); }
+  .edit-set-row { display:grid;grid-template-columns:24px 1fr 1fr 28px;gap:6px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border); }
   .edit-set-row:last-child { border-bottom:none; }
   .edit-set-n { font-size:10px;color:var(--muted);text-align:center; }
-  .edit-set-inp { background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-family:Geist Mono,monospace;font-size:12px;color:var(--text);width:100%;text-align:center; }
+  .edit-set-inp { background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:7px 8px;font-family:Geist Mono,monospace;font-size:12px;color:var(--text);width:100%;text-align:center; }
   .edit-set-del { background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;text-align:center; }
   /* ── Share modal ── */
   .share-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity 0.2s; }
@@ -5258,7 +5258,7 @@
     if (!editSessionData) return;
     body.innerHTML = editSessionData.exercises.map((ex, ei) => `
       <div class="edit-ex-block">
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--warm);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--warm);border-bottom:1px solid var(--border)">
           <input class="edit-set-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
             style="flex:1;font-size:13px;font-weight:500;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:2px 4px"
             onchange="editSessionData.exercises[${ei}].name=this.value"/>
