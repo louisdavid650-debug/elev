@@ -3057,13 +3057,19 @@
 
   // ── Save session ──
   function saveSession() {
+    // Flush inputs et notes depuis le fullscreen si ouvert
+    if (_sessionFsOpen) {
+      flushFsInputs();
+      const notesFs = document.getElementById('sessionNotesFs');
+      const notesMain = document.getElementById('sessionNotes');
+      if (notesFs && notesMain) notesMain.value = notesFs.value;
+      closeSessionFs();
+    }
     if (!exercises.length) { showToast('Ajoute au moins un exercice'); return; }
-    // If session came from a routine, skip the "save as routine" modal
     if (loadedRoutineId) { saveSessionOnly(); return; }
     // Free session — propose saving as routine
     const modal = document.getElementById('saveRoutineModal');
     modal.style.display = 'flex';
-    // Pre-fill name if muscles selected
     const muscles = getSelectedMuscles();
     if (muscles.length) document.getElementById('saveRoutineName').placeholder = muscles.join(' · ');
   }
@@ -6325,21 +6331,6 @@
     const blocks = ['sessionRoutineBlock', 'freeSessionBlock'];
     blocks.forEach(id => { const el = document.getElementById(id); if (el) el.style.visibility = ''; });
     if (_minibarTimerInterval) { clearInterval(_minibarTimerInterval); _minibarTimerInterval = null; }
-  }
-
-  // Sync notes + flush inputs depuis FS vers le state avant save
-  const _origSaveSession = saveSession;
-  function saveSession() {
-    // 1. Flush toutes les valeurs des inputs non sauvegardées
-    flushFsInputs();
-    // 2. Sync les notes FS → champ principal
-    const notesFs = document.getElementById('sessionNotesFs');
-    const notesMain = document.getElementById('sessionNotes');
-    if (notesFs && notesMain) notesMain.value = notesFs.value;
-    // 3. Fermer l'overlay (ne remet pas exercises à zéro)
-    closeSessionFs();
-    // 4. Sauvegarder
-    _origSaveSession();
   }
 
 
