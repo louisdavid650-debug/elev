@@ -2106,7 +2106,7 @@
     const hasDraft = restoreDraft();
     if (hasDraft) {
       switchTab('session');
-      setTimeout(() => openSessionFullscreen(), 300);
+      setTimeout(() => openSessionFullscreen(), 50);
     } else {
       switchTab('home');
     }
@@ -2607,12 +2607,10 @@
       const btn = document.getElementById('timerBtn');
       if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
     }
-    // Show free session content
-    showSessionContent();
     renderExercises(); renderRoutinePicker();
     showToast(`"${routine.name}" lancée ! ⏱`);
     autosaveDraft();
-    setTimeout(() => openSessionFullscreen(), 200);
+    openSessionFullscreen();
   }
 
   function closeRoutineConfirm() {
@@ -2643,7 +2641,6 @@
       if (document.getElementById('sessionNotes')) document.getElementById('sessionNotes').value = '';
       renderExercises();
     } else {
-      showSessionContent();
       if (!timerRunning) {
         timerStartedAt = Date.now();
         timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
@@ -2651,7 +2648,7 @@
         const timerBtn = document.getElementById('timerBtn');
         if (timerBtn) { timerBtn.textContent = '⏸'; timerBtn.classList.add('active'); }
       }
-      setTimeout(() => openSessionFullscreen(), 100);
+      openSessionFullscreen();
     }
   }
 
@@ -2669,7 +2666,7 @@
     if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
     renderExercises(); renderRoutinePicker();
     showToast('Séance libre démarrée ⚡');
-    setTimeout(() => openSessionFullscreen(), 100);
+    openSessionFullscreen();
   }
 
   function toggleAddExForm() {
