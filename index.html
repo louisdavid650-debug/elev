@@ -757,7 +757,7 @@
 </div>
 
 <!-- ══ LOADING SCREEN ══ -->
-<div class="offline-banner" id="offlineBanner">⚡ Mode hors-ligne — tes données seront synchronisées à la reconnexion</div>
+<div class="offline-banner" id="offlineBanner">⚡ Mode hors-ligne — <span id="offlineQueueCount"></span>tes données seront synchronisées à la reconnexion</div>
 <div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="168" height="48">
     <defs><style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&amp;display=swap');</style></defs>
@@ -1566,7 +1566,7 @@
   })();
 
   // ── Offline queue ──
-  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights', programs: 'elev_cache_programs' };
+  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights', programs: 'elev_cache_programs', kcal_entries: 'elev_cache_kcal', profiles: 'elev_cache_profiles' };
   const QUEUE_KEY = 'elev_offline_queue';
 
   function isOnline() { return navigator.onLine; }
@@ -1574,12 +1574,26 @@
   function getQueue() { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
   function setQueue(q) { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
 
+  function updateOfflineBanner() {
+    const q = getQueue();
+    const banner = document.getElementById('offlineBanner');
+    const countEl = document.getElementById('offlineQueueCount');
+    if (!isOnline()) {
+      banner?.classList.add('show');
+      if (countEl) countEl.textContent = q.length > 0 ? q.length + ' action' + (q.length > 1 ? 's' : '') + ' en attente — ' : '';
+    } else {
+      banner?.classList.remove('show');
+      if (countEl) countEl.textContent = '';
+    }
+  }
+
   function queueOp(op) {
     const q = getQueue();
     // Remove duplicate (same table + id) to avoid double-sync
     const filtered = q.filter(o => !(o.type === op.type && o.table === op.table && o.id === op.id));
     filtered.push(op);
     setQueue(filtered);
+    updateOfflineBanner();
   }
 
   async function flushQueue() {
@@ -1786,20 +1800,19 @@
   });
 
   window.addEventListener('online', async () => {
-    document.getElementById('offlineBanner').classList.remove('show');
     setDot('syncing');
+    updateOfflineBanner();
     await flushQueue();
-    showSyncBadge('✓ Sync', true);
+    updateOfflineBanner();
   });
   window.addEventListener('offline', () => {
-    document.getElementById('offlineBanner').classList.add('show');
     setDot('offline');
-    showSyncBadge('Hors-ligne', false);
+    updateOfflineBanner();
   });
   // Init dot state
   document.addEventListener('DOMContentLoaded', () => {
     setDot(isOnline() ? 'online' : 'offline');
-    if (!isOnline()) document.getElementById('offlineBanner').classList.add('show');
+    updateOfflineBanner();
   });
 
   async function loadAllData() {
@@ -3790,18 +3803,12 @@
   }
 
   async function saveUserProfile(data) {
-    // Sauvegarder avec clé user-spécifique
+    // Toujours sauvegarder localement en premier
     localStorage.setItem(profileKey(), JSON.stringify(data));
-    // Sync Supabase (source de vérité multi-appareils)
-    if (accessToken && isOnline() && currentUser) {
-      try {
-        await supaFetch('/rest/v1/profiles', {
-          method: 'POST',
-          headers: { 'Prefer': 'resolution=merge-duplicates' },
-          body: JSON.stringify([{ id: currentUser.id, user_id: currentUser.id, data }])
-        });
-      } catch(e) { console.warn('profile sync failed', e); }
-    }
+    if (!accessToken || !currentUser) return;
+    // Passer par sbSave pour bénéficier de la queue offline
+    const record = { id: currentUser.id, ...data };
+    await sbSave('profiles', [record]);
   }
 
   async function loadUserProfileFromSupabase() {
@@ -4399,20 +4406,11 @@
     await saveUserProfile(profile);
     // Enregistrer le poids de départ comme première entrée
     if (profile.startWeight) {
-      const entry = { date: today, kg: profile.startWeight };
+      const entry = { id: today + '_bw', date: today, kg: profile.startWeight };
       bodyWeights = bodyWeights.filter(w => w.date !== today);
       bodyWeights.push(entry);
       bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
-      cacheSet('elev_cache_body_weights', bodyWeights);
-      if (accessToken && isOnline() && currentUser) {
-        try {
-          await supaFetch('/rest/v1/body_weights', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify([{ id: today + '_' + currentUser.id, user_id: currentUser.id, data: entry }])
-          });
-        } catch(e) {}
-      }
+      await sbSave('body_weights', [entry]);
     }
     document.getElementById('fobOverlay').style.display = 'none';
     switchTab('home');
@@ -4479,20 +4477,13 @@
     const val = parseFloat(inp?.value);
     if (val && val > 20 && val < 300) {
       const today = new Date().toISOString().split('T')[0];
-      const entry = { date: today, kg: val };
+      const existing = bodyWeights.find(w => w.date === today);
+      if (existing) await sbDelete('body_weights', existing.id);
+      const entry = { id: today + '_bw', date: today, kg: val };
       bodyWeights = bodyWeights.filter(w => w.date !== today);
       bodyWeights.push(entry);
       bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
-      cacheSet('elev_cache_body_weights', bodyWeights);
-      if (accessToken && isOnline() && currentUser) {
-        try {
-          await supaFetch('/rest/v1/body_weights', {
-            method: 'POST',
-            headers: { 'Prefer': 'resolution=merge-duplicates' },
-            body: JSON.stringify([{ id: today + '_' + currentUser.id, user_id: currentUser.id, data: entry }])
-          });
-        } catch(e) {}
-      }
+      await sbSave('body_weights', [entry]);
       showToast('Poids enregistré 💪');
     }
     closeDailyGreeting();
