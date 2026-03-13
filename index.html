@@ -726,24 +726,33 @@
   .ex-note-area { width:100%;background:var(--warm);border:none;border-top:1px solid var(--border);padding:10px 14px;font-family:DM Serif Display,serif;font-size:14px;font-style:italic;color:var(--text);resize:none;min-height:52px;line-height:1.5;box-sizing:border-box; }
   .ex-note-area:focus { outline:none;background:#f0ece6; }
   /* ── Récap modal ── */
-  .recap-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s; }
+  .recap-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s; }
   .recap-overlay.show { opacity:1;pointer-events:all; }
-  .recap-sheet { background:var(--bg);border-radius:16px 16px 0 0;padding:28px 24px 48px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.1,0.64,1); }
+  .recap-sheet { background:var(--bg);border-radius:20px 20px 0 0;padding:32px 24px 52px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.34,1.1,0.64,1); }
   .recap-overlay.show .recap-sheet { transform:translateY(0); }
-  .recap-logo { font-family:DM Serif Display,serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:20px; }
-  .recap-title { font-family:DM Serif Display,serif;font-size:32px;font-weight:400;color:var(--text);margin-bottom:4px;line-height:1.1; }
-  .recap-sub { font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:24px; }
-  .recap-stats { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:24px; }
-  .recap-stat { background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center; }
-  .recap-stat-val { font-family:DM Serif Display,serif;font-size:28px;font-weight:400;color:var(--text);line-height:1; }
-  .recap-stat-lbl { font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px; }
-  .recap-pr { background:linear-gradient(135deg,#fdf6e3,#fff8e7);border:1px solid #e8d48a;border-radius:8px;padding:14px 16px;margin-bottom:20px; }
-  .recap-pr-title { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#b8960c;margin-bottom:8px; }
-  .recap-pr-row { font-family:DM Serif Display,serif;font-size:16px;color:var(--text);padding:3px 0; }
-  .recap-ex { margin-bottom:12px; }
-  .recap-ex-name { font-family:DM Serif Display,serif;font-size:17px;font-weight:500;color:var(--text);margin-bottom:4px; }
-  .recap-ex-sets { font-size:11px;color:var(--muted);font-family:Geist Mono,monospace;line-height:1.8; }
-  .recap-close { width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:14px;font-family:Geist Mono,monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:20px; }
+  .recap-logo { font-family:DM Serif Display,serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:16px; }
+  .recap-title { font-family:DM Serif Display,serif;font-size:34px;font-weight:400;color:var(--text);margin-bottom:4px;line-height:1.1; }
+  .recap-sub { font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:28px; }
+  .recap-stats { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px; }
+  .recap-stat { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center; }
+  .recap-stat-val { font-family:DM Serif Display,serif;font-size:26px;font-weight:400;color:var(--text);line-height:1; }
+  .recap-stat-lbl { font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:5px; }
+  .recap-highlight { background:linear-gradient(135deg,rgba(44,95,74,0.08),rgba(44,95,74,0.04));border:1px solid rgba(44,95,74,0.2);border-radius:12px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:14px; }
+  .recap-highlight-icon { font-size:28px;flex-shrink:0; }
+  .recap-highlight-text { font-family:DM Serif Display,serif;font-size:18px;color:var(--text);line-height:1.3; }
+  .recap-highlight-sub { font-size:11px;color:var(--muted);margin-top:3px;font-family:'Geist Mono',monospace; }
+  .recap-pr { background:linear-gradient(135deg,#fdf6e3,#fff8e7);border:1px solid #e8d48a;border-radius:12px;padding:16px;margin-bottom:20px; }
+  .recap-pr-title { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#b8960c;margin-bottom:10px; }
+  .recap-pr-row { font-family:DM Serif Display,serif;font-size:16px;color:var(--text);padding:4px 0;display:flex;align-items:center;gap:8px; }
+  .recap-section-title { font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:4px; }
+  .recap-ex { padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px; }
+  .recap-ex-name { font-family:DM Serif Display,serif;font-size:16px;font-weight:500;color:var(--text);margin-bottom:5px; }
+  .recap-ex-sets { font-size:10px;color:var(--muted);font-family:Geist Mono,monospace;line-height:2; }
+  .recap-ex-sets span { display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;margin:1px 2px; }
+  .recap-close { width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:16px;font-family:Geist Mono,monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;margin-top:24px;font-weight:600; }
+  /* Flash vert validation série */
+  @keyframes set-validate { 0%{background:rgba(44,95,74,0.18)} 100%{background:transparent} }
+  .set-row.validating { animation: set-validate 0.6s ease-out forwards; }
   /* ── Offline indicator ── */
   .offline-banner { position:fixed;top:0;left:0;right:0;z-index:999;background:#b85c2a;color:#fff;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:6px;transform:translateY(-100%);transition:transform 0.3s ease; }
   .offline-banner.show { transform:translateY(0); }
@@ -3043,7 +3052,8 @@
   }
   function tick(ei,si) {
     exercises[ei].sets[si].done = !exercises[ei].sets[si].done;
-    if (exercises[ei].sets[si].done) {
+    const justDone = exercises[ei].sets[si].done;
+    if (justDone) {
       const ex = exercises[ei];
       if (ex.supersetWith !== undefined) {
         const partnerIdx = exercises.findIndex(e => e.id === ex.supersetWith);
@@ -3052,8 +3062,7 @@
           const myWorkIdx = myWorkSets.indexOf(ex.sets[si]);
           const partnerWorkSets = exercises[partnerIdx].sets.filter(s => !s.warmup);
           const partnerSet = partnerWorkSets[myWorkIdx];
-          const partnerSetDone = partnerSet && partnerSet.done;
-          if (partnerSetDone) {
+          if (partnerSet?.done) {
             const restTime = Math.max(ex.restTime || restDur, exercises[partnerIdx].restTime || restDur);
             startRest(restTime, ex.name + ' + ' + exercises[partnerIdx].name);
           }
@@ -3063,6 +3072,30 @@
       }
     }
     _rerender();
+    // Flash vert sur la ligne après re-render
+    if (justDone) {
+      setTimeout(() => {
+        const container = _sessionFsOpen
+          ? document.getElementById('sessionFsBody')
+          : document.getElementById('exerciseList');
+        if (!container) return;
+        const rows = container.querySelectorAll('.set-row');
+        // Trouver la bonne row via data ou position
+        const workRows = [...rows].filter(r => !r.classList.contains('wu-row'));
+        let count = 0;
+        for (let i = 0; i <= ei; i++) {
+          const ex = exercises[i];
+          const workSets = ex.sets.filter(s => !s.warmup);
+          if (i === ei) {
+            const workIdx = ex.sets.filter(s => !s.warmup).indexOf(ex.sets[si]);
+            const row = workRows[count + workIdx];
+            if (row) { row.classList.add('validating'); setTimeout(() => row.classList.remove('validating'), 600); }
+          } else {
+            count += ex.sets.filter(s => !s.warmup).length;
+          }
+        }
+      }, 30);
+    }
   }
   function getSelectedMuscles() {
     // Si le fullscreen est ouvert, lire les chips du FS (les chips de l'onglet sont visibility:hidden)
@@ -6060,24 +6093,38 @@
     const dateStr = d.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
     document.getElementById('recapDate').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
-    // Titre selon l'heure
+    // Titre + phrase motivante selon l'heure
     const h = d.getHours();
-    document.getElementById('recapTitle').textContent = h < 12 ? 'Matinée accomplie' : h < 18 ? 'Séance terminée' : 'Soirée productive';
+    const titles = h < 12
+      ? ['Matinée accomplie', 'La journée commence bien.']
+      : h < 18
+      ? ['Séance terminée', 'Tu t\'es montré aujourd\'hui.']
+      : ['Soirée productive', 'Pendant que d\'autres regardaient.'];
+    document.getElementById('recapTitle').textContent = titles[0];
 
-    // Stats — exclure les séries warmup
+    // Stats
     const dur = sessionData.duration > 0 ? fmt(sessionData.duration) : '—';
     const totalSets = sessionData.exercises.reduce((a, e) => a + e.sets.filter(s => !s.warmup && (s.done || s.w)).length, 0);
     const totalVol = sessionData.exercises.reduce((a, e) => a + e.sets.filter(s => !s.warmup).reduce((b, s) => {
       const w = parseFloat(s.w||0), r = parseFloat(s.r||0);
       return b + (w * r);
     }, 0), 0);
+    const totalEx = sessionData.exercises.length;
     document.getElementById('recapStats').innerHTML = `
       <div class="recap-stat"><div class="recap-stat-val">${dur}</div><div class="recap-stat-lbl">Durée</div></div>
       <div class="recap-stat"><div class="recap-stat-val">${totalSets}</div><div class="recap-stat-lbl">Séries</div></div>
-      <div class="recap-stat"><div class="recap-stat-val">${totalVol > 0 ? Math.round(totalVol) : '—'}</div><div class="recap-stat-lbl">Volume kg</div></div>
+      <div class="recap-stat"><div class="recap-stat-val">${totalVol > 0 ? Math.round(totalVol).toLocaleString('fr-FR') : '—'}</div><div class="recap-stat-lbl">Volume kg</div></div>
     `;
 
-    // PRs battus — exclure les séries warmup
+    // Phrase highlight
+    document.getElementById('recapHighlight').innerHTML = `
+      <div class="recap-highlight-icon">💪</div>
+      <div>
+        <div class="recap-highlight-text">${titles[1]}</div>
+        <div class="recap-highlight-sub">${totalEx} exercice${totalEx>1?'s':''} · ${totalSets} série${totalSets>1?'s':''}</div>
+      </div>`;
+
+    // PRs battus
     const newPRs = [];
     sessionData.exercises.forEach(ex => {
       ex.sets.filter(s => !s.warmup).forEach(s => {
@@ -6097,24 +6144,26 @@
     });
     if (newPRs.length) {
       document.getElementById('recapPRs').style.display = 'block';
-      document.getElementById('recapPRList').innerHTML = newPRs.map(function(p) {
-        return '<div class="recap-pr-row">🏆 ' + p.name + ' — ' + p.weight + ' kg</div>';
-      }).join('');
+      document.getElementById('recapPRList').innerHTML = newPRs.map(p =>
+        `<div class="recap-pr-row">🏆 <span>${p.name}</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:13px;color:var(--accent)">${p.weight} kg</span></div>`
+      ).join('');
       if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
     } else {
       document.getElementById('recapPRs').style.display = 'none';
     }
 
     // Exercices
-    document.getElementById('recapExercises').innerHTML = sessionData.exercises.map(function(ex) {
-      const muscleBadge = ex.muscle ? ' <span style="font-size:11px;color:var(--muted)">' + ex.muscle + '</span>' : '';
+    document.getElementById('recapExercises').innerHTML = sessionData.exercises.map(ex => {
+      const muscleBadge = ex.muscle ? `<span style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-left:6px;letter-spacing:0.5px;text-transform:uppercase">${ex.muscle}</span>` : '';
       const workSets = ex.sets.filter(s => !s.warmup);
-      const setsHtml = workSets.map(function(s, i) {
+      const setsHtml = workSets.map((s, i) => {
         const w = s.w||s.weight||'—'; const r = s.r||s.reps||'—';
-        return 'Série ' + (i+1) + ' · ' + w + 'kg × ' + r + ' reps';
-      }).join('  ·  ');
-      const noteHtml = ex.note ? '<div style="font-family:DM Serif Display,serif;font-style:italic;font-size:13px;color:var(--muted);margin-top:4px">' + ex.note + '</div>' : '';
-      return '<div class="recap-ex"><div class="recap-ex-name">' + ex.name + muscleBadge + '</div><div class="recap-ex-sets">' + setsHtml + '</div>' + noteHtml + '</div>';
+        return `<span>${i+1} · ${w}kg × ${r}</span>`;
+      }).join('');
+      return `<div class="recap-ex">
+        <div class="recap-ex-name">${ex.name}${muscleBadge}</div>
+        <div class="recap-ex-sets">${setsHtml}</div>
+      </div>`;
     }).join('');
 
     document.getElementById('recapOverlay').classList.add('show');
@@ -6611,15 +6660,16 @@
     <div class="recap-title" id="recapTitle">Séance terminée</div>
     <div class="recap-sub" id="recapDate"></div>
     <div class="recap-stats" id="recapStats"></div>
+    <div id="recapHighlight" class="recap-highlight"></div>
     <div id="recapPRs" style="display:none">
       <div class="recap-pr">
         <div class="recap-pr-title">🏆 Nouveaux records</div>
         <div id="recapPRList"></div>
       </div>
     </div>
-    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Exercices</div>
+    <div class="recap-section-title">Exercices</div>
     <div id="recapExercises"></div>
-    <button class="recap-close" onclick="closeRecap()">Fermer</button>
+    <button class="recap-close" onclick="closeRecap()">Fermer ✓</button>
   </div>
 </div>
 
