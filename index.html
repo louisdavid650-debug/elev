@@ -2111,8 +2111,8 @@
     // Restore any in-progress session — returns true only if draft had exercises
     const hasDraft = restoreDraft();
     if (hasDraft) {
-      switchTab('session');
-      setTimeout(() => openSessionFullscreen(), 50);
+      switchTab('home');
+      setTimeout(() => openSessionFullscreen(), 100);
     } else {
       switchTab('home');
     }
@@ -2454,8 +2454,7 @@
         const remaining = draft.restRemaining - elapsed;
         if (remaining > 0) startRest(remaining);
       }
-      // Restore free session block visibility
-      if (exercises.length) showSessionContent();
+      // NE PAS appeler showSessionContent — le fullscreen gère l'affichage
       const ago = Math.round((Date.now() - draft.savedAt) / 60000);
       showToast(`Session restaurée (il y a ${ago < 1 ? "moins d'1 min" : ago + " min"})`);
       return true;
@@ -2616,8 +2615,8 @@
     renderExercises(); renderRoutinePicker();
     showToast(`"${routine.name}" lancée ! ⏱`);
     autosaveDraft();
-    // Ouvrir le fullscreen — setTimeout pour laisser le DOM se stabiliser
-    setTimeout(() => openSessionFullscreen(), 50);
+    // Ouvrir directement le fullscreen
+    openSessionFullscreen();
   }
 
   function closeRoutineConfirm() {
@@ -2629,9 +2628,8 @@
   // ── Exercises ──
   let _ignoreToggleUntil = 0;
   function showSessionContent() {
-    document.getElementById('freeSessionStartBtn').style.display = 'none';
-    document.getElementById('freeSessionContent').style.display = 'block';
-    document.getElementById('freeSessionToggleBtn').textContent = '✕ Annuler la séance';
+    // L'ancien système est remplacé par le fullscreen — on ne l'affiche plus
+    // Garder uniquement pour compatibilité interne
   }
   function hideSessionContent() {
     document.getElementById('freeSessionContent').style.display = 'none';
