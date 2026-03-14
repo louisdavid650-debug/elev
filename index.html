@@ -2413,7 +2413,9 @@
       switchTab('home');
       setTimeout(() => openSessionFullscreen(), 100);
     } else {
-      switchTab('home');
+      const lastTab = localStorage.getItem('elev_last_tab') || 'home';
+      const validTabs = ['home','session','routines','poids','nutrition','stats'];
+      switchTab(validTabs.includes(lastTab) ? lastTab : 'home');
     }
     // Charger le profil depuis Supabase EN PREMIER (source de vérité)
     // puis décider si onboarding nécessaire — évite de demander les infos déjà connues
