@@ -776,6 +776,7 @@
   .nutri-qty-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:970;display:flex;align-items:flex-end;justify-content:center; }
   .nutri-qty-sheet { background:var(--surface);border-radius:18px 18px 0 0;padding:28px 22px 40px;width:100%;max-width:480px; }
   /* Widget accueil nutrition */
+  .sound-sel { background:rgba(44,95,74,0.12) !important; border-color:var(--accent) !important; }
   .home-nutri-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all 0.15s;box-shadow:var(--card-shadow); }
   .home-nutri-card:active { opacity:0.85; }
   .offline-banner { position:fixed;top:0;left:0;right:0;z-index:999;background:#b85c2a;color:#fff;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;text-align:center;padding:6px;transform:translateY(-100%);transition:transform 0.3s ease; }
@@ -1694,6 +1695,9 @@
     <button class="rest-skip" onclick="skipRest()" title="Passer" style="padding:7px 14px">⏹</button>
     <button onclick="adjustRest(15)" style="flex:1;background:var(--warm);border:1px solid var(--border2);border-radius:6px;padding:7px;font-family:Geist Mono,monospace;font-size:11px;color:var(--text);cursor:pointer">+15s</button>
   </div>
+  <div style="margin-top:10px;text-align:center">
+    <button onclick="openSoundPicker()" style="background:none;border:none;font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;cursor:pointer;padding:4px 8px" id="restSoundBtn">🔔 SON</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2493,56 +2497,123 @@
     }
   };
 
-  // ── Audio via <audio> WAV — passe en mode silence iOS comme la musique ──
-  // ── Audio : preload au premier tap (sans jouer), play uniquement à la fin du timer ──
-  const _beepAudio = (() => {
-    try {
-      const a = document.createElement('audio');
-      a.src = '/elev/beep.wav';
-      a.setAttribute('playsinline', '');
-      a.preload = 'auto';
-      return a;
-    } catch(e) { return null; }
-  })();
+  // ── AUDIO SYSTEM ──
+  // Utilise AudioContext en mode 'ambient' pour ne pas couper la musique (iOS 17+)
+  // Génère les sons via Web Audio (oscillateurs) — aucun fichier externe
 
-  // Au premier tap : charge en mémoire SANS jouer → débloque iOS sans son parasite
-  let _beepLoaded = false;
-  function _loadBeep() {
-    if (_beepLoaded || !_beepAudio) return;
-    _beepLoaded = true;
-    _beepAudio.load();
+  const SOUNDS = {
+    'Bips classiques': (ctx, t) => {
+      const b = (f,s,d,v=0.5) => { const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=f; o.type='sine'; g.gain.setValueAtTime(v,t+s); g.gain.exponentialRampToValueAtTime(0.001,t+s+d); o.start(t+s); o.stop(t+s+d+0.05); };
+      b(880,0,.1); b(880,.18,.1); b(1100,.36,.25,.7);
+      b(880,.9,.1); b(880,1.08,.1); b(1100,1.26,.25,.7);
+      b(880,1.8,.1); b(880,1.98,.1); b(1320,2.16,.35,.9);
+    },
+    'Cloche douce': (ctx, t) => {
+      const bell = (f,s,v=0.6) => {
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value=f; o.type='sine';
+        g.gain.setValueAtTime(v,t+s);
+        g.gain.exponentialRampToValueAtTime(0.001,t+s+1.8);
+        o.start(t+s); o.stop(t+s+2);
+      };
+      bell(523,0,.5); bell(659,.4,.4); bell(784,.8,.6);
+    },
+    'Ding simple': (ctx, t) => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=1047; o.type='sine';
+      g.gain.setValueAtTime(0.7,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+1.2);
+      o.start(t); o.stop(t+1.3);
+    },
+    'Alerte boxe': (ctx, t) => {
+      const b=(f,s,d,v=0.6)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=f; o.type='square'; g.gain.setValueAtTime(v,t+s); g.gain.exponentialRampToValueAtTime(0.001,t+s+d); o.start(t+s); o.stop(t+s+d+0.05); };
+      b(440,0,.08,.3); b(440,.12,.08,.3); b(440,.24,.08,.3);
+      b(880,.5,.4,.6);
+    },
+    'Chime zen': (ctx, t) => {
+      const note=(f,s,v=0.4)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=f; o.type='sine'; g.gain.setValueAtTime(v,t+s); g.gain.exponentialRampToValueAtTime(0.001,t+s+2.5); o.start(t+s); o.stop(t+s+2.7); };
+      note(396,0,.35); note(528,.6,.3); note(660,1.2,.4); note(792,1.8,.5);
+    },
+    'Whistle court': (ctx, t) => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.setValueAtTime(1200,t); o.frequency.linearRampToValueAtTime(1400,t+.08); o.frequency.linearRampToValueAtTime(1200,t+.18);
+      o.type='sine';
+      g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+.25);
+      o.start(t); o.stop(t+.3);
+      // 2e coup
+      const o2=ctx.createOscillator(), g2=ctx.createGain();
+      o2.connect(g2); g2.connect(ctx.destination);
+      o2.frequency.setValueAtTime(1200,t+.5); o2.frequency.linearRampToValueAtTime(1600,t+.6); o2.frequency.linearRampToValueAtTime(1400,t+.8);
+      o2.type='sine'; g2.gain.setValueAtTime(0.6,t+.5); g2.gain.exponentialRampToValueAtTime(0.001,t+.9);
+      o2.start(t+.5); o2.stop(t+1);
+    },
+  };
+
+  let _selectedSound = localStorage.getItem('elev_sound') || 'Bips classiques';
+  let _audioCtx = null;
+
+  function _getAudioCtx() {
+    if (_audioCtx && _audioCtx.state !== 'closed') return _audioCtx;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      _audioCtx = new Ctx();
+      // iOS 17+ : mode ambient = se superpose à la musique sans la couper
+      if (_audioCtx.audioSession) _audioCtx.audioSession.type = 'ambient';
+    } catch(e) { _audioCtx = null; }
+    return _audioCtx;
   }
-  document.addEventListener('touchstart', _loadBeep, { once: true, passive: true });
-  document.addEventListener('click', _loadBeep, { once: true, passive: true });
+
+  // Déblocage iOS au premier tap utilisateur
+  document.addEventListener('touchstart', function unlock() {
+    const ctx = _getAudioCtx();
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    document.removeEventListener('touchstart', unlock);
+  }, { once: true, passive: true });
 
   function playBeep() {
-    if (_beepAudio) {
-      try {
-        _beepAudio.currentTime = 0;
-        _beepAudio.volume = 1;
-        _beepAudio.play().catch(() => _playBeepFallback());
-        return;
-      } catch(e) {}
-    }
-    _playBeepFallback();
+    const ctx = _getAudioCtx();
+    if (!ctx) return;
+    try {
+      const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+      resume.then(() => {
+        const fn = SOUNDS[_selectedSound] || SOUNDS['Bips classiques'];
+        fn(ctx, ctx.currentTime);
+      });
+    } catch(e) {}
   }
 
-  function _playBeepFallback() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const beep = (freq, start, dur, vol=0.4) => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = freq; o.type = 'sine';
-        g.gain.setValueAtTime(vol, ctx.currentTime + start);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-        o.start(ctx.currentTime + start);
-        o.stop(ctx.currentTime + start + dur + 0.05);
-      };
-      beep(880,0,.12); beep(880,.2,.12); beep(1100,.4,.28,.7);
-      beep(880,1,.12); beep(880,1.2,.12); beep(1100,1.4,.28,.7);
-      beep(880,2,.12); beep(880,2.2,.12); beep(1100,2.4,.35,.8);
-    } catch(e) {}
+  function previewSound(name) {
+    _selectedSound = name;
+    localStorage.setItem('elev_sound', name);
+    playBeep();
+  }
+
+  function openSoundPicker() {
+    const existing = document.getElementById('soundPickerModal');
+    if (existing) { existing.remove(); return; }
+    const modal = document.createElement('div');
+    modal.id = 'soundPickerModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:980;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if(e.target===modal) modal.remove(); };
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:4px">Son de fin de repos</div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px;letter-spacing:0.5px">SE SUPERPOSE À LA MUSIQUE</div>
+        ${Object.keys(SOUNDS).map(name => `
+          <div onclick="previewSound('${name}');document.querySelectorAll('.sound-opt').forEach(e=>e.classList.remove('sound-sel'));this.classList.add('sound-sel')"
+            class="sound-opt${name===_selectedSound?' sound-sel':''}"
+            style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:10px;margin-bottom:8px;background:${name===_selectedSound?'rgba(44,95,74,0.12)':'var(--warm)'};border:1px solid ${name===_selectedSound?'var(--accent)':'var(--border)'};cursor:pointer;transition:all 0.15s">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text)">${name}</div>
+            </div>
+            <div style="font-size:11px;color:var(--accent);font-family:'Geist Mono',monospace">${name===_selectedSound?'ACTIF ✓':'▶ tester'}</div>
+          </div>`).join('')}
+        <button onclick="document.getElementById('soundPickerModal').remove()" style="width:100%;margin-top:8px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer">Confirmer</button>
+      </div>`;
+    document.body.appendChild(modal);
   }
 
     function updateRestDisplay() {
