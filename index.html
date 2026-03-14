@@ -1515,7 +1515,7 @@
     <div id="nutriSummaryCard" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--card-shadow);margin-bottom:24px;padding:12px 18px">
 
       <!-- Anneau complet + chiffres -->
-      <div style="display:flex;align-items:center;justify-content:space-around;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-around;margin-bottom:6px">
 
         <!-- Colonne gauche -->
         <div style="text-align:center;flex:1">
@@ -1545,9 +1545,6 @@
           <div style="font-size:10px;color:var(--muted);margin-top:5px">Objectif</div>
         </div>
       </div>
-
-      <!-- Séparateur -->
-      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
 
       <!-- Macros barres -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -6383,24 +6380,23 @@
     _nutriAccordionOpen[entry.meal] = true;
   }
 
-  // Éditer un aliment loggé (quantité + portion)
+  // ── Portions prédéfinies par produit ──
+  function getPortionDef(name) {
+    try { return JSON.parse(localStorage.getItem('elev_portions') || '{}')[name] || null; } catch(e) { return null; }
+  }
+  function savePortionDef(name, grams) {
+    try {
+      const all = JSON.parse(localStorage.getItem('elev_portions') || '{}');
+      if (grams) all[name] = grams; else delete all[name];
+      localStorage.setItem('elev_portions', JSON.stringify(all));
+    } catch(e) {}
+  }
+
+  // ✏️ Modal "Définir la taille d'une portion"
   function openEditNutriEntry(id, encodedName, kcal100, prot100, gluc100, lip100, fib100, brandStr) {
-    // Appelé depuis le journal (id existant) ou depuis la fiche produit (id=null, on crée)
-    let entry = id ? nutriEntries.find(e => e.id === id) : null;
-    const name = entry ? entry.name : (encodedName ? decodeURIComponent(encodedName) : '');
-    const brand = entry ? (entry.brand || '') : (brandStr || '');
-    if (!entry) {
-      // Depuis fiche produit → recalculer les /100g depuis les params
-      kcal100 = kcal100 || 0; prot100 = prot100 || 0;
-      gluc100 = gluc100 || 0; lip100 = lip100 || 0; fib100 = fib100 || 0;
-    } else {
-      kcal100 = entry.kcal100 || Math.round(entry.kcal / (entry.qty||100) * 100);
-      prot100 = entry.prot100 || Math.round(entry.prot / (entry.qty||100) * 1000) / 10;
-      gluc100 = entry.gluc100 || Math.round(entry.gluc / (entry.qty||100) * 1000) / 10;
-      lip100  = entry.lip100  || Math.round(entry.lip  / (entry.qty||100) * 1000) / 10;
-      fib100  = entry.fib100  || Math.round((entry.fib||0) / (entry.qty||100) * 1000) / 10;
-    }
-    const defaultQty = entry ? entry.qty : 100;
+    const name = encodedName ? decodeURIComponent(encodedName) : (nutriEntries.find(e=>e.id===id)?.name || '');
+    const brand = brandStr || '';
+    const current = getPortionDef(name);
 
     const existing = document.getElementById('editNutriModal');
     if (existing) existing.remove();
@@ -6408,136 +6404,44 @@
     const modal = document.createElement('div');
     modal.id = 'editNutriModal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:980;display:flex;align-items:center;justify-content:center;padding:24px';
-    modal.onclick = e => { if (e.target === modal) { confirmEditNutriEntry(id,kcal100,prot100,gluc100,lip100,fib100,name,brand); modal.remove(); } };
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
 
     modal.innerHTML = `
-      <div style="background:var(--surface);border-radius:16px;width:100%;max-width:360px;overflow:hidden" onclick="event.stopPropagation()">
-        <!-- Header -->
-        <div style="background:var(--surface2);padding:16px 16px 14px;position:relative;text-align:center">
-          <button onclick="confirmEditNutriEntry(${id},'${kcal100}','${prot100}','${gluc100}','${lip100}','${fib100}','${name.replace(/'/g,"\\'")}','${brand.replace(/'/g,"\\'")}');document.getElementById('editNutriModal').remove()" style="position:absolute;top:14px;left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;display:flex;align-items:center">
+      <div style="background:var(--surface);border-radius:16px;width:100%;max-width:340px;overflow:hidden" onclick="event.stopPropagation()">
+        <div style="background:var(--surface2);padding:16px;position:relative;text-align:center">
+          <button onclick="document.getElementById('editNutriModal').remove()" style="position:absolute;top:14px;left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)">${name}</div>
-          ${brand ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${brand}</div>` : ''}
+          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)">Taille de la portion</div>
+          ${brand ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${brand || name}</div>` : `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${name}</div>`}
         </div>
-
-        <div style="padding:18px 16px 20px">
-          <!-- Champ quantité + menu déroulant unité -->
-          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">Quantité</div>
-          <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
-            <input class="inp" id="editNutriQty" type="number" value="${defaultQty}" min="0.1" max="5000" step="any"
-              style="flex:1;text-align:center;font-size:28px;font-family:'DM Serif Display',serif"
-              oninput="updateEditNutriPreview(${kcal100},${prot100},${gluc100},${lip100},${fib100})"/>
-            <select id="editNutriUnit"
-              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 10px;font-family:'Geist Mono',monospace;font-size:12px;color:var(--text);cursor:pointer;flex-shrink:0"
-              onchange="onEditUnitChange(${kcal100},${prot100},${gluc100},${lip100},${fib100})">
-              <option value="g" selected>Gramme</option>
-              <option value="portion">Portion</option>
-            </select>
+        <div style="padding:20px 16px">
+          <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">1 PORTION =</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+            <input class="inp" id="portionDefGrams" type="number" value="${current || ''}" min="1" max="2000" placeholder="ex : 150"
+              style="flex:1;text-align:center;font-size:28px;font-family:'DM Serif Display',serif"/>
+            <span style="font-size:14px;color:var(--muted);font-family:'Geist Mono',monospace;flex-shrink:0">g</span>
           </div>
-          <!-- Taille de portion (visible uniquement si "Portion" sélectionné) -->
-          <div id="portionSizeRow" style="display:none;margin-bottom:14px">
-            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">1 portion = <span id="portionGLabel">100</span> g</div>
-            <input class="inp" id="portionGrams" type="number" value="100" min="1" max="2000" placeholder="ex: 150"
-              style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"
-              oninput="updateEditNutriPreview(${kcal100},${prot100},${gluc100},${lip100},${fib100})"/>
-          </div>
-
-          <!-- Aperçu macros -->
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;text-align:center">
-            <div style="background:var(--surface2);border-radius:8px;padding:9px 4px">
-              <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="enKcal">${entry ? entry.kcal : Math.round(kcal100)}</div>
-              <div style="font-size:8px;color:var(--muted);margin-top:2px">kcal</div>
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:9px 4px">
-              <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--accent)" id="enProt">${entry ? entry.prot : prot100}g</div>
-              <div style="font-size:8px;color:var(--muted);margin-top:2px">prot</div>
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:9px 4px">
-              <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="enGluc">${entry ? entry.gluc : gluc100}g</div>
-              <div style="font-size:8px;color:var(--muted);margin-top:2px">gluc</div>
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:9px 4px">
-              <div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="enLip">${entry ? entry.lip : lip100}g</div>
-              <div style="font-size:8px;color:var(--muted);margin-top:2px">lip</div>
-            </div>
+          <div style="display:flex;gap:8px">
+            ${current ? `<button onclick="savePortionDef('${name.replace(/'/g,"\\'")}',null);document.getElementById('editNutriModal').remove();showToast('Portion supprimée')"
+              style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer">Supprimer</button>` : ''}
+            <button onclick="
+              const g=parseFloat(document.getElementById('portionDefGrams').value);
+              if(!g||g<=0){showToast('Entre un nombre de grammes');return;}
+              savePortionDef('${name.replace(/'/g,"\\'")}',g);
+              document.getElementById('editNutriModal').remove();
+              showToast('Portion enregistrée : '+g+'g ✓')"
+              style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px;font-family:'DM Serif Display',serif;font-size:15px;cursor:pointer">Enregistrer</button>
           </div>
         </div>
       </div>`;
     document.body.appendChild(modal);
-    setTimeout(() => document.getElementById('editNutriQty')?.focus(), 200);
+    setTimeout(() => document.getElementById('portionDefGrams')?.focus(), 200);
   }
 
-  function onEditUnitChange(kcal100, prot100, gluc100, lip100, fib100) {
-    const unit = document.getElementById('editNutriUnit')?.value;
-    const row = document.getElementById('portionSizeRow');
-    if (row) row.style.display = unit === 'portion' ? 'block' : 'none';
-    updateEditNutriPreview(kcal100, prot100, gluc100, lip100, fib100);
-  }
-
-  function updateEditNutriPreview(kcal100, prot100, gluc100, lip100, fib100) {
-    const qtyRaw = parseFloat(document.getElementById('editNutriQty')?.value) || 0;
-    const unit = document.getElementById('editNutriUnit')?.value || 'g';
-    const portionG = parseFloat(document.getElementById('portionGrams')?.value) || 100;
-    // Mettre à jour le label "1 portion = X g"
-    const lbl = document.getElementById('portionGLabel');
-    if (lbl) lbl.textContent = portionG;
-    // Calcul du ratio
-    const r = unit === 'portion' ? (qtyRaw * portionG) / 100 : qtyRaw / 100;
-    const k = document.getElementById('enKcal'); if (k) k.textContent = Math.round(kcal100*r);
-    const p = document.getElementById('enProt'); if (p) p.textContent = Math.round(prot100*r*10)/10 + 'g';
-    const g = document.getElementById('enGluc'); if (g) g.textContent = Math.round(gluc100*r*10)/10 + 'g';
-    const l = document.getElementById('enLip');  if (l) l.textContent = Math.round(lip100*r*10)/10 + 'g';
-  }
-
-  async function confirmEditNutriEntry(id, kcal100, prot100, gluc100, lip100, fib100, name, brand) {
-    const qtyRaw = parseFloat(document.getElementById('editNutriQty')?.value) || 100;
-    const unit = document.getElementById('editNutriUnit')?.value || 'g';
-    const portionG = parseFloat(document.getElementById('portionGrams')?.value) || 100;
-    // Convertir en grammes réels
-    const qty = unit === 'portion' ? Math.round(qtyRaw * portionG) : Math.round(qtyRaw);
-    const r = qty / 100;
-    if (qtyRaw <= 0) return;
-    kcal100 = parseFloat(kcal100) || 0;
-    prot100 = parseFloat(prot100) || 0;
-    gluc100 = parseFloat(gluc100) || 0;
-    lip100  = parseFloat(lip100)  || 0;
-    fib100  = parseFloat(fib100)  || 0;
-
-    if (id) {
-      // Modifier une entrée existante
-      const idx = nutriEntries.findIndex(e => e.id === id);
-      if (idx === -1) return;
-      nutriEntries[idx] = {
-        ...nutriEntries[idx], qty: Math.round(qty),
-        kcal: Math.round(kcal100*r), prot: Math.round(prot100*r*10)/10,
-        gluc: Math.round(gluc100*r*10)/10, lip: Math.round(lip100*r*10)/10,
-        fib: Math.round(fib100*r*10)/10, kcal100, prot100, gluc100, lip100, fib100,
-      };
-      try { await sbSave('nutrition_entries', [nutriEntries[idx]]); } catch(e) {}
-      try {
-        const c = JSON.parse(localStorage.getItem(CACHE_KEYS.nutrition_entries)||'[]');
-        const ci = c.findIndex(e=>String(e.id)===String(id));
-        if(ci>=0){c[ci]=nutriEntries[idx];localStorage.setItem(CACHE_KEYS.nutrition_entries,JSON.stringify(c));}
-      } catch(e) {}
-    } else if (name) {
-      // Nouvel ajout depuis la fiche produit
-      const entry = {
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        meal: _nutriActiveMeal || 'Déjeuner',
-        name, brand: brand || null, qty: Math.round(qty),
-        kcal: Math.round(kcal100*r), prot: Math.round(prot100*r*10)/10,
-        gluc: Math.round(gluc100*r*10)/10, lip: Math.round(lip100*r*10)/10,
-        fib: Math.round(fib100*r*10)/10, kcal100, prot100, gluc100, lip100, fib100,
-      };
-      await saveNutriEntry(entry);
-      _nutriAccordionOpen[entry.meal] = true;
-    }
-    renderNutritionTab();
-    renderHomeNutriWidget();
-    showToast('Enregistré ✓');
-  }
+  function onEditUnitChange(kcal100, prot100, gluc100, lip100, fib100) {}
+  function updateEditNutriPreview(kcal100, prot100, gluc100, lip100, fib100) {}
+  async function confirmEditNutriEntry(id, kcal100, prot100, gluc100, lip100, fib100, name, brand) {}
 
   async function reuseNutriEntry(sourceId) {
     const src = nutriEntries.find(e => e.id === sourceId);
@@ -7023,10 +6927,18 @@
           </div>
 
           <!-- Quantité -->
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Quantité (g)</div>
-          <input class="inp" id="nutriQtyInput" type="number" value="${qty0}" min="1" max="2000"
-            style="width:100%;text-align:center;font-size:24px;font-family:'DM Serif Display',serif;margin-bottom:14px"
-            oninput="updateNutriPreview()"/>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Quantité</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+            <input class="inp" id="nutriQtyInput" type="number" value="${qty0}" min="1" max="5000"
+              style="flex:1;text-align:center;font-size:24px;font-family:'DM Serif Display',serif"
+              oninput="updateNutriPreview()"/>
+            <select id="nutriQtyUnit"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;flex-shrink:0"
+              onchange="onNutriUnitChange()">
+              <option value="g">Gramme</option>
+              ${(()=>{const p=getPortionDef(name);return p?`<option value="portion">Portion (${p}g)</option>`:''})()}
+            </select>
+          </div>
         </div>
 
         <!-- Bouton bas -->
@@ -7037,9 +6949,28 @@
     document.body.appendChild(modal);
   }
 
+  function onNutriUnitChange() {
+    const unit = document.getElementById('nutriQtyUnit')?.value;
+    const inp = document.getElementById('nutriQtyInput');
+    if (!inp) return;
+    // Basculer la valeur par défaut selon l'unité
+    if (unit === 'portion') { inp.value = 1; } else { inp.value = 100; }
+    updateNutriPreview();
+  }
+
+  function getNutriQtyGrams() {
+    const qtyRaw = parseFloat(document.getElementById('nutriQtyInput')?.value) || 100;
+    const unit = document.getElementById('nutriQtyUnit')?.value || 'g';
+    if (unit === 'portion' && _nutriPendingFood) {
+      const portionG = getPortionDef(_nutriPendingFood.name) || 100;
+      return qtyRaw * portionG;
+    }
+    return qtyRaw;
+  }
+
   function updateNutriPreview() {
     if (!_nutriPendingFood) return;
-    const qty = parseFloat(document.getElementById('nutriQtyInput')?.value) || 100;
+    const qty = getNutriQtyGrams();
     const f = _nutriPendingFood;
     const ratio = qty / 100;
     const kcal = Math.round(f.kcal100 * ratio);
@@ -7047,31 +6978,20 @@
     const gluc = Math.round(f.gluc100 * ratio * 10) / 10;
     const lip  = Math.round(f.lip100  * ratio * 10) / 10;
     const fib  = Math.round((f.fib100 || 0) * ratio * 10) / 10;
-    // Grille macros
-    const kEl = document.getElementById('previewKcal');
-    const pEl = document.getElementById('previewProt');
-    const gEl = document.getElementById('previewGluc');
-    const lEl = document.getElementById('previewLip');
-    if (kEl) kEl.textContent = kcal;
-    if (pEl) pEl.textContent = prot + ' g';
-    if (gEl) gEl.textContent = gluc + ' g';
-    if (lEl) lEl.textContent = lip + ' g';
-    // Tableau détaillé
-    const kdEl = document.getElementById('previewKcalDetail');
-    const pdEl = document.getElementById('previewProtDetail');
-    const gdEl = document.getElementById('previewGlucDetail');
-    const ldEl = document.getElementById('previewLipDetail');
-    const fdEl = document.getElementById('previewFibDetail');
-    if (kdEl) kdEl.textContent = kcal + ' kcal';
-    if (pdEl) pdEl.textContent = prot + ' g';
-    if (gdEl) gdEl.textContent = gluc + ' g';
-    if (ldEl) ldEl.textContent = lip + ' g';
-    if (fdEl) fdEl.textContent = fib + ' g';
+    const kEl = document.getElementById('previewKcal'); if (kEl) kEl.textContent = kcal;
+    const pEl = document.getElementById('previewProt'); if (pEl) pEl.textContent = prot + ' g';
+    const gEl = document.getElementById('previewGluc'); if (gEl) gEl.textContent = gluc + ' g';
+    const lEl = document.getElementById('previewLip');  if (lEl) lEl.textContent = lip  + ' g';
+    const kdEl = document.getElementById('previewKcalDetail'); if (kdEl) kdEl.textContent = kcal + ' kcal';
+    const pdEl = document.getElementById('previewProtDetail'); if (pdEl) pdEl.textContent = prot + ' g';
+    const gdEl = document.getElementById('previewGlucDetail'); if (gdEl) gdEl.textContent = gluc + ' g';
+    const ldEl = document.getElementById('previewLipDetail');  if (ldEl) ldEl.textContent = lip  + ' g';
+    const fdEl = document.getElementById('previewFibDetail');  if (fdEl) fdEl.textContent = fib  + ' g';
   }
 
   async function confirmNutriEntry() {
     if (!_nutriPendingFood) return;
-    const qty  = parseFloat(document.getElementById('nutriQtyInput')?.value) || 100;
+    const qty = getNutriQtyGrams();
     const f = _nutriPendingFood;
     const ratio = qty / 100;
     const entry = {
