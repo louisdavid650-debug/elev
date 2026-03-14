@@ -6548,17 +6548,29 @@
             <button onclick="event.stopPropagation();openNutriAdd('${meal}')"
               style="background:var(--surface2,var(--warm));border:2px solid var(--border2);border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);line-height:1">+</button>
           </div>
-          ${isOpen ? `<div style="border-top:1px solid var(--border);padding:2px 14px 12px">
+          ${isOpen ? `<div style="border-top:1px solid var(--border);padding:2px 0 4px">
             ${items.length ? items.map(e => `
-              <div style="display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border)">
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
-                  <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
+              <div style="position:relative;overflow:hidden;border-bottom:0.5px solid var(--border)">
+                <!-- Poubelle cachée derrière -->
+                <div id="ndel-${e.id}" onclick="deleteNutriEntry(${e.id})" style="position:absolute;right:0;top:0;bottom:0;width:72px;background:#c0392b;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.15s">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                 </div>
-                <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace;margin-left:10px;flex-shrink:0">${e.kcal} kcal</div>
-                <button onclick="deleteNutriEntry(${e.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 10px">✕</button>
+                <!-- Contenu swipeable -->
+                <div id="ncard-${e.id}"
+                  style="display:flex;align-items:center;padding:11px 14px;background:var(--surface);will-change:transform"
+                  ontouchstart="nutriSwipeStart(event,${e.id})"
+                  ontouchmove="nutriSwipeMove(event,${e.id})"
+                  ontouchend="nutriSwipeEnd(event,${e.id})"
+                  onclick="nutriSwipeReset(${e.id})">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
+                    <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L${e.fib ? ' · ' + e.fib + 'F' : ''}</div>
+                  </div>
+                  <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace;margin-left:10px;flex-shrink:0">${e.kcal} kcal</div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2" style="margin-left:8px;flex-shrink:0"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
               </div>`).join('')
-            : `<div style="padding:12px 0;text-align:center;font-size:12px;color:var(--muted)">Aucun aliment — appuie sur + pour ajouter.</div>`}
+            : `<div style="padding:14px;text-align:center;font-size:12px;color:var(--muted)">Aucun aliment — appuie sur + pour ajouter.</div>`}
           </div>` : ''}
           ${!isLast ? `<div style="height:1px;background:var(--border);margin:0 14px"></div>` : ''}
         </div>`;
@@ -6853,6 +6865,49 @@
 
   // ── Swipe to delete (history) ──
   let swipeSessions = {}, swipeThreshold = 72;
+
+  // ── Swipe-to-delete aliments nutrition ──
+  let nutriSwipeSessions = {};
+  function nutriSwipeStart(e, id) {
+    nutriSwipeSessions[id] = { startX: e.touches[0].clientX, swiping: false };
+  }
+  function nutriSwipeMove(e, id) {
+    const s = nutriSwipeSessions[id];
+    if (!s) return;
+    const dx = s.startX - e.touches[0].clientX;
+    if (dx < 0) { nutriSwipeSessions[id] = null; return; }
+    s.swiping = true;
+    const card = document.getElementById('ncard-' + id);
+    const del  = document.getElementById('ndel-' + id);
+    if (!card) return;
+    const clamped = Math.min(dx, 72);
+    card.style.transform = `translateX(-${clamped}px)`;
+    if (del) del.style.opacity = Math.min(dx / 56, 1);
+    e.preventDefault();
+  }
+  function nutriSwipeEnd(e, id) {
+    const s = nutriSwipeSessions[id];
+    if (!s?.swiping) return;
+    const dx = s.startX - e.changedTouches[0].clientX;
+    const card = document.getElementById('ncard-' + id);
+    const del  = document.getElementById('ndel-' + id);
+    if (dx > 48) {
+      // Maintenir ouvert → poubelle cliquable
+      if (card) { card.style.transition = 'transform 0.2s'; card.style.transform = 'translateX(-72px)'; setTimeout(() => card.style.transition = '', 200); }
+      if (del)  { del.style.opacity = '1'; del.style.pointerEvents = 'all'; }
+    } else {
+      // Refermer
+      if (card) { card.style.transition = 'transform 0.2s'; card.style.transform = ''; setTimeout(() => card.style.transition = '', 200); }
+      if (del)  { del.style.opacity = '0'; del.style.pointerEvents = 'none'; }
+    }
+    nutriSwipeSessions[id] = null;
+  }
+  function nutriSwipeReset(id) {
+    const card = document.getElementById('ncard-' + id);
+    const del  = document.getElementById('ndel-' + id);
+    if (card) { card.style.transition = 'transform 0.2s'; card.style.transform = ''; setTimeout(() => card.style.transition = '', 200); }
+    if (del)  { del.style.opacity = '0'; del.style.pointerEvents = 'none'; }
+  }
   function swipeStart(e, id) {
     swipeSessions[id] = { startX: e.touches[0].clientX, swiping: false };
   }
