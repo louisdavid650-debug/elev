@@ -6516,10 +6516,24 @@
         usageMap[k] = (usageMap[k] || 0) + 1;
       });
 
-      // Trier : aliments déjà utilisés en premier (par fréquence desc), puis le reste
+      // Trier : déjà utilisés en premier, puis par pertinence (exact → commence par → contient)
+      const qLow2 = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const relevance = name => {
+        const n = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        if (n === qLow2) return 0;
+        if (n.startsWith(qLow2 + ' ') || n.startsWith(qLow2 + ',') || n.startsWith(qLow2 + '-')) return 1;
+        if (n.split(/[\s,\-]+/).some(w => w.startsWith(qLow2))) return 2;
+        return 3;
+      };
       const sorted = [...items].sort((a, b) => {
         const ua = usageMap[norm(a.name)] || 0;
         const ub = usageMap[norm(b.name)] || 0;
+        // D'abord par usage (déjà utilisé vs pas utilisé)
+        if ((ua > 0) !== (ub > 0)) return ub > 0 ? 1 : -1;
+        // Dans chaque groupe, par pertinence
+        const ra = relevance(a.name), rb = relevance(b.name);
+        if (ra !== rb) return ra - rb;
+        // À égalité, par fréquence d'usage
         return ub - ua;
       });
 
@@ -6573,6 +6587,7 @@
       );
       if (supaRes.ok) {
         const rows = await supaRes.json();
+        const qLow = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         supaResults = (rows || []).map(r => ({
           name:      r.name,
           brand:     r.brand || null,
@@ -6582,7 +6597,18 @@
           gluc:      Math.round((r.carbs    || 0) * 10) / 10,
           lip:       Math.round((r.fat      || 0) * 10) / 10,
           fib:       Math.round((r.fiber    || 0) * 10) / 10,
-        }));
+        })).sort((a, b) => {
+          const na = a.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          const nb = b.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          // Score : 0 = exact, 1 = commence par, 2 = mot commence par, 3 = contient
+          const score = n => {
+            if (n === qLow) return 0;
+            if (n.startsWith(qLow + ' ') || n.startsWith(qLow + ',')) return 1;
+            if (n.split(/[\s,\-]+/).some(w => w.startsWith(qLow))) return 2;
+            return 3;
+          };
+          return score(na) - score(nb) || na.localeCompare(nb);
+        });
       }
     } catch(e) { /* Supabase inaccessible */ }
 
