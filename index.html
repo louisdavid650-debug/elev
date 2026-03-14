@@ -1058,12 +1058,12 @@
       <!-- Poids & Calories -->
       <div class="home-snap">
         <div class="home-snap-card" onclick="switchTab('poids'); setTimeout(()=>switchEntryTab('weight'),50)" style="padding:12px;gap:0;justify-content:flex-start">
-          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">Poids</div>
-          <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">Poids</div>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:12px">
             <span style="font-family:'DM Serif Display',serif;font-size:34px;font-style:italic;color:var(--text);line-height:1" id="homeWeightVal">—</span>
             <span style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace">kg</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%;margin-bottom:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%">
             <div style="background:var(--surface2);border-radius:6px;padding:6px;text-align:center">
               <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--accent)" id="homeWeightDelta">—</div>
               <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-top:1px">Vs Hier</div>
@@ -1073,10 +1073,9 @@
               <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-top:1px">Ce Mois</div>
             </div>
           </div>
-          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.3px;margin-top:auto" id="homeWeightSub"></div>
+          <div style="display:none" id="homeWeightSub"></div>
         </div>
-        <div class="home-snap-card" onclick="switchTab('nutrition')" style="align-items:center;justify-content:center;padding:12px;gap:0">
-          <!-- Titre -->
+        <div class="home-snap-card" onclick="switchTab('nutrition')" style="align-items:center;justify-content:flex-start;padding:12px;gap:0">
           <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px;align-self:flex-start">Calories</div>
           <!-- Arc fin + chiffre centré -->
           <div style="position:relative;width:84px;height:84px;flex-shrink:0">
@@ -1091,23 +1090,22 @@
               <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">kcal</div>
             </div>
           </div>
-          <!-- Sous-texte (progression seulement) -->
-          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:5px;margin-bottom:7px;text-align:center;letter-spacing:0.3px;min-height:13px" id="homeKcalSub"></div>
-          <!-- Mini macros -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;width:100%">
+          <!-- Mini macros collées juste sous l'anneau -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;width:100%;margin-top:3px">
             <div style="text-align:center;padding:4px 2px;background:var(--surface2);border-radius:6px">
               <div style="font-family:'DM Serif Display',serif;font-size:12px;color:var(--accent)" id="homeKcalProt">0g</div>
-              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">prot</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">Prot</div>
             </div>
             <div style="text-align:center;padding:4px 2px;background:var(--surface2);border-radius:6px">
               <div style="font-family:'DM Serif Display',serif;font-size:12px;color:var(--text)" id="homeKcalGluc">0g</div>
-              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">gluc</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">Gluc</div>
             </div>
             <div style="text-align:center;padding:4px 2px;background:var(--surface2);border-radius:6px">
               <div style="font-family:'DM Serif Display',serif;font-size:12px;color:var(--text)" id="homeKcalLip">0g</div>
-              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">lip</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px">Lip</div>
             </div>
           </div>
+          <div style="display:none" id="homeKcalSub"></div>
         </div>
       </div>
 
