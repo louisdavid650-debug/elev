@@ -2707,7 +2707,19 @@
 
   // ── PR helpers — basés sur volume = reps × poids ──
   function getLastSessionData(exName) {
-    for (const s of sessions) { const ex = s.exercises.find(e => e.name.toLowerCase() === exName.toLowerCase()); if (ex) return ex.sets; }
+    // Cherche dans TOUT l'historique la dernière fois que CET exercice a été fait
+    // sessions est déjà triée par date décroissante
+    // On exclut la séance en cours (non sauvegardée) en cherchant uniquement dans sessions[]
+    const norm = n => n.toLowerCase().trim();
+    for (const s of sessions) {
+      const ex = s.exercises.find(e => norm(e.name) === norm(exName));
+      if (ex && ex.sets.some(st => !st.warmup && (st.w || st.r))) {
+        // Calcul "il y a X jours"
+        const days = Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000);
+        const label = days === 0 ? "aujourd'hui" : days === 1 ? 'hier' : `il y a ${days}j`;
+        return { sets: ex.sets, date: s.date, label };
+      }
+    }
     return null;
   }
   function setVolume(set) {
@@ -3033,7 +3045,9 @@
     const el = document.getElementById('exerciseList');
     if (!exercises.length) { el.innerHTML = ''; return; }
     el.innerHTML = exercises.map((ex, ei) => {
-      const lastSets = getLastSessionData(ex.name);
+      const lastData = getLastSessionData(ex.name);
+      const lastSets = lastData ? lastData.sets : null;
+      const lastLabel = lastData ? lastData.label : null;
       const pr = getPR(ex.name);
       const _ssPartnerIdx = ex.supersetWith !== undefined ? exercises.findIndex(e => e.id === ex.supersetWith) : -1;
       const _isInSS = ex.supersetWith !== undefined && _ssPartnerIdx >= 0;
@@ -3059,7 +3073,7 @@
             <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button>
             <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div></div>
-        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div>Dernière</div><div>✓</div></div>
+        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:9px">${lastLabel ? lastLabel : 'Dernière'}</div><div>✓</div></div>
         ${(() => {
           const wuSets = ex.sets.filter(s => s.warmup);
           const workSets = ex.sets.filter(s => !s.warmup);
@@ -3239,7 +3253,7 @@
       } else {
         const lastData = getLastSessionData(ex.name);
         if (lastData) {
-          const best = lastData.reduce((max, s) => parseFloat(s.w||0) > max ? parseFloat(s.w||0) : max, 0);
+          const best = lastData.sets.reduce((max, s) => parseFloat(s.w||0) > max ? parseFloat(s.w||0) : max, 0);
           refW = best;
         }
       }
@@ -7243,7 +7257,9 @@
 
     // Exercices construits directement depuis le state — rendu complet identique à l'original
     const exHtml = exercises.length ? exercises.map((ex, ei) => {
-      const lastSets = getLastSessionData(ex.name);
+      const lastData = getLastSessionData(ex.name);
+      const lastSets = lastData ? lastData.sets : null;
+      const lastLabel = lastData ? lastData.label : null;
       const pr = getPR(ex.name);
       const wuSets = ex.sets.filter(s => s.warmup);
       const workSets = ex.sets.filter(s => !s.warmup);
@@ -7303,7 +7319,7 @@
             <button class="ex-del" onclick="delEx(${ei})">✕</button>
           </div>
         </div>
-        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div>Dernière</div><div>✓</div></div>
+        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:9px">${lastLabel ? lastLabel : 'Dernière'}</div><div>✓</div></div>
         ${setsHtml}
         <div class="ex-actions-row">
           <button class="add-set" onclick="addSet(${ei})">+ Série</button>
