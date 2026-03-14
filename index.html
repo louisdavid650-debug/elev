@@ -6393,10 +6393,17 @@
   }
 
   // ✏️ Modal "Définir la taille d'une portion"
-  function openEditNutriEntry(id, encodedName, kcal100, prot100, gluc100, lip100, fib100, brandStr) {
+  function openEditNutriEntry(id, encodedName, kcal100, prot100, gluc100, lip100, fib100, brandStr, _k, _p, _g, _l, _f, _en, _eb) {
     const name = encodedName ? decodeURIComponent(encodedName) : (nutriEntries.find(e=>e.id===id)?.name || '');
     const brand = brandStr || '';
     const current = getPortionDef(name);
+    // Paramètres pour rouvrir la fiche après
+    const sheetName = _en ? decodeURIComponent(_en) : name;
+    const sheetBrand = _eb || brand;
+    const sheetK = parseFloat(_k||kcal100)||0, sheetP = parseFloat(_p||prot100)||0;
+    const sheetG = parseFloat(_g||gluc100)||0, sheetL = parseFloat(_l||lip100)||0;
+    const sheetF = parseFloat(_f||fib100)||0;
+    const hasSheet = sheetK > 0 || sheetP > 0;
 
     const existing = document.getElementById('editNutriModal');
     if (existing) existing.remove();
@@ -6406,14 +6413,30 @@
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:980;display:flex;align-items:center;justify-content:center;padding:24px';
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
 
+    const saveAndReturn = `
+      const g=parseFloat(document.getElementById('portionDefGrams').value);
+      if(!g||g<=0){showToast('Entre un nombre de grammes');return;}
+      savePortionDef('${name.replace(/'/g,"\\'")}',g);
+      document.getElementById('editNutriModal').remove();
+      showToast('Portion enregistrée : '+g+'g ✓');
+      ${hasSheet ? `openNutriQtyModal('${encodeURIComponent(sheetName)}',${sheetK},${sheetP},${sheetG},${sheetL},${sheetF},undefined,'${sheetBrand}');` : ''}
+    `;
+
+    const deleteAndReturn = `
+      savePortionDef('${name.replace(/'/g,"\\'")}',null);
+      document.getElementById('editNutriModal').remove();
+      showToast('Portion supprimée');
+      ${hasSheet ? `openNutriQtyModal('${encodeURIComponent(sheetName)}',${sheetK},${sheetP},${sheetG},${sheetL},${sheetF},undefined,'${sheetBrand}');` : ''}
+    `;
+
     modal.innerHTML = `
       <div style="background:var(--surface);border-radius:16px;width:100%;max-width:340px;overflow:hidden" onclick="event.stopPropagation()">
         <div style="background:var(--surface2);padding:16px;position:relative;text-align:center">
-          <button onclick="document.getElementById('editNutriModal').remove()" style="position:absolute;top:14px;left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center">
+          <button onclick="document.getElementById('editNutriModal').remove();${hasSheet ? `openNutriQtyModal('${encodeURIComponent(sheetName)}',${sheetK},${sheetP},${sheetG},${sheetL},${sheetF},undefined,'${sheetBrand}')` : ''}" style="position:absolute;top:14px;left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)">Taille de la portion</div>
-          ${brand ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${brand || name}</div>` : `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${name}</div>`}
+          <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${brand || name}</div>
         </div>
         <div style="padding:20px 16px">
           <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">1 PORTION =</div>
@@ -6423,15 +6446,8 @@
             <span style="font-size:14px;color:var(--muted);font-family:'Geist Mono',monospace;flex-shrink:0">g</span>
           </div>
           <div style="display:flex;gap:8px">
-            ${current ? `<button onclick="savePortionDef('${name.replace(/'/g,"\\'")}',null);document.getElementById('editNutriModal').remove();showToast('Portion supprimée')"
-              style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer">Supprimer</button>` : ''}
-            <button onclick="
-              const g=parseFloat(document.getElementById('portionDefGrams').value);
-              if(!g||g<=0){showToast('Entre un nombre de grammes');return;}
-              savePortionDef('${name.replace(/'/g,"\\'")}',g);
-              document.getElementById('editNutriModal').remove();
-              showToast('Portion enregistrée : '+g+'g ✓')"
-              style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px;font-family:'DM Serif Display',serif;font-size:15px;cursor:pointer">Enregistrer</button>
+            ${current ? `<button onclick="${deleteAndReturn}" style="flex:1;background:none;border:1px solid var(--border);border-radius:10px;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer">Supprimer</button>` : ''}
+            <button onclick="${saveAndReturn}" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px;font-family:'DM Serif Display',serif;font-size:15px;cursor:pointer">Enregistrer</button>
           </div>
         </div>
       </div>`;
@@ -6866,7 +6882,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
           <!-- Crayon édition quantité -->
-          <button onclick="document.getElementById('nutriQtyModal').remove();openEditNutriEntry(null,'${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${brand||''}')" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;display:flex;align-items:center">
+          <button onclick="openEditNutriEntry(null,'${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${brand||''}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${encodeURIComponent(name)}','${brand||''}')" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;display:flex;align-items:center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
           <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;color:var(--text);line-height:1.2">${name}</div>
