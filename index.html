@@ -6358,27 +6358,42 @@
         body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} ».</div>`;
         return;
       }
-      // Stocker dans un cache pour éviter les problèmes d'encodage dans les onclick
-      window._nutriSearchCache = items;
+
+      // Construire un map nom → nombre d'utilisations depuis l'historique
+      const usageMap = {};
+      nutriEntries.forEach(e => {
+        const k = norm(e.name);
+        usageMap[k] = (usageMap[k] || 0) + 1;
+      });
+
+      // Trier : aliments déjà utilisés en premier (par fréquence desc), puis le reste
+      const sorted = [...items].sort((a, b) => {
+        const ua = usageMap[norm(a.name)] || 0;
+        const ub = usageMap[norm(b.name)] || 0;
+        return ub - ua;
+      });
+
+      window._nutriSearchCache = sorted;
 
       const srcLabel = source === 'local'
         ? `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">BASE LOCALE · RECHERCHE EN LIGNE…</div>`
         : source === 'supabase'
-        ? `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${items.length} RÉSULTATS · BASE OFF</div>`
-        : `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${items.length} RÉSULTATS</div>`;
+        ? `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${sorted.length} RÉSULTATS · BASE OFF</div>`
+        : `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${sorted.length} RÉSULTATS</div>`;
 
-      // Stocker dans cache
-      window._nutriSearchCache = items;
-      body.innerHTML = srcLabel + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">` + items.map((f, i) => {
+      body.innerHTML = srcLabel + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">` + sorted.map((f, i) => {
         const sub = [f.brand, f.qty ? f.qty + 'g' : '100g'].filter(Boolean).join(', ');
-        const isRecent = nutriEntries.some(e => e.name === f.name);
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 14px;display:flex;align-items:center;gap:10px">
+        const useCount = usageMap[norm(f.name)] || 0;
+        const isRecent = useCount > 0;
+        return `<div style="background:var(--surface);border:1px solid ${isRecent ? 'var(--accent)' : 'var(--border)'};border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px${isRecent ? ';background:var(--accent-light)' : ''}">
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-              <span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--muted)">Aliment</span>
-              ${isRecent ? `<span style="font-size:14px;color:var(--accent)" title="Récemment consommé">🕐</span>` : ''}
+            <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+              ${isRecent
+                ? `<span style="background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1px">✓ Déjà utilisé${useCount > 1 ? ' · ' + useCount + 'x' : ''}</span>`
+                : `<span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace">Aliment</span>`
+              }
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
