@@ -1066,7 +1066,7 @@
           </div>
           <div class="home-snap-sub" id="homeWeightSub"></div>
         </div>
-        <div class="home-snap-card" onclick="switchTab('poids'); setTimeout(()=>switchEntryTab('kcal'),50)">
+        <div class="home-snap-card" onclick="switchTab('nutrition')">
           <div class="home-snap-icon">🔥</div>
           <div class="home-snap-label">Calories</div>
           <div>
@@ -1465,46 +1465,79 @@
   <!-- ══ STATS ══ -->
   <!-- ══ NUTRITION ══ -->
   <div class="section" id="tab-nutrition">
-    <div class="label" id="nutri-date-label">Chargement...</div>
-    <div class="card" id="nutriSummaryCard">
-      <div style="display:flex;align-items:center;gap:18px">
-        <div style="position:relative;width:90px;height:90px;flex-shrink:0">
-          <svg width="90" height="90" viewBox="0 0 90 90" style="transform:rotate(-90deg)">
-            <circle cx="45" cy="45" r="37" fill="none" stroke="var(--border2)" stroke-width="8"/>
-            <circle cx="45" cy="45" r="37" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" id="nutriRingProgress" stroke-dasharray="232" stroke-dashoffset="232"/>
+
+    <!-- En-tête date + réglages -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.1">Résumé</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:0.5px" id="nutri-date-label"></div>
+      </div>
+      <button onclick="openNutriSettings()" style="background:none;border:none;font-size:12px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;cursor:pointer;padding:0">Réglages →</button>
+    </div>
+
+    <!-- Bilan carte principale -->
+    <div class="card" id="nutriSummaryCard" style="margin-bottom:24px;padding:20px 18px">
+
+      <!-- Demi-anneau + chiffres -->
+      <div style="display:flex;align-items:center;justify-content:space-around;margin-bottom:20px">
+        <div style="text-align:center">
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);line-height:1" id="nutriKcalConsumed">0</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Mangées</div>
+        </div>
+
+        <!-- Demi-anneau SVG -->
+        <div style="position:relative;width:110px;height:60px;flex-shrink:0">
+          <svg width="110" height="70" viewBox="0 0 110 70">
+            <!-- Track -->
+            <path d="M 10 60 A 45 45 0 0 1 100 60" fill="none" stroke="var(--border2)" stroke-width="9" stroke-linecap="round"/>
+            <!-- Progress -->
+            <path d="M 10 60 A 45 45 0 0 1 100 60" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round"
+              id="nutriSemiRing"
+              stroke-dasharray="141.4"
+              stroke-dashoffset="141.4"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;color:var(--text);line-height:1" id="nutriKcalConsumed">0</div>
-            <div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">kcal</div>
+          <div style="position:absolute;bottom:0;left:0;right:0;text-align:center">
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1" id="nutriKcalRemaining">—</div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:0.5px">Restantes</div>
           </div>
         </div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-size:12px;color:var(--muted)">Objectif <strong style="color:var(--text)" id="nutriKcalGoal">—</strong> kcal</div>
-            <button onclick="openNutriSettings()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;font-family:'Geist Mono',monospace;letter-spacing:1px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:4px">⚙ Réglages</button>
-          </div>
-          <div class="nutri-macro-row">
-            <div class="nutri-macro-name">Protéines</div>
-            <div class="nutri-bar-wrap"><div class="nutri-bar" style="background:var(--accent)" id="barProt"></div></div>
-            <div class="nutri-macro-val" id="valProt">0g</div>
-            <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;width:28px;text-align:right" id="goalProt">—g</div>
-          </div>
-          <div class="nutri-macro-row">
-            <div class="nutri-macro-name">Glucides</div>
-            <div class="nutri-bar-wrap"><div class="nutri-bar" style="background:#7ab893" id="barGluc"></div></div>
-            <div class="nutri-macro-val" id="valGluc">0g</div>
-            <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;width:28px;text-align:right" id="goalGluc">—g</div>
-          </div>
-          <div class="nutri-macro-row">
-            <div class="nutri-macro-name">Lipides</div>
-            <div class="nutri-bar-wrap"><div class="nutri-bar" style="background:#b5cfc3" id="barLip"></div></div>
-            <div class="nutri-macro-val" id="valLip">0g</div>
-            <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;width:28px;text-align:right" id="goalLip">—g</div>
-          </div>
+
+        <div style="text-align:center">
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);line-height:1" id="nutriKcalGoal">—</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Objectif</div>
+        </div>
+      </div>
+
+      <!-- Séparateur -->
+      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+
+      <!-- Macros barres -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:6px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">Glucides</div>
+          <div class="nutri-bar-wrap" style="height:6px;margin-bottom:5px"><div class="nutri-bar" style="background:#7ab893" id="barGluc"></div></div>
+          <div style="text-align:center;font-size:11px;font-family:'Geist Mono',monospace;color:var(--text)"><span id="valGluc">0</span> / <span id="goalGluc" style="color:var(--muted)">—</span> g</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:6px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">Protéines</div>
+          <div class="nutri-bar-wrap" style="height:6px;margin-bottom:5px"><div class="nutri-bar" style="background:var(--accent)" id="barProt"></div></div>
+          <div style="text-align:center;font-size:11px;font-family:'Geist Mono',monospace;color:var(--text)"><span id="valProt">0</span> / <span id="goalProt" style="color:var(--muted)">—</span> g</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:6px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">Lipides</div>
+          <div class="nutri-bar-wrap" style="height:6px;margin-bottom:5px"><div class="nutri-bar" style="background:#b5cfc3" id="barLip"></div></div>
+          <div style="text-align:center;font-size:11px;font-family:'Geist Mono',monospace;color:var(--text)"><span id="valLip">0</span> / <span id="goalLip" style="color:var(--muted)">—</span> g</div>
         </div>
       </div>
     </div>
-    <div id="nutriJournal" style="margin-top:20px"></div>
+
+    <!-- Titre section repas -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">Alimentation</div>
+    </div>
+
+    <!-- Liste repas -->
+    <div id="nutriJournal"></div>
   </div>
 
   <!-- ══ OVERLAY RÉGLAGES NUTRITION ══ -->
@@ -5149,17 +5182,20 @@
       document.getElementById('homeWeightSub').textContent = '';
     }
 
-    // Calories du jour
-    const todayKcal = kcalEntries.filter(k => k.date === today).reduce((s, k) => s + (k.kcal || 0), 0);
-    const kcalTarget = profile?.kcalTarget || 0;
-    if (todayKcal > 0) {
-      document.getElementById('homeKcalVal').textContent = todayKcal;
+    // Calories du jour — lit nutriEntries (onglet Nutrition)
+    const nutriToday = getTodayNutri();
+    const todayNutriKcal = nutriToday.reduce((s, e) => s + e.kcal, 0);
+    const kcalTarget = parseInt(profile?.kcalTarget) || 0;
+    if (todayNutriKcal > 0) {
+      document.getElementById('homeKcalVal').textContent = todayNutriKcal.toLocaleString('fr-FR');
       document.getElementById('homeKcalUnit').textContent = 'kcal';
-      document.getElementById('homeKcalSub').textContent = kcalTarget ? (Math.round(todayKcal / kcalTarget * 100) + '% objectif') : "aujourd'hui";
+      document.getElementById('homeKcalSub').textContent = kcalTarget
+        ? (Math.round(todayNutriKcal / kcalTarget * 100) + '% objectif')
+        : "aujourd'hui";
     } else {
-      document.getElementById('homeKcalVal').textContent = kcalTarget || '—';
+      document.getElementById('homeKcalVal').textContent = kcalTarget ? kcalTarget.toLocaleString('fr-FR') : '—';
       document.getElementById('homeKcalUnit').textContent = kcalTarget ? 'kcal' : '';
-      document.getElementById('homeKcalSub').textContent = kcalTarget ? 'objectif' : 'non saisi';
+      document.getElementById('homeKcalSub').textContent = kcalTarget ? 'objectif' : 'configure →';
     }
 
     // Prochaine séance suggérée — basée sur les jours du programme
@@ -6306,7 +6342,8 @@
 
   // ── Rendu principal ──
   function renderNutritionTab() {
-    const dateLabel = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+    const today = new Date();
+    const dateLabel = today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
     const el = document.getElementById('nutri-date-label');
     if (el) el.textContent = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
 
@@ -6318,73 +6355,104 @@
 
     const profile = getUserProfile() || {};
     const goalKcal = parseInt(profile.kcalTarget) || 2400;
-
-    // Lire les macros personnalisées ou defaults
     const ns = getNutriSettings();
     const goalProt = Math.round(goalKcal * (ns.prot / 100) / 4);
     const goalGluc = Math.round(goalKcal * (ns.gluc / 100) / 4);
     const goalLip  = Math.round(goalKcal * (ns.lip  / 100) / 9);
+    const remaining = Math.max(goalKcal - totalKcal, 0);
 
-    // Anneau
-    const circumference = 232;
-    const offset = circumference - Math.min(totalKcal / goalKcal, 1) * circumference;
-    const ring = document.getElementById('nutriRingProgress');
-    if (ring) ring.style.strokeDashoffset = offset;
-    const kcalEl = document.getElementById('nutriKcalConsumed');
-    if (kcalEl) kcalEl.textContent = totalKcal.toLocaleString('fr-FR');
-    const goalEl = document.getElementById('nutriKcalGoal');
-    if (goalEl) goalEl.textContent = goalKcal.toLocaleString('fr-FR');
+    // Demi-anneau : stroke-dasharray 141.4 = demi-cercle r=45 * π ≈ 141.4
+    const semiLen = 141.4;
+    const semiOffset = semiLen - Math.min(totalKcal / goalKcal, 1) * semiLen;
+    const ring = document.getElementById('nutriSemiRing');
+    if (ring) {
+      ring.style.strokeDashoffset = semiOffset;
+      ring.style.stroke = totalKcal > goalKcal ? 'var(--accent2)' : 'var(--accent)';
+    }
 
-    const setPct = (barId, valId, goalId, val, goal, unit) => {
+    // Chiffres
+    const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    set('nutriKcalConsumed', totalKcal.toLocaleString('fr-FR'));
+    set('nutriKcalRemaining', remaining.toLocaleString('fr-FR'));
+    set('nutriKcalGoal', goalKcal.toLocaleString('fr-FR'));
+
+    // Macros barres
+    const setMacro = (barId, valId, goalId, val, goal) => {
       const b = document.getElementById(barId);
       const v = document.getElementById(valId);
       const g = document.getElementById(goalId);
       if (b) b.style.width = Math.min(val / goal * 100, 100) + '%';
-      if (v) v.textContent = val + unit;
-      if (g) g.textContent = goal + unit;
+      if (v) v.textContent = val;
+      if (g) g.textContent = goal;
     };
-    setPct('barProt', 'valProt', 'goalProt', totalProt, goalProt, 'g');
-    setPct('barGluc', 'valGluc', 'goalGluc', totalGluc, goalGluc, 'g');
-    setPct('barLip',  'valLip',  'goalLip',  totalLip,  goalLip,  'g');
+    setMacro('barProt', 'valProt', 'goalProt', totalProt, goalProt);
+    setMacro('barGluc', 'valGluc', 'goalGluc', totalGluc, goalGluc);
+    setMacro('barLip',  'valLip',  'goalLip',  totalLip,  goalLip);
 
-    // Accordéons
+    // Repas — style liste avec icône circulaire + barre de progression
     const journal = document.getElementById('nutriJournal');
     if (!journal) return;
+
+    const MEAL_GOAL_PCT = { 'Petit-déjeuner': 0.30, 'Déjeuner': 0.29, 'En-cas': 0.12, 'Dîner': 0.29 };
+    const MEAL_ICON_BG  = { 'Petit-déjeuner': '#c8956c', 'Déjeuner': '#7ab893', 'En-cas': '#e05c4b', 'Dîner': '#5b8ccc' };
+
     journal.innerHTML = MEALS.map(meal => {
       const items = todayEntries.filter(e => e.meal === meal);
       const mealKcal = items.reduce((s, e) => s + e.kcal, 0);
-      const mealProt = Math.round(items.reduce((s, e) => s + e.prot, 0) * 10) / 10;
-      const mealGluc = Math.round(items.reduce((s, e) => s + e.gluc, 0) * 10) / 10;
-      const mealLip  = Math.round(items.reduce((s, e) => s + e.lip,  0) * 10) / 10;
-      const isOpen = !!_nutriAccordionOpen[meal];
-      const icon = MEAL_ICONS[meal] || '';
-      return `<div class="nutri-accordion" id="acc-${meal.replace(/[^a-z]/gi,'')}" style="margin-bottom:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow)">
-        <div style="display:flex;align-items:center;padding:15px 14px;cursor:pointer;gap:10px" onclick="toggleNutriAccordion('${meal}')">
-          <span style="font-size:18px">${icon}</span>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:500;color:var(--text)">${meal}</div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">
-              ${mealKcal ? `${mealKcal} kcal · ${mealProt}P ${mealGluc}G ${mealLip}L` : 'Aucun aliment'}
-            </div>
+      const mealGoal = Math.round(goalKcal * (MEAL_GOAL_PCT[meal] || 0.25));
+      const mealPct  = Math.min(mealKcal / mealGoal, 1);
+      const isOpen   = !!_nutriAccordionOpen[meal];
+      const icon     = MEAL_ICONS[meal] || '🍽️';
+      const iconBg   = MEAL_ICON_BG[meal] || 'var(--border2)';
+      const preview  = items.slice(0, 3).map(e => e.name).join(', ');
+      const circumference = 2 * Math.PI * 18; // r=18 → ~113
+      const dashOffset = circumference - mealPct * circumference;
+
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:var(--card-shadow)">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 14px;cursor:pointer" onclick="toggleNutriAccordion('${meal}')">
+
+          <!-- Icône avec anneau de progression -->
+          <div style="position:relative;width:48px;height:48px;flex-shrink:0">
+            <svg width="48" height="48" viewBox="0 0 48 48" style="position:absolute;inset:0;transform:rotate(-90deg)">
+              <circle cx="24" cy="24" r="18" fill="none" stroke="var(--border2)" stroke-width="3"/>
+              <circle cx="24" cy="24" r="18" fill="none" stroke="${iconBg}" stroke-width="3"
+                stroke-linecap="round"
+                stroke-dasharray="${circumference.toFixed(1)}"
+                stroke-dashoffset="${dashOffset.toFixed(1)}"/>
+            </svg>
+            <div style="position:absolute;inset:5px;background:var(--warm);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px">${icon}</div>
           </div>
-          <button onclick="event.stopPropagation();openNutriAdd('${meal}')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:32px;height:32px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">+</button>
-          <span style="color:var(--muted);font-size:11px;margin-left:4px;transition:transform 0.2s;display:inline-block;transform:rotate(${isOpen?'180':'0'}deg)">▾</span>
+
+          <!-- Texte -->
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <div style="font-size:14px;font-weight:500;color:var(--text)">${meal}</div>
+              <span style="font-size:11px;color:var(--muted)">→</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">${mealKcal} / ${mealGoal} kcal</div>
+            ${preview ? `<div style="font-size:10px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}${items.length > 3 ? '…' : ''}</div>` : ''}
+          </div>
+
+          <!-- Bouton + -->
+          <button onclick="event.stopPropagation();openNutriAdd('${meal}')"
+            style="background:var(--surface);border:2px solid var(--border2);border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);line-height:1">+</button>
         </div>
-        ${isOpen ? `<div style="padding:0 14px 14px;border-top:1px solid var(--border)">
+
+        ${isOpen ? `<div style="border-top:1px solid var(--border);padding:2px 14px 12px">
           ${items.length ? items.map(e => `
-            <div style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+            <div style="display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border)">
               <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
-                <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L${e.fib ? ' ' + e.fib + 'F' : ''}</div>
+                <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${e.qty}g · ${e.prot}P ${e.gluc}G ${e.lip}L</div>
               </div>
-              <div style="text-align:right;margin-left:10px;flex-shrink:0">
-                <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace">${e.kcal} kcal</div>
-              </div>
-              <button onclick="deleteNutriEntry(${e.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 12px;flex-shrink:0">✕</button>
-            </div>`).join('') : `<div style="padding:14px 0;text-align:center;font-size:12px;color:var(--muted)">Aucun aliment pour ce repas.</div>`}
+              <div style="font-size:13px;font-weight:500;color:var(--text);font-family:'Geist Mono',monospace;margin-left:10px;flex-shrink:0">${e.kcal} kcal</div>
+              <button onclick="deleteNutriEntry(${e.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 10px">✕</button>
+            </div>`).join('')
+          : `<div style="padding:12px 0;text-align:center;font-size:12px;color:var(--muted)">Aucun aliment — appuie sur + pour ajouter.</div>`}
         </div>` : ''}
       </div>`;
     }).join('');
+  }
   }
 
   // ── Réglages nutrition ──
