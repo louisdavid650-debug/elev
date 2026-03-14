@@ -1141,7 +1141,6 @@
     </div>
 
     <!-- Nutrition du jour -->
-    <div class="home-section-title">Nutrition</div>
     <div class="home-nutri-card" id="homeNutriWidget" onclick="switchTab('nutrition')"></div>
 
     <!-- Dernière séance -->
@@ -1826,13 +1825,6 @@
 <div class="toast" id="toast"></div>
 
 <nav class="bottom-nav">
-  <button class="bn-btn active" id="bnav-session" onclick="switchTab('session')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
-      <rect x="3" y="3" width="18" height="18" rx="3"/>
-      <polygon points="10,8 10,16 17,12" fill="currentColor" stroke="none"/>
-    </svg>
-    <span class="bn-label">Séances</span>
-  </button>
   <button class="bn-btn" id="bnav-routines" onclick="switchTab('routines')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
@@ -1840,13 +1832,6 @@
       <path d="M9 12h6M9 16h4"/>
     </svg>
     <span class="bn-label">Programmes</span>
-  </button>
-  <button class="bn-btn" id="bnav-home" onclick="switchTab('home')">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
-      <path d="M9 21V12h6v9"/>
-    </svg>
-    <span class="bn-label">Accueil</span>
   </button>
   <button class="bn-btn" id="bnav-poids" onclick="switchTab('poids')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
@@ -1857,6 +1842,13 @@
     </svg>
     <span class="bn-label">Poids</span>
   </button>
+  <button class="bn-btn active" id="bnav-home" onclick="switchTab('home')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/>
+      <path d="M9 21V12h6v9"/>
+    </svg>
+    <span class="bn-label">Accueil</span>
+  </button>
   <button class="bn-btn" id="bnav-nutrition" onclick="switchTab('nutrition')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
       <path d="M12 2C8 2 5 6 5 10c0 3.5 2 6.5 5 8v2h4v-2c3-1.5 5-4.5 5-8 0-4-3-8-7-8z"/>
@@ -1865,7 +1857,6 @@
     </svg>
     <span class="bn-label">Nutrition</span>
   </button>
-
   <button class="bn-btn" id="bnav-stats" onclick="switchTab('stats')">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.4">
       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
@@ -2414,7 +2405,7 @@
       setTimeout(() => openSessionFullscreen(), 100);
     } else {
       const lastTab = localStorage.getItem('elev_last_tab') || 'home';
-      const validTabs = ['home','session','routines','poids','nutrition','stats'];
+      const validTabs = ['home','routines','poids','nutrition','stats'];
       switchTab(validTabs.includes(lastTab) ? lastTab : 'home');
     }
     // Charger le profil depuis Supabase EN PREMIER (source de vérité)
@@ -2452,6 +2443,8 @@
   // ── Tabs ──
   const TAB_TITLES = { home: 'Accueil', session: 'Séances', stats: 'Stats', routines: 'Programmes', poids: 'Poids', nutrition: 'Nutrition' };
   function switchTab(tab) {
+    // Rediriger l'ancien onglet séances vers programmes
+    if (tab === 'session') tab = 'routines';
     document.title = 'Élev | ' + (TAB_TITLES[tab] || tab);
     localStorage.setItem('elev_last_tab', tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2946,6 +2939,10 @@
     if (dy > 8 || dx > 8) return;
     e.preventDefault();
     loadRoutine(id);
+  }
+
+  function launchRoutineFromList(id) {
+    openRoutinePreview(id);
   }
 
   function loadRoutine(id) {
@@ -4350,14 +4347,19 @@
         ondragend="onRoutineDragEnd(event)"
         ontouchstart="onRoutineTouchStart(event,${ri})">
         <div class="rc-head">
-          <div style="display:flex;align-items:center;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
             <span class="rc-drag-handle" title="Déplacer">⠿</span>
-            <div onclick="toggleRoutineExs(${r.id})" style="cursor:pointer">
+            <div onclick="toggleRoutineExs(${r.id})" style="cursor:pointer;min-width:0">
               <div class="rc-name">${r.name}</div>
               <div class="rc-meta">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
             </div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center">
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <button onclick="launchRoutineFromList(${r.id})"
+              style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;gap:5px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              Lancer
+            </button>
             <button class="rc-toggle-btn ${isOpen?'open':''}" onclick="toggleRoutineExs(${r.id})">▼</button>
             <button class="btn-ghost ${isEditing?'active':''}" onclick="toggleInlineEdit(${ri})" title="Modifier">✏️</button>
             <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">✕</button>
