@@ -6035,10 +6035,15 @@
     const q = document.getElementById('nutriSearch')?.value.trim();
     if (q && q.length >= 2) return;
 
+    const getBlacklist = () => { try { return JSON.parse(localStorage.getItem('elev_nutri_blacklist') || '[]'); } catch(e) { return []; } };
+    const addToBlacklist = name => { const b = getBlacklist(); if (!b.includes(name)) { b.push(name); localStorage.setItem('elev_nutri_blacklist', JSON.stringify(b)); } };
+    const blacklist = getBlacklist();
+
     const renderList = (items, emptyMsg) => {
-      if (!items.length) return `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">${emptyMsg}</div>`;
-      window._nutriSuggCache = items;
-      return items.map((f, i) => {
+      const filtered = items.filter(f => !blacklist.includes(f.name));
+      if (!filtered.length) return `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">${emptyMsg || 'Aucun aliment.'}</div>`;
+      window._nutriSuggCache = filtered;
+      return filtered.map((f, i) => {
         const isFav = isNutriFavorite(f.name);
         return `<div style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border);cursor:pointer" onclick="openNutriFromCache(${i})">
           <div style="flex:1;min-width:0;pointer-events:none">
@@ -6049,6 +6054,8 @@
             <span style="font-size:13px;color:var(--muted);font-family:'Geist Mono',monospace">${f.kcal} kcal</span>
             <button onclick="event.stopPropagation();toggleNutriFavorite('${f.name.replace(/'/g,"\\'")}',${f.kcal},${f.prot||0},${f.gluc||0},${f.lip||0},${f.fib||0})"
               style="background:none;border:none;font-size:18px;cursor:pointer;padding:2px;color:${isFav ? 'var(--gold)' : 'var(--muted2)'}">${isFav ? '★' : '☆'}</button>
+            <button onclick="event.stopPropagation();addToBlacklist('${f.name.replace(/'/g,"\\'")}');renderNutriAddBody();showToast('Retiré des suggestions')"
+              style="background:none;border:none;cursor:pointer;padding:2px;color:var(--muted2);line-height:1;font-size:16px">✕</button>
             <button onclick="event.stopPropagation();addNutriDirect(${i})"
               style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
           </div>
