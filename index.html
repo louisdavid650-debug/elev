@@ -1472,7 +1472,11 @@
         <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.1">Résumé</div>
         <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:0.5px" id="nutri-date-label"></div>
       </div>
-      <button onclick="openNutriSettings()" style="background:none;border:none;font-size:12px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;cursor:pointer;padding:0">Réglages →</button>
+      <button onclick="openNutriSettings()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);flex-shrink:0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Bilan carte principale -->
@@ -1629,19 +1633,32 @@
           style="background:var(--accent);color:#fff;border:none;border-radius:12px;width:44px;height:44px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:300">+</button>
       </div>
 
-      <!-- Onglets Fréquents / Récents / Favoris -->
-      <div style="display:flex;gap:0" id="nutriAddTabs">
+      <!-- Onglets Fréquents / Récents / Favoris / Plats -->
+      <div style="display:flex;gap:0;margin-bottom:8px" id="nutriAddTabs">
         <button onclick="setNutriTab('frequent')" id="ntab-frequent"
-          style="flex:1;padding:8px 0;border:none;border-radius:8px 0 0 8px;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--accent);color:#fff">
+          style="flex:1;padding:8px 0;border:none;border-radius:8px 0 0 8px;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--accent);color:#fff">
           Fréquents
         </button>
         <button onclick="setNutriTab('recent')" id="ntab-recent"
-          style="flex:1;padding:8px 0;border:none;border-radius:0;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-left:none;border-right:none">
+          style="flex:1;padding:8px 0;border:none;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-left:none;border-right:none">
           Récents
         </button>
         <button onclick="setNutriTab('favorite')" id="ntab-favorite"
-          style="flex:1;padding:8px 0;border:none;border-radius:0 8px 8px 0;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-left:none">
+          style="flex:1;padding:8px 0;border:none;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-right:none">
           Favoris
+        </button>
+        <button onclick="setNutriTab('meals')" id="ntab-meals"
+          style="flex:1;padding:8px 0;border:none;border-radius:0 8px 8px 0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border)">
+          Plats
+        </button>
+      </div>
+
+      <!-- Bouton créer un plat (visible sur l'onglet Plats) -->
+      <div id="nutriCreateMealBtn" style="display:none">
+        <button onclick="openCreateMealModal()"
+          style="width:100%;background:var(--surface);border:1.5px dashed var(--border2);border-radius:12px;padding:12px;font-size:13px;color:var(--accent);cursor:pointer;font-family:'Geist Mono',monospace;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          CRÉER UN PLAT
         </button>
       </div>
     </div>
@@ -1998,7 +2015,7 @@
   })();
 
   // ── Offline queue ──
-  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights', programs: 'elev_cache_programs', kcal_entries: 'elev_cache_kcal', profiles: 'elev_cache_profiles', nutrition_entries: 'elev_cache_nutrition' };
+  const CACHE_KEYS = { sessions: 'elev_cache_sessions', routines: 'elev_cache_routines', body_weights: 'elev_cache_body_weights', programs: 'elev_cache_programs', kcal_entries: 'elev_cache_kcal', profiles: 'elev_cache_profiles', nutrition_entries: 'elev_cache_nutrition', nutri_favorites: 'elev_cache_nutri_fav', nutri_meals: 'elev_cache_nutri_meals' };
   const QUEUE_KEY = 'elev_offline_queue';
 
   function isOnline() { return navigator.onLine; }
@@ -2256,13 +2273,15 @@
     };
 
     // Chargement en parallèle — max 3s au lieu de 5s × 5 tables
-    const [s, r, p, bw, kc, ne] = await Promise.all([
+    const [s, r, p, bw, kc, ne, nf, nm] = await Promise.all([
       loadWithTimeout('sessions'),
       loadWithTimeout('routines'),
       loadWithTimeout('programs'),
       loadWithTimeout('body_weights'),
       loadWithTimeout('kcal_entries'),
       loadWithTimeout('nutrition_entries'),
+      loadWithTimeout('nutri_favorites'),
+      loadWithTimeout('nutri_meals'),
     ]);
 
     sessions    = s; sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2271,6 +2290,8 @@
     bodyWeights = bw; bodyWeights.sort((a, b) => a.date.localeCompare(b.date));
     kcalEntries = kc; kcalEntries.sort((a, b) => a.date.localeCompare(b.date));
     nutriEntries = ne || [];
+    if (nf && nf.length) _nutriFavorites = nf;
+    if (nm && nm.length) _nutriMeals = nm;
     showSyncBadge('✓ Sync', true);
   }
 
@@ -5893,30 +5914,36 @@
 
   function setNutriTab(tab) {
     _nutriActiveTab = tab;
-    // Mettre à jour le style des onglets
-    ['frequent','recent','favorite'].forEach(t => {
+    ['frequent','recent','favorite','meals'].forEach(t => {
       const btn = document.getElementById('ntab-' + t);
       if (!btn) return;
-      if (t === tab) {
-        btn.style.background = 'var(--accent)';
-        btn.style.color = '#fff';
-      } else {
-        btn.style.background = 'var(--surface)';
-        btn.style.color = 'var(--muted)';
-      }
+      if (t === tab) { btn.style.background = 'var(--accent)'; btn.style.color = '#fff'; }
+      else { btn.style.background = 'var(--surface)'; btn.style.color = 'var(--muted)'; }
     });
-    // Vider la recherche
     const searchEl = document.getElementById('nutriSearch');
     if (searchEl) searchEl.value = '';
+    // Afficher/masquer le bouton créer un plat
+    const createBtn = document.getElementById('nutriCreateMealBtn');
+    if (createBtn) createBtn.style.display = tab === 'meals' ? 'block' : 'none';
     renderNutriAddBody();
   }
 
-  function toggleNutriFavorite(name, kcal, prot, gluc, lip) {
+  async function toggleNutriFavorite(name, kcal, prot, gluc, lip, fib) {
     const idx = _nutriFavorites.findIndex(f => f.name === name);
-    if (idx >= 0) _nutriFavorites.splice(idx, 1);
-    else _nutriFavorites.push({ name, kcal, prot, gluc, lip });
+    if (idx >= 0) {
+      const removed = _nutriFavorites.splice(idx, 1)[0];
+      try { await sbDelete('nutri_favorites', removed.id); } catch(e) {}
+    } else {
+      const fav = { id: 'fav_' + Date.now(), name, kcal, prot, gluc, lip, fib: fib || 0 };
+      _nutriFavorites.push(fav);
+      try { await sbSave('nutri_favorites', [fav]); } catch(e) {}
+    }
     localStorage.setItem('elev_nutri_fav', JSON.stringify(_nutriFavorites));
     renderNutriAddBody();
+  }
+
+  function isNutriFavorite(name) {
+    return _nutriFavorites.some(f => f.name === name);
   }
 
   function closeNutriAdd() {
@@ -5930,50 +5957,76 @@
     const body = document.getElementById('nutriAddBody');
     if (!body) return;
     const q = document.getElementById('nutriSearch')?.value.trim();
-    if (q && q.length >= 2) return; // résultats gérés par doNutriSearch
+    if (q && q.length >= 2) return;
 
-    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const renderList = (items, emptyMsg) => {
       if (!items.length) return `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">${emptyMsg}</div>`;
       window._nutriSuggCache = items;
       return items.map((f, i) => {
-        const sub = [f.brand, f.qty ? f.qty + 'g' : ''].filter(Boolean).join(', ');
+        const isFav = isNutriFavorite(f.name);
+        const sub = [f.brand, f.qty ? f.qty + 'g' : ''].filter(Boolean).join(' · ');
         return `<div style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border)">
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
-            ${sub ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${sub}</div>` : ''}
+            ${sub ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">${sub}</div>` : ''}
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">${f.prot}P · ${f.gluc}G · ${f.lip}L${f.fib ? ' · ' + f.fib + 'F' : ''} · ${f.kcal} kcal</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:10px">
-            <span style="font-size:13px;color:var(--muted)">${f.kcal} kcal</span>
+            <button onclick="toggleNutriFavorite('${f.name.replace(/'/g,"\\'")}',${f.kcal},${f.prot||0},${f.gluc||0},${f.lip||0},${f.fib||0})"
+              style="background:none;border:none;font-size:18px;cursor:pointer;padding:2px;color:${isFav ? 'var(--gold)' : 'var(--muted2)'}">${isFav ? '★' : '☆'}</button>
             <button onclick="openNutriFromCache(${i})"
               style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
           </div>
         </div>`;
       }).join('');
-    };;
+    };
 
     let html = '';
+
     if (_nutriActiveTab === 'frequent') {
-      // Chercher les aliments fréquents dans Supabase selon le repas
-      const SUGGESTIONS = {
-        'Petit-déjeuner': 'flocon OR yaourt OR oeuf OR lait OR pain OR banane OR skyr OR whey',
-        'Déjeuner':       'poulet OR riz OR pates OR thon OR saumon OR lentilles OR boeuf',
-        'En-cas':         'amande OR banane OR pomme OR whey OR barre OR yaourt OR noix',
-        'Dîner':          'saumon OR boeuf OR poulet OR pates OR riz OR tofu OR cabillaud',
-      };
-      const kw = SUGGESTIONS[_nutriActiveMeal] || 'poulet OR riz OR pates';
-      html = `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Chargement…</div>`;
-      body.innerHTML = html;
-      try {
-        const res = await supaFetch(`/rest/v1/foods?name=ilike.%25${encodeURIComponent(kw.split(' OR ')[0])}%25&order=scan_count.desc&limit=10&select=name,brand,kcal,proteins,carbs,fat`, { method:'GET', headers:{'Accept':'application/json','Prefer':'count=none'} });
-        const data = res.ok ? await res.json() : [];
-        const items = data.map(r => ({ name: r.name, brand: r.brand||'', kcal: Math.round(r.kcal||0), prot: Math.round((r.proteins||0)*10)/10, gluc: Math.round((r.carbs||0)*10)/10, lip: Math.round((r.fat||0)*10)/10 }));
-        body.innerHTML = items.length ? renderList(items, '') : `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucun aliment fréquent.</div>`;
-      } catch(e) { body.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Erreur de chargement.</div>`; }
-      return;
+      // Aliments les plus souvent mangés par cet utilisateur (depuis nutriEntries)
+      const countMap = {};
+      nutriEntries.forEach(e => {
+        if (!countMap[e.name]) countMap[e.name] = { count: 0, entry: e };
+        countMap[e.name].count++;
+      });
+      const frequent = Object.values(countMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 15)
+        .map(x => ({
+          name: x.entry.name,
+          brand: x.entry.brand || '',
+          kcal: x.entry.kcal,
+          prot: x.entry.prot,
+          gluc: x.entry.gluc,
+          lip:  x.entry.lip,
+          fib:  x.entry.fib || 0,
+          qty:  x.entry.qty,
+          count: x.count,
+        }));
+
+      if (frequent.length) {
+        html = renderList(frequent, '');
+      } else {
+        // Pas encore d'historique → suggestions par repas depuis Supabase
+        html = `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Chargement…</div>`;
+        body.innerHTML = html;
+        try {
+          const kw = ({ 'Petit-déjeuner':'flocon', 'Déjeuner':'poulet', 'En-cas':'amande', 'Dîner':'saumon' })[_nutriActiveMeal] || 'poulet';
+          const res = await supaFetch(`/rest/v1/rpc/search_foods`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ query: kw + ':*', lim: 10 })
+          });
+          const data = res.ok ? await res.json() : [];
+          const items = (data || []).map(r => ({ name: r.name, brand: r.brand||'', kcal: Math.round(r.kcal||0), prot: Math.round((r.proteins||0)*10)/10, gluc: Math.round((r.carbs||0)*10)/10, lip: Math.round((r.fat||0)*10)/10, fib: Math.round((r.fiber||0)*10)/10 }));
+          body.innerHTML = items.length ? renderList(items, '') : `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucune suggestion.</div>`;
+        } catch(e) { body.innerHTML = `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Erreur de chargement.</div>`; }
+        return;
+      }
 
     } else if (_nutriActiveTab === 'recent') {
-      // Tous les aliments distincts enregistrés les 7 derniers jours
+      // Aliments distincts des 7 derniers jours
       const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
       const cutoffStr = cutoff.toISOString().split('T')[0];
       const seen = new Set();
@@ -5982,21 +6035,202 @@
         .sort((a, b) => b.date.localeCompare(a.date))
         .filter(e => { if (seen.has(e.name)) return false; seen.add(e.name); return true; })
         .slice(0, 15)
-        .map(e => ({ name: e.name, brand: e.brand || '', kcal: e.kcal, prot: e.prot, gluc: e.gluc, lip: e.lip, qty: e.qty }));
+        .map(e => ({ name: e.name, brand: e.brand || '', kcal: e.kcal, prot: e.prot, gluc: e.gluc, lip: e.lip, fib: e.fib || 0, qty: e.qty }));
       html = renderList(items, 'Aucun aliment récent (7 derniers jours).');
 
-    } else { // favorite
-      html = _nutriFavorites.length
-        ? renderList(_nutriFavorites, '')
-        : `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">
-            Appuie sur ☆ pour ajouter un favori.
-          </div>`;
+    } else if (_nutriActiveTab === 'favorite') {
+      const favItems = _nutriFavorites.map(f => ({ ...f }));
+      html = favItems.length
+        ? renderList(favItems, '')
+        : `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Appuie sur ☆ pour ajouter un favori.</div>`;
+
+    } else if (_nutriActiveTab === 'meals') {
+      // Plats enregistrés
+      const meals = _nutriMeals;
+      if (!meals.length) {
+        html = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Aucun plat enregistré.<br><span style="font-size:11px;opacity:0.7">Appuie sur "Créer un plat" pour commencer.</span></div>`;
+      } else {
+        window._nutriSuggCache = meals.map(m => ({ name: m.name, kcal: m.kcal, prot: m.prot, gluc: m.gluc, lip: m.lip, fib: m.fib || 0 }));
+        html = meals.map((m, i) => `
+          <div style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:600;color:var(--text)">${m.name}</div>
+              <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px">
+              <button onclick="deleteSavedMeal('${m.id}')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px">🗑</button>
+              <button onclick="openNutriFromCache(${i})"
+                style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
+            </div>
+          </div>`).join('');
+      }
     }
 
     body.innerHTML = html;
   }
 
-  function openNutriFromCache(i) {
+  // ══ PLATS ENREGISTRÉS ══
+  let _nutriMeals = JSON.parse(localStorage.getItem('elev_nutri_meals') || '[]');
+  let _cmIngredients = []; // ingrédients du plat en cours de création
+  let _ingredientSearchTimer = null;
+
+  function openCreateMealModal() {
+    _cmIngredients = [];
+    document.getElementById('cmName').value = '';
+    updateCmSummary();
+    renderCmIngredients();
+    document.getElementById('createMealModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('cmName')?.focus(), 200);
+  }
+
+  function closeCreateMealModal() {
+    document.getElementById('createMealModal').style.display = 'none';
+  }
+
+  function updateCmSummary() {
+    const totKcal = Math.round(_cmIngredients.reduce((s,i) => s + i.kcal, 0));
+    const totProt = Math.round(_cmIngredients.reduce((s,i) => s + i.prot, 0) * 10) / 10;
+    const totGluc = Math.round(_cmIngredients.reduce((s,i) => s + i.gluc, 0) * 10) / 10;
+    const totLip  = Math.round(_cmIngredients.reduce((s,i) => s + i.lip,  0) * 10) / 10;
+    document.getElementById('cmTotalKcal').textContent = totKcal;
+    document.getElementById('cmTotalProt').textContent = totProt + 'g';
+    document.getElementById('cmTotalGluc').textContent = totGluc + 'g';
+    document.getElementById('cmTotalLip').textContent  = totLip + 'g';
+  }
+
+  function renderCmIngredients() {
+    const list = document.getElementById('cmIngredientList');
+    const empty = document.getElementById('cmEmptyMsg');
+    if (!_cmIngredients.length) {
+      if (empty) empty.style.display = 'block';
+      if (list) list.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucun ingrédient — appuie sur + pour ajouter</div>';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = _cmIngredients.map((ing, i) => `
+      <div style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${ing.qty}g · ${ing.kcal} kcal · ${ing.prot}P ${ing.gluc}G ${ing.lip}L</div>
+        </div>
+        <button onclick="removeCmIngredient(${i})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px 0 4px 10px">✕</button>
+      </div>`).join('');
+  }
+
+  function removeCmIngredient(i) {
+    _cmIngredients.splice(i, 1);
+    updateCmSummary();
+    renderCmIngredients();
+  }
+
+  function openIngredientSearch() {
+    document.getElementById('ingredientSearchInput').value = '';
+    document.getElementById('ingredientSearchBody').innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>';
+    document.getElementById('ingredientSearchModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('ingredientSearchInput')?.focus(), 200);
+  }
+
+  function closeIngredientSearch() {
+    document.getElementById('ingredientSearchModal').style.display = 'none';
+  }
+
+  function ingredientSearchDebounce() {
+    clearTimeout(_ingredientSearchTimer);
+    const q = document.getElementById('ingredientSearchInput')?.value.trim();
+    if (!q || q.length < 2) {
+      document.getElementById('ingredientSearchBody').innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>';
+      return;
+    }
+    document.getElementById('ingredientSearchBody').innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px;font-family:Geist Mono,monospace;letter-spacing:1px">RECHERCHE…</div>';
+    _ingredientSearchTimer = setTimeout(() => doIngredientSearch(q), 400);
+  }
+
+  async function doIngredientSearch(q) {
+    const body = document.getElementById('ingredientSearchBody');
+    try {
+      const ftsQuery = q.trim().split(/\s+/).filter(w=>w.length>1).map(w=>w+':*').join(' & ') || q+':*';
+      const res = await fetch(`${SUPA_URL}/rest/v1/rpc/search_foods`, {
+        method: 'POST',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ query: ftsQuery, lim: 20 })
+      });
+      const rows = res.ok ? await res.json() : [];
+      window._ingredientCache = (rows || []).map(r => ({
+        name: r.name, brand: r.brand || null,
+        kcal: Math.round(r.kcal || 0),
+        prot: Math.round((r.proteins || 0) * 10) / 10,
+        gluc: Math.round((r.carbs    || 0) * 10) / 10,
+        lip:  Math.round((r.fat      || 0) * 10) / 10,
+        fib:  Math.round((r.fiber    || 0) * 10) / 10,
+      }));
+      if (!window._ingredientCache.length) {
+        body.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} »</div>`;
+        return;
+      }
+      body.innerHTML = window._ingredientCache.map((f, i) => `
+        <div style="display:flex;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}${f.brand ? `<span style="color:var(--muted2);font-size:11px"> · ${f.brand}</span>` : ''}</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+          </div>
+          <button onclick="addIngredientToMeal(${i})"
+            style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:10px;line-height:1;padding:0">+</button>
+        </div>`).join('');
+    } catch(e) {
+      body.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Erreur de recherche.</div>`;
+    }
+  }
+
+  function addIngredientToMeal(i) {
+    const f = (window._ingredientCache || [])[i];
+    if (!f) return;
+    // Demander la quantité
+    const qty = parseInt(prompt(`Quantité de "${f.name}" (g) :`, '100'));
+    if (!qty || qty <= 0) return;
+    const ratio = qty / 100;
+    _cmIngredients.push({
+      name: f.name, qty,
+      kcal: Math.round(f.kcal * ratio),
+      prot: Math.round(f.prot * ratio * 10) / 10,
+      gluc: Math.round(f.gluc * ratio * 10) / 10,
+      lip:  Math.round(f.lip  * ratio * 10) / 10,
+      fib:  Math.round((f.fib || 0) * ratio * 10) / 10,
+    });
+    updateCmSummary();
+    renderCmIngredients();
+    closeIngredientSearch();
+  }
+
+  async function saveMealRecipe() {
+    const name = document.getElementById('cmName')?.value.trim();
+    if (!name) { showToast('Donne un nom à ton plat'); return; }
+    if (!_cmIngredients.length) { showToast('Ajoute au moins un ingrédient'); return; }
+    const totKcal = Math.round(_cmIngredients.reduce((s,i) => s + i.kcal, 0));
+    const totProt = Math.round(_cmIngredients.reduce((s,i) => s + i.prot, 0) * 10) / 10;
+    const totGluc = Math.round(_cmIngredients.reduce((s,i) => s + i.gluc, 0) * 10) / 10;
+    const totLip  = Math.round(_cmIngredients.reduce((s,i) => s + i.lip,  0) * 10) / 10;
+    const totFib  = Math.round(_cmIngredients.reduce((s,i) => s + (i.fib||0), 0) * 10) / 10;
+    const meal = {
+      id: 'meal_' + Date.now(),
+      name, kcal: totKcal, prot: totProt, gluc: totGluc, lip: totLip, fib: totFib,
+      ingredients: _cmIngredients,
+      qty: Math.round(_cmIngredients.reduce((s,i) => s + i.qty, 0)),
+    };
+    _nutriMeals.push(meal);
+    localStorage.setItem('elev_nutri_meals', JSON.stringify(_nutriMeals));
+    // Sauvegarder dans Supabase
+    try { await sbSave('nutri_meals', [meal]); } catch(e) {}
+    showToast(`« ${name} » enregistré ✓`);
+    closeCreateMealModal();
+    if (_nutriActiveTab === 'meals') renderNutriAddBody();
+  }
+
+  async function deleteSavedMeal(id) {
+    _nutriMeals = _nutriMeals.filter(m => m.id !== id);
+    localStorage.setItem('elev_nutri_meals', JSON.stringify(_nutriMeals));
+    try { await sbDelete('nutri_meals', id); } catch(e) {}
+    renderNutriAddBody();
+  }
     const f = (window._nutriSuggCache || [])[i];
     if (!f) return;
     openNutriQtyModal(encodeURIComponent(f.name), f.kcal, f.prot, f.gluc, f.lip, f.fib || 0);
@@ -8212,6 +8446,72 @@
       style="width:100%;background:none;border:1px solid var(--border);border-radius:14px;padding:13px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;color:var(--muted)">
       Annuler
     </button>
+  </div>
+</div>
+
+<!-- ══ MODAL CRÉER UN PLAT ══ -->
+<div id="createMealModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:985;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeCreateMealModal()">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92vh;display:flex;flex-direction:column">
+
+    <!-- Header -->
+    <div style="padding:20px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">Nouveau plat</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-top:2px">COMPOSITION & ENREGISTREMENT</div>
+        </div>
+        <button onclick="closeCreateMealModal()" style="background:var(--surface2);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;font-size:15px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <!-- Nom du plat -->
+      <input class="inp" id="cmName" type="text" placeholder="Nom du plat (ex: Bol Buddha, Pasta poulet…)" maxlength="80"
+        style="width:100%;font-size:15px;font-family:'DM Serif Display',serif"/>
+    </div>
+
+    <!-- Résumé macros du plat -->
+    <div id="cmMacroSummary" style="display:flex;justify-content:space-around;padding:10px 20px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="cmTotalKcal">0</div><div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px">KCAL</div></div>
+      <div style="text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)" id="cmTotalProt">0g</div><div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px">PROT</div></div>
+      <div style="text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="cmTotalGluc">0g</div><div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px">GLUC</div></div>
+      <div style="text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="cmTotalLip">0g</div><div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px">LIP</div></div>
+    </div>
+
+    <!-- Liste ingrédients -->
+    <div style="flex:1;overflow-y:auto;padding:12px 20px" id="cmIngredientList">
+      <div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px" id="cmEmptyMsg">Aucun ingrédient — appuie sur + pour ajouter</div>
+    </div>
+
+    <!-- Boutons bas -->
+    <div style="padding:12px 20px calc(env(safe-area-inset-bottom)+12px);border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:8px">
+      <button onclick="openIngredientSearch()"
+        style="width:100%;background:var(--surface);border:1.5px solid var(--accent);color:var(--accent);border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        AJOUTER UN INGRÉDIENT
+      </button>
+      <button onclick="saveMealRecipe()"
+        style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;font-weight:600">
+        ENREGISTRER LE PLAT
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL RECHERCHE INGRÉDIENT ══ -->
+<div id="ingredientSearchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:990;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;height:75vh;display:flex;flex-direction:column">
+    <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <button onclick="closeIngredientSearch()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:0;line-height:1">←</button>
+        <div style="font-size:15px;font-weight:500;color:var(--text)">Choisir un ingrédient</div>
+      </div>
+      <div style="position:relative">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none">🔍</span>
+        <input id="ingredientSearchInput" class="inp" placeholder="Rechercher…" oninput="ingredientSearchDebounce()"
+          autocomplete="off" style="width:100%;padding-left:36px;font-size:14px"/>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 16px" id="ingredientSearchBody">
+      <div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>
+    </div>
   </div>
 </div>
 
