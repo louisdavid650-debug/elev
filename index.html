@@ -5926,22 +5926,20 @@
       if (!items.length) return `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">${emptyMsg}</div>`;
       window._nutriSuggCache = items;
       return items.map((f, i) => {
-        const isFav = _nutriFavorites.some(fv => fv.name === f.name);
-        const brand = f.brand ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${f.brand}</div>` : '';
-        const qty = f.qty ? `${f.qty}g · ` : '';
-        return `<div style="display:flex;align-items:center;padding:14px 0;border-bottom:0.5px solid var(--border)">
+        const sub = [f.brand, f.qty ? f.qty + 'g' : ''].filter(Boolean).join(', ');
+        return `<div style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border)">
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
-            ${brand}
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">${qty}${f.kcal} kcal</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+            ${sub ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${sub}</div>` : ''}
           </div>
-          <button onclick="toggleNutriFavorite('${f.name.replace(/'/g,"\\'")}',${f.kcal},${f.prot},${f.gluc},${f.lip})"
-            style="background:none;border:none;font-size:20px;cursor:pointer;padding:0 10px;color:${isFav?'#f5c518':'var(--muted)'};flex-shrink:0">${isFav?'★':'☆'}</button>
-          <button onclick="openNutriFromCache(${i})"
-            style="background:var(--accent);color:#fff;border:none;border-radius:10px;width:34px;height:34px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">+</button>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:10px">
+            <span style="font-size:13px;color:var(--muted)">${f.kcal} kcal</span>
+            <button onclick="openNutriFromCache(${i})"
+              style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
+          </div>
         </div>`;
       }).join('');
-    };
+    };;
 
     let html = '';
     if (_nutriActiveTab === 'frequent') {
@@ -6044,18 +6042,25 @@
 
       // Stocker dans cache
       window._nutriSearchCache = items;
-      body.innerHTML = srcLabel + items.map((f, i) => {
-        const brand = f.brand ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${f.brand}</div>` : '';
-        return `<div style="display:flex;align-items:center;padding:14px 0;border-bottom:0.5px solid var(--border)">
+      body.innerHTML = srcLabel + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">` + items.map((f, i) => {
+        const sub = [f.brand, f.qty ? f.qty + 'g' : '100g'].filter(Boolean).join(', ');
+        const isRecent = nutriEntries.some(e => e.name === f.name);
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 14px;display:flex;align-items:center;gap:10px">
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
-            ${brand}
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">${f.kcal} kcal · ${f.prot}P ${f.gluc}G ${f.lip}L</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--muted)">Aliment</span>
+              ${isRecent ? `<span style="font-size:14px;color:var(--accent)" title="Récemment consommé">🕐</span>` : ''}
+            </div>
           </div>
-          <button onclick="openNutriFromSearchCache(${i})"
-            style="background:var(--accent);color:#fff;border:none;border-radius:10px;width:34px;height:34px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;margin-left:10px">+</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+            <button onclick="openNutriFromSearchCache(${i})"
+              style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
+            <span style="font-size:13px;color:var(--muted);font-family:'Geist Mono',monospace">${f.kcal} kcal</span>
+          </div>
         </div>`;
-      }).join('');
+      }).join('') + `</div>`;
     };
 
     // ── 1. Supabase via fonction search_foods (FTS sur 100k aliments OFF) ──
