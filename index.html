@@ -6501,51 +6501,54 @@
     if (!body || !q || q.length < 2) return;
 
     const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const qNorm = norm(q);
+
+    // Afficher indicateur de chargement
+    body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace;letter-spacing:1px">RECHERCHE…</div>`;
+
+    // ── Scoring pertinence ──
+    const relevance = name => {
+      const n = norm(name);
+      if (n === qNorm) return 0;
+      if (n.startsWith(qNorm + ' ') || n.startsWith(qNorm + ',') || n.startsWith(qNorm + '-')) return 1;
+      if (n.split(/[\s,\-]+/).some(w => w.startsWith(qNorm))) return 2;
+      if (n.includes(qNorm)) return 3;
+      return 4;
+    };
 
     // ── Rendu commun ──
-    const renderResults = (items, source) => {
+    const renderResults = items => {
+      const currentQ = document.getElementById('nutriSearch')?.value.trim();
+      if (currentQ !== q) return; // la recherche a changé entre temps
+
       if (!items.length) {
         body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} ».</div>`;
         return;
       }
 
-      // Construire un map nom → nombre d'utilisations depuis l'historique
       const usageMap = {};
-      nutriEntries.forEach(e => {
-        const k = norm(e.name);
-        usageMap[k] = (usageMap[k] || 0) + 1;
-      });
+      nutriEntries.forEach(e => { const k = norm(e.name); usageMap[k] = (usageMap[k] || 0) + 1; });
 
-      // Trier : déjà utilisés en premier, puis par pertinence (exact → commence par → contient)
-      const qLow2 = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      const relevance = name => {
-        const n = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        if (n === qLow2) return 0;
-        if (n.startsWith(qLow2 + ' ') || n.startsWith(qLow2 + ',') || n.startsWith(qLow2 + '-')) return 1;
-        if (n.split(/[\s,\-]+/).some(w => w.startsWith(qLow2))) return 2;
-        return 3;
-      };
-      const sorted = [...items].sort((a, b) => {
-        const ua = usageMap[norm(a.name)] || 0;
-        const ub = usageMap[norm(b.name)] || 0;
-        // D'abord par usage (déjà utilisé vs pas utilisé)
-        if ((ua > 0) !== (ub > 0)) return ub > 0 ? 1 : -1;
-        // Dans chaque groupe, par pertinence
-        const ra = relevance(a.name), rb = relevance(b.name);
-        if (ra !== rb) return ra - rb;
-        // À égalité, par fréquence d'usage
-        return ub - ua;
-      });
+      const sorted = [...items]
+        .filter(f => relevance(f.name) < 4) // exclure les non-pertinents
+        .sort((a, b) => {
+          const ua = usageMap[norm(a.name)] || 0;
+          const ub = usageMap[norm(b.name)] || 0;
+          if ((ua > 0) !== (ub > 0)) return ub > 0 ? 1 : -1;
+          const ra = relevance(a.name), rb = relevance(b.name);
+          if (ra !== rb) return ra - rb;
+          return ub - ua || norm(a.name).localeCompare(norm(b.name));
+        });
+
+      if (!sorted.length) {
+        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} ».</div>`;
+        return;
+      }
 
       window._nutriSearchCache = sorted;
+      const label = `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${sorted.length} RÉSULTATS</div>`;
 
-      const srcLabel = source === 'local'
-        ? `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">BASE LOCALE · RECHERCHE EN LIGNE…</div>`
-        : source === 'supabase'
-        ? `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${sorted.length} RÉSULTATS · BASE OFF</div>`
-        : `<div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;text-align:right;margin:4px 0 8px;letter-spacing:1px">${sorted.length} RÉSULTATS</div>`;
-
-      body.innerHTML = srcLabel + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">` + sorted.map((f, i) => {
+      body.innerHTML = label + `<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">` + sorted.map((f, i) => {
         const useCount = usageMap[norm(f.name)] || 0;
         const isRecent = useCount > 0;
         return `<div style="background:var(--surface);border:1px solid ${isRecent ? 'var(--accent)' : 'var(--border)'};border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px${isRecent ? ';background:var(--accent-light)' : ''};cursor:pointer" onclick="openNutriFromSearchCache(${i})">
@@ -6555,8 +6558,7 @@
             <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
               ${isRecent
                 ? `<span style="background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1px">✓ Déjà utilisé${useCount > 1 ? ' · ' + useCount + 'x' : ''}</span>`
-                : `<span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace">Aliment</span>`
-              }
+                : `<span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace">Aliment</span>`}
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
@@ -6568,102 +6570,57 @@
       }).join('') + `</div>`;
     };
 
-    // ── 1. Supabase via fonction search_foods (FTS sur 100k aliments OFF) ──
-    let supaResults = [];
-    try {
-      const ftsQuery = q.trim().split(/\s+/).filter(w=>w.length>1).map(w => w + ':*').join(' & ') || q + ':*';
-      const supaRes = await fetch(
-        `${SUPA_URL}/rest/v1/rpc/search_foods`,
-        {
-          method: 'POST',
-          headers: {
-            'apikey': SUPA_KEY,
-            'Authorization': `Bearer ${SUPA_KEY}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ query: ftsQuery, lim: 20 })
-        }
-      );
-      if (supaRes.ok) {
-        const rows = await supaRes.json();
-        const qLow = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        supaResults = (rows || []).map(r => ({
-          name:      r.name,
-          brand:     r.brand || null,
-          image_url: r.image_url || null,
-          kcal:      Math.round(r.kcal || 0),
-          prot:      Math.round((r.proteins || 0) * 10) / 10,
-          gluc:      Math.round((r.carbs    || 0) * 10) / 10,
-          lip:       Math.round((r.fat      || 0) * 10) / 10,
-          fib:       Math.round((r.fiber    || 0) * 10) / 10,
-        })).sort((a, b) => {
-          const na = a.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          const nb = b.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          // Score : 0 = exact, 1 = commence par, 2 = mot commence par, 3 = contient
-          const score = n => {
-            if (n === qLow) return 0;
-            if (n.startsWith(qLow + ' ') || n.startsWith(qLow + ',')) return 1;
-            if (n.split(/[\s,\-]+/).some(w => w.startsWith(qLow))) return 2;
-            return 3;
-          };
-          return score(na) - score(nb) || na.localeCompare(nb);
-        });
-      }
-    } catch(e) { /* Supabase inaccessible */ }
+    // ── Lancer Supabase + OFF en PARALLÈLE ──
+    const ftsQuery = q.trim().split(/\s+/).filter(w=>w.length>1).map(w=>w+':*').join(' & ') || q+':*';
 
-    if (supaResults.length) {
-      renderResults(supaResults, 'supabase');
-    } else if (!supaResults.length) {
-      body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour «\u00a0${q}\u00a0».</div>`;
-    }
-
-    // ── 2. API Open Food Facts (enrichissement si réseau dispo) ──
-    if (!isOnline()) return;
+    const supaPromise = fetch(`${SUPA_URL}/rest/v1/rpc/search_foods`, {
+      method: 'POST',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query: ftsQuery, lim: 30 })
+    }).then(r => r.ok ? r.json() : []).catch(() => []);
 
     const ctrl = new AbortController();
-    const apiTimeout = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}&page_size=10&lc=fr&cc=fr&fields=code,product_name,product_name_fr,brands,image_front_small_url,nutriments`;
-      const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } });
-      clearTimeout(apiTimeout);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
+    setTimeout(() => ctrl.abort(), 8000);
+    const offPromise = isOnline()
+      ? fetch(`https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}&page_size=20&lc=fr&cc=fr&fields=code,product_name,product_name_fr,brands,nutriments`, {
+          signal: ctrl.signal, headers: { 'Accept': 'application/json' }
+        }).then(r => r.ok ? r.json() : { products: [] }).catch(() => ({ products: [] }))
+      : Promise.resolve({ products: [] });
 
-      const seen = new Set(supaResults.map(f => norm(f.name)));
-      const apiItems = (data.products || [])
-        .filter(p => (p.product_name_fr || p.product_name) && p.nutriments)
-        .map(p => {
-          const name = (p.product_name_fr || p.product_name || '').trim().slice(0, 80);
-          const n = p.nutriments || {};
-          return {
-            name,
-            brand:     (p.brands || '').split(',')[0].trim().slice(0, 40) || null,
-            image_url: p.image_front_small_url || null,
-            kcal:  Math.round(n['energy-kcal_100g'] || (n['energy_100g'] || 0) / 4.184 || 0),
-            prot:  Math.round((n.proteins_100g      || 0) * 10) / 10,
-            gluc:  Math.round((n.carbohydrates_100g || 0) * 10) / 10,
-            lip:   Math.round((n.fat_100g           || 0) * 10) / 10,
-          };
-        })
-        .filter(f => f.name && (f.kcal || f.prot) && !seen.has(norm(f.name)));
+    const [supaRows, offData] = await Promise.all([supaPromise, offPromise]);
 
-      const currentQ = document.getElementById('nutriSearch')?.value.trim();
-      if (currentQ !== q) return;
+    if (document.getElementById('nutriSearch')?.value.trim() !== q) return;
 
-      const merged = [...supaResults, ...apiItems];
-      if (merged.length) renderResults(merged, 'api');
-    } catch(e) {
-      clearTimeout(apiTimeout);
-      // Ne pas écraser les résultats Supabase si l'API OFF timeout
-      // Vérifier que la recherche est encore d'actualité
-      const currentQ2 = document.getElementById('nutriSearch')?.value.trim();
-      if (currentQ2 !== q) return;
-      if (!supaResults.length && body.innerHTML.includes('RECHERCHE')) {
-        body.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} ».</div>`;
-      }
-      // Si Supabase avait déjà rendu des résultats → on les garde, pas d'erreur
-    }
+    // Mapper Supabase
+    const supaItems = (supaRows || []).map(r => ({
+      name: r.name, brand: r.brand || null,
+      kcal: Math.round(r.kcal || 0),
+      prot: Math.round((r.proteins || 0) * 10) / 10,
+      gluc: Math.round((r.carbs    || 0) * 10) / 10,
+      lip:  Math.round((r.fat      || 0) * 10) / 10,
+      fib:  Math.round((r.fiber    || 0) * 10) / 10,
+    }));
+
+    // Mapper OFF en dédupliquant vs Supabase
+    const seen = new Set(supaItems.map(f => norm(f.name)));
+    const offItems = (offData.products || [])
+      .filter(p => (p.product_name_fr || p.product_name) && p.nutriments)
+      .map(p => {
+        const name = (p.product_name_fr || p.product_name || '').trim().slice(0, 80);
+        const n = p.nutriments || {};
+        return {
+          name,
+          brand: (p.brands || '').split(',')[0].trim().slice(0, 40) || null,
+          kcal: Math.round(n['energy-kcal_100g'] || (n['energy_100g'] || 0) / 4.184 || 0),
+          prot: Math.round((n.proteins_100g      || 0) * 10) / 10,
+          gluc: Math.round((n.carbohydrates_100g || 0) * 10) / 10,
+          lip:  Math.round((n.fat_100g           || 0) * 10) / 10,
+          fib:  0,
+        };
+      })
+      .filter(f => f.name && (f.kcal || f.prot) && !seen.has(norm(f.name)));
+
+    renderResults([...supaItems, ...offItems]);
   }
 
   async function searchByBarcode(code) {
