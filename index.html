@@ -1057,16 +1057,27 @@
     <div class="home-dashboard">
       <!-- Poids & Calories -->
       <div class="home-snap">
-        <div class="home-snap-card" onclick="switchTab('poids'); setTimeout(()=>switchEntryTab('weight'),50)">
-          <div class="home-snap-icon">⚖️</div>
-          <div class="home-snap-label">Poids du jour</div>
-          <div>
-            <span class="home-snap-val" id="homeWeightVal">—</span>
-            <span class="home-snap-unit">kg</span>
+        <div class="home-snap-card" onclick="switchTab('poids'); setTimeout(()=>switchEntryTab('weight'),50)" style="padding:12px;gap:0;justify-content:flex-start">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">Poids</div>
+          <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+            <span style="font-family:'DM Serif Display',serif;font-size:34px;font-style:italic;color:var(--text);line-height:1" id="homeWeightVal">—</span>
+            <span style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace">kg</span>
           </div>
-          <div class="home-snap-sub" id="homeWeightSub"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%;margin-bottom:8px">
+            <div style="background:var(--surface2);border-radius:6px;padding:6px;text-align:center">
+              <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--accent)" id="homeWeightDelta">—</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-top:1px">Vs Hier</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:6px;padding:6px;text-align:center">
+              <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--accent)" id="homeWeightMonth">—</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;margin-top:1px">Ce Mois</div>
+            </div>
+          </div>
+          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.3px;margin-top:auto" id="homeWeightSub"></div>
         </div>
         <div class="home-snap-card" onclick="switchTab('nutrition')" style="align-items:center;justify-content:center;padding:12px;gap:0">
+          <!-- Titre -->
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px;align-self:flex-start">Calories</div>
           <!-- Arc fin + chiffre centré -->
           <div style="position:relative;width:84px;height:84px;flex-shrink:0">
             <svg width="84" height="84" viewBox="0 0 84 84" style="transform:rotate(-90deg)">
@@ -1080,8 +1091,8 @@
               <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">kcal</div>
             </div>
           </div>
-          <!-- Sous-texte -->
-          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:5px;margin-bottom:7px;text-align:center;letter-spacing:0.3px" id="homeKcalSub">objectif</div>
+          <!-- Sous-texte (progression seulement) -->
+          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:5px;margin-bottom:7px;text-align:center;letter-spacing:0.3px;min-height:13px" id="homeKcalSub"></div>
           <!-- Mini macros -->
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;width:100%">
             <div style="text-align:center;padding:4px 2px;background:var(--surface2);border-radius:6px">
@@ -5253,21 +5264,55 @@
     // Poids du jour
     const todayWeight = bodyWeights.find(w => w.date === today);
     const lastWeight = bodyWeights.length ? bodyWeights[bodyWeights.length - 1] : null;
-    if (todayWeight) {
-      document.getElementById('homeWeightVal').textContent = todayWeight.kg;
+    const profile2 = getUserProfile() || {};
+    const targetKg = parseFloat(profile2.targetWeight) || null;
+
+    // Chiffre principal
+    const wVal = document.getElementById('homeWeightVal');
+    const wSub = document.getElementById('homeWeightSub');
+    const wDelta = document.getElementById('homeWeightDelta');
+    const wMonth = document.getElementById('homeWeightMonth');
+
+    if (todayWeight || lastWeight) {
+      const displayW = todayWeight || lastWeight;
+      if (wVal) wVal.textContent = displayW.kg;
+
+      // Delta vs hier
       if (bodyWeights.length >= 2) {
-        const prev = bodyWeights[bodyWeights.length - 2];
-        if (prev && prev.date !== today) {
-          const diff = (todayWeight.kg - prev.kg).toFixed(1);
-          document.getElementById('homeWeightSub').textContent = (diff > 0 ? '+' : '') + diff + ' kg vs hier';
+        const prev = bodyWeights[bodyWeights.length - (todayWeight ? 2 : 1)];
+        if (prev && prev.kg) {
+          const diff = parseFloat((displayW.kg - prev.kg).toFixed(1));
+          if (wDelta) {
+            wDelta.textContent = (diff > 0 ? '+' : '') + diff + ' kg';
+            wDelta.style.color = diff <= 0 ? 'var(--accent)' : 'var(--accent2)';
+          }
         }
+      } else {
+        if (wDelta) wDelta.textContent = '—';
       }
-    } else if (lastWeight) {
-      document.getElementById('homeWeightVal').textContent = lastWeight.kg;
-      document.getElementById('homeWeightSub').textContent = 'dernier : ' + new Date(lastWeight.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+
+      // Delta ce mois
+      const monthStart = today.slice(0, 7) + '-01';
+      const firstOfMonth = bodyWeights.find(w => w.date >= monthStart);
+      if (firstOfMonth && firstOfMonth.date !== displayW.date) {
+        const diffMonth = parseFloat((displayW.kg - firstOfMonth.kg).toFixed(1));
+        if (wMonth) {
+          wMonth.textContent = (diffMonth > 0 ? '+' : '') + diffMonth + ' kg';
+          wMonth.style.color = diffMonth <= 0 ? 'var(--accent)' : 'var(--accent2)';
+        }
+      } else {
+        if (wMonth) wMonth.textContent = '—';
+      }
+
+      // Sous-texte : cible
+      if (wSub) wSub.textContent = targetKg
+        ? 'Cible ' + targetKg + ' kg · ' + parseFloat((displayW.kg - targetKg).toFixed(1)) + ' kg restants'
+        : (!todayWeight ? 'Dernière mesure : ' + new Date(lastWeight.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '');
     } else {
-      document.getElementById('homeWeightVal').textContent = '—';
-      document.getElementById('homeWeightSub').textContent = '';
+      if (wVal) wVal.textContent = '—';
+      if (wDelta) wDelta.textContent = '—';
+      if (wMonth) wMonth.textContent = '—';
+      if (wSub) wSub.textContent = '';
     }
 
     // Calories du jour — lit nutriEntries (onglet Nutrition)
@@ -5286,7 +5331,7 @@
     const subEl = document.getElementById('homeKcalSub');
     if (subEl) subEl.textContent = todayNutriKcal > 0
       ? Math.round(pct * 100) + '% · ' + (kcalTarget - todayNutriKcal) + ' rest.'
-      : 'objectif ' + kcalTarget.toLocaleString('fr-FR') + ' kcal';
+      : '';
     const protEl = document.getElementById('homeKcalProt');
     const glucEl = document.getElementById('homeKcalGluc');
     const lipEl  = document.getElementById('homeKcalLip');
@@ -7009,7 +7054,7 @@
     const subEl = document.getElementById('homeKcalSub');
     if (subEl) subEl.textContent = totalKcal > 0
       ? Math.round(pct * 100) + '% · ' + (goalKcal - totalKcal) + ' rest.'
-      : 'objectif ' + goalKcal.toLocaleString('fr-FR') + ' kcal';
+      : '';
     const protEl = document.getElementById('homeKcalProt');
     const glucEl = document.getElementById('homeKcalGluc');
     const lipEl  = document.getElementById('homeKcalLip');
