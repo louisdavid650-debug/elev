@@ -1066,14 +1066,20 @@
           </div>
           <div class="home-snap-sub" id="homeWeightSub"></div>
         </div>
-        <div class="home-snap-card" onclick="switchTab('nutrition')">
-          <div class="home-snap-icon">🔥</div>
-          <div class="home-snap-label">Calories</div>
-          <div>
-            <span class="home-snap-val" id="homeKcalVal">—</span>
-            <span class="home-snap-unit" id="homeKcalUnit"></span>
+        <div class="home-snap-card" onclick="switchTab('nutrition')" style="align-items:center;justify-content:center;padding:14px">
+          <div style="position:relative;width:90px;height:90px">
+            <svg width="90" height="90" viewBox="0 0 90 90" style="transform:rotate(-90deg)">
+              <circle cx="45" cy="45" r="37" fill="none" stroke="var(--border2)" stroke-width="7"/>
+              <circle cx="45" cy="45" r="37" fill="none" stroke="var(--accent)" stroke-width="7"
+                stroke-linecap="round" id="homeKcalRing"
+                stroke-dasharray="232" stroke-dashoffset="232"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1" id="homeKcalVal">0</div>
+              <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">kcal</div>
+            </div>
           </div>
-          <div class="home-snap-sub" id="homeKcalSub"></div>
+          <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:6px;text-align:center" id="homeKcalSub">objectif</div>
         </div>
       </div>
 
@@ -5250,18 +5256,17 @@
     // Calories du jour — lit nutriEntries (onglet Nutrition)
     const nutriToday = getTodayNutri();
     const todayNutriKcal = nutriToday.reduce((s, e) => s + e.kcal, 0);
-    const kcalTarget = parseInt(profile?.kcalTarget) || 0;
-    if (todayNutriKcal > 0) {
-      document.getElementById('homeKcalVal').textContent = todayNutriKcal.toLocaleString('fr-FR');
-      document.getElementById('homeKcalUnit').textContent = 'kcal';
-      document.getElementById('homeKcalSub').textContent = kcalTarget
-        ? (Math.round(todayNutriKcal / kcalTarget * 100) + '% objectif')
-        : "aujourd'hui";
-    } else {
-      document.getElementById('homeKcalVal').textContent = kcalTarget ? kcalTarget.toLocaleString('fr-FR') : '—';
-      document.getElementById('homeKcalUnit').textContent = kcalTarget ? 'kcal' : '';
-      document.getElementById('homeKcalSub').textContent = kcalTarget ? 'objectif' : 'configure →';
-    }
+    const kcalTarget = parseInt(profile?.kcalTarget) || 2400;
+    const pct = Math.min(todayNutriKcal / kcalTarget, 1);
+    const circumference = 232;
+    const ring = document.getElementById('homeKcalRing');
+    if (ring) ring.style.strokeDashoffset = circumference - pct * circumference;
+    const kcalEl = document.getElementById('homeKcalVal');
+    if (kcalEl) kcalEl.textContent = todayNutriKcal > 0 ? todayNutriKcal.toLocaleString('fr-FR') : kcalTarget.toLocaleString('fr-FR');
+    const subEl = document.getElementById('homeKcalSub');
+    if (subEl) subEl.textContent = todayNutriKcal > 0
+      ? Math.round(pct * 100) + '% · ' + (kcalTarget - todayNutriKcal) + ' restantes'
+      : 'objectif ' + kcalTarget.toLocaleString('fr-FR') + ' kcal';
 
     // Prochaine séance suggérée — basée sur les jours du programme
     const activeProgram = programs.find(p => p.id === activeProgId);
@@ -6967,6 +6972,17 @@
     const profile = getUserProfile() || {};
     const goalKcal = parseInt(profile.kcalTarget) || 2400;
     const pct = Math.min(totalKcal / goalKcal * 100, 100);
+
+    // Mettre à jour l'anneau dans le snap card
+    const ring = document.getElementById('homeKcalRing');
+    if (ring) ring.style.strokeDashoffset = 232 - (pct / 100) * 232;
+    const kcalEl = document.getElementById('homeKcalVal');
+    if (kcalEl) kcalEl.textContent = totalKcal > 0 ? totalKcal.toLocaleString('fr-FR') : goalKcal.toLocaleString('fr-FR');
+    const subEl = document.getElementById('homeKcalSub');
+    if (subEl) subEl.textContent = totalKcal > 0
+      ? Math.round(pct) + '% · ' + (goalKcal - totalKcal) + ' restantes'
+      : 'objectif ' + goalKcal.toLocaleString('fr-FR') + ' kcal';
+
     el.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div>
