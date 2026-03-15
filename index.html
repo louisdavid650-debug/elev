@@ -6015,13 +6015,16 @@
     renderNutriAddBody();
   }
 
-  async function toggleNutriFavorite(name, kcal, prot, gluc, lip, fib) {
+  async function toggleNutriFavorite(name, kcal, prot, gluc, lip, fib, brand) {
     const idx = _nutriFavorites.findIndex(f => f.name === name);
     if (idx >= 0) {
       const removed = _nutriFavorites.splice(idx, 1)[0];
       try { await sbDelete('nutri_favorites', removed.id); } catch(e) {}
     } else {
-      const fav = { id: 'fav_' + Date.now(), name, kcal, prot, gluc, lip, fib: fib || 0 };
+      // Chercher la marque dans l'historique si non fournie
+      const histEntry = nutriEntries.find(e => e.name === name);
+      const finalBrand = brand || histEntry?.brand || null;
+      const fav = { id: 'fav_' + Date.now(), name, brand: finalBrand, kcal, prot, gluc, lip, fib: fib || 0 };
       _nutriFavorites.push(fav);
       try { await sbSave('nutri_favorites', [fav]); } catch(e) {}
     }
@@ -6255,6 +6258,8 @@
   async function doIngredientSearch(q) {
     const body = document.getElementById('ingredientSearchBody');
     try {
+      const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const qNorm = norm(q);
       const ftsQuery = q.trim().split(/\s+/).filter(w=>w.length>1).map(w=>w+':*').join(' & ') || q+':*';
       const res = await fetch(`${SUPA_URL}/rest/v1/rpc/search_foods`, {
         method: 'POST',
@@ -6262,7 +6267,7 @@
         body: JSON.stringify({ query: ftsQuery, lim: 20 })
       });
       const rows = res.ok ? await res.json() : [];
-      window._ingredientCache = (rows || []).map(r => ({
+      let items = (rows || []).map(r => ({
         name: r.name, brand: r.brand || null,
         kcal: Math.round(r.kcal || 0),
         prot: Math.round((r.proteins || 0) * 10) / 10,
@@ -6270,19 +6275,44 @@
         lip:  Math.round((r.fat      || 0) * 10) / 10,
         fib:  Math.round((r.fiber    || 0) * 10) / 10,
       }));
-      if (!window._ingredientCache.length) {
+
+      // Injecter historique + trier par usage
+      const usageMap = {};
+      nutriEntries.forEach(e => { const k = norm(e.name); usageMap[k] = (usageMap[k] || 0) + 1; });
+      const seen = new Set(items.map(f => norm(f.name)));
+      nutriEntries.filter(e => norm(e.name).includes(qNorm) && !seen.has(norm(e.name)))
+        .forEach(e => {
+          seen.add(norm(e.name));
+          items.push({ name: e.name, brand: e.brand || null,
+            kcal: e.kcal100 || Math.round(e.kcal/(e.qty||100)*100),
+            prot: e.prot100 || Math.round(e.prot/(e.qty||100)*1000)/10,
+            gluc: e.gluc100 || Math.round(e.gluc/(e.qty||100)*1000)/10,
+            lip:  e.lip100  || Math.round(e.lip /(e.qty||100)*1000)/10,
+            fib:  e.fib100  || 0 });
+        });
+      items.sort((a, b) => {
+        const ua = usageMap[norm(a.name)] || 0, ub = usageMap[norm(b.name)] || 0;
+        if ((ua>0) !== (ub>0)) return ub>0 ? 1 : -1;
+        return ub - ua;
+      });
+
+      window._ingredientCache = items;
+      if (!items.length) {
         body.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Aucun résultat pour « ${q} »</div>`;
         return;
       }
-      body.innerHTML = window._ingredientCache.map((f, i) => `
-        <div style="display:flex;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)">
+      body.innerHTML = items.map((f, i) => {
+        const useCount = usageMap[norm(f.name)] || 0;
+        return `<div style="display:flex;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)${useCount > 0 ? ';background:var(--accent-light)' : ''}">
           <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}${f.brand ? `<span style="color:var(--muted2);font-size:11px"> · ${f.brand}</span>` : ''}</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+            ${f.brand ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.brand}</div>` : ''}
             <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
           </div>
           <button onclick="addIngredientToMeal(${i})"
             style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:10px;line-height:1;padding:0">+</button>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     } catch(e) {
       body.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Erreur de recherche.</div>`;
     }
