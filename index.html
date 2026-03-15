@@ -776,6 +776,18 @@
   .nutri-qty-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:985;display:flex;align-items:center;justify-content:center;padding:20px; }
   .nutri-qty-sheet { background:var(--surface);border-radius:18px;padding:28px 22px 40px;width:100%;max-width:480px; }
   /* Widget accueil nutrition */
+  @keyframes nutriEntryPop {
+    0%   { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    60%  { transform: translateY(2px) scale(1.01); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes nutriRingPulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  .nutri-entry-new { animation: nutriEntryPop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .nutri-ring-pulse { animation: nutriRingPulse 0.5s ease-out; }
   .sound-sel { background:rgba(44,95,74,0.12) !important; border-color:var(--accent) !important; }
   .home-nutri-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all 0.15s;box-shadow:var(--card-shadow); }
   .home-nutri-card:active { opacity:0.85; }
@@ -6711,6 +6723,9 @@
     await saveNutriEntry(entry);
     showToast(f.name.slice(0,30) + ' ajouté — 100g ✓');
     _nutriAccordionOpen[entry.meal] = true;
+    window._nutriLastAddedId = entry.id;
+    renderNutritionTab();
+    _animateNutriEntry();
   }
 
   async function addNutriDirectFromSearch(i) {
@@ -6729,6 +6744,35 @@
     await saveNutriEntry(entry);
     showToast(f.name.slice(0,30) + ' ajouté — 100g ✓');
     _nutriAccordionOpen[entry.meal] = true;
+    window._nutriLastAddedId = entry.id;
+    renderNutritionTab();
+    _animateNutriEntry();
+  }
+
+  function _animateNutriEntry() {
+    const id = window._nutriLastAddedId;
+    if (!id) return;
+    window._nutriLastAddedId = null;
+
+    // Animer le nouvel item dans le journal
+    requestAnimationFrame(() => {
+      // L'item dans l'onglet nutrition (identifié par data-entry-id)
+      const el = document.querySelector(`[data-entry-id="${id}"]`);
+      if (el) {
+        el.classList.add('nutri-entry-new');
+        el.addEventListener('animationend', () => el.classList.remove('nutri-entry-new'), { once: true });
+      }
+
+      // Pulse sur l'anneau de calories
+      const ring = document.getElementById('nutriSemiRing');
+      if (ring) {
+        const wrap = ring.closest('div[style*="position:relative"]');
+        if (wrap) {
+          wrap.classList.add('nutri-ring-pulse');
+          wrap.addEventListener('animationend', () => wrap.classList.remove('nutri-ring-pulse'), { once: true });
+        }
+      }
+    });
   }
 
   // ── Portions prédéfinies par produit ──
@@ -7735,10 +7779,12 @@
       await saveNutriEntry(entry);
       showToast(f.name.slice(0, 30) + ' ajouté ✓');
       _nutriAccordionOpen[entry.meal] = true;
+      window._nutriLastAddedId = entry.id;
     }
 
     renderMealPage();
     renderNutritionTab();
+    _animateNutriEntry();
   }
 
   // ── Rendu principal ──
@@ -8117,7 +8163,7 @@
         const prot = Math.round((e.prot||0)*10)/10;
         const lip  = Math.round((e.lip ||0)*10)/10;
         return `
-      <div style="position:relative;overflow:hidden;border-bottom:0.5px solid var(--border)">
+      <div data-entry-id="${e.id}" style="position:relative;overflow:hidden;border-bottom:0.5px solid var(--border)">
         <div id="ndel-${e.id}" onclick="deleteNutriEntry(${e.id});renderMealPage();renderNutritionTab()" style="position:absolute;right:0;top:0;bottom:0;width:72px;background:#c0392b;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.15s">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
         </div>
