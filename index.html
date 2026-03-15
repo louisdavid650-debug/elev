@@ -1324,7 +1324,7 @@
     <!-- ══ SÉANCES ══ -->
     <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
     <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:12px">Séances</div>
-    <button id="createRoutineToggleBtn" style="width:100%;margin-bottom:16px;background:#1c1c1e;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="toggleCreateRoutineForm()">+ CRÉER UNE SÉANCE</button>
+    <button id="createRoutineToggleBtn" style="width:100%;margin-bottom:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="toggleCreateRoutineForm()">+ CRÉER UNE SÉANCE</button>
     <div class="create-routine-form" id="createRoutineForm" style="display:none">
       <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
@@ -3968,32 +3968,38 @@
     const ALL_DAYS = [1,2,3,4,5,6,0];
     el.innerHTML = programs.map(p => {
       const isActive = p.id === activeProgId;
+      const isEditing = _editingProgId === p.id;
       const activeDays = new Set(p.trainingDays.map(td => td.day));
       return `<div style="background:var(--surface);border-radius:14px;padding:14px;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};box-shadow:var(--card-shadow)">
-        <!-- Badge + actions -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           ${isActive
             ? `<span style="font-size:8px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace">● ACTIF</span>`
             : `<button onclick="setActiveProgram(${p.id})" style="font-size:8px;background:var(--warm);color:var(--muted);padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace;border:1px solid var(--border);cursor:pointer">Activer</button>`}
           <div style="display:flex;gap:6px">
-            <button onclick="toggleInlineProgEdit(${p.id})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <button onclick="toggleInlineProgEdit(${p.id})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:${isEditing ? 'var(--accent)' : 'var(--surface)'};cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${isEditing ? '#fff' : 'var(--muted)'}" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
             <button onclick="deleteProgram(${p.id})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
             </button>
           </div>
         </div>
-        <!-- Nom -->
         <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:3px">${p.name}</div>
         <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">${p.trainingDays.length} JOURS / SEMAINE</div>
-        <!-- Cercles jours -->
         <div style="display:flex;gap:5px">
           ${ALL_DAYS.map(d => `<span style="width:28px;height:28px;border-radius:50%;background:${activeDays.has(d) ? 'var(--accent)' : 'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${activeDays.has(d) ? '#fff' : 'var(--muted)'};font-family:'Geist Mono',monospace">${DAY_LETTER[d]}</span>`).join('')}
         </div>
-        <div id="inlineProgEdit-${p.id}" style="display:none;border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
+        <div id="inlineProgEdit-${p.id}" style="display:${isEditing ? 'block' : 'none'};border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
       </div>`;
     }).join('');
+
+    // Re-rendre les forms en édition
+    programs.forEach(p => {
+      if (_editingProgId === p.id) {
+        const formEl = document.getElementById('inlineProgEdit-' + p.id);
+        if (formEl) { renderInlineProgAssign(p.id, p); editProgram(p.id); }
+      }
+    });
   }
 
   // ── Streak intelligent basé sur le programme actif ──
@@ -4380,7 +4386,7 @@
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isEditing = inlineEditRoutineId === r.id;
       const color = CIRCLE_COLORS[ri % CIRCLE_COLORS.length];
-      return `<div style="background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--card-shadow);cursor:pointer"
+      return `<div style="background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--card-shadow)"
         draggable="true" data-ri="${ri}"
         ondragstart="onRoutineDragStart(event,${ri})"
         ondragover="onRoutineDragOver(event)"
@@ -4388,10 +4394,6 @@
         ondragend="onRoutineDragEnd(event)"
         ontouchstart="onRoutineTouchStart(event,${ri})">
         <div style="display:flex;align-items:center;gap:10px">
-          <!-- Cercle J -->
-          <div style="width:40px;height:40px;border-radius:50%;border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <span style="font-size:12px;font-family:'DM Serif Display',serif;color:${color}">J${ri+1}</span>
-          </div>
           <!-- Infos -->
           <div style="flex:1;min-width:0" onclick="toggleRoutineExs(${r.id})">
             <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
