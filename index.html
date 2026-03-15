@@ -4999,19 +4999,91 @@
         diffHtml = `<span style="font-size:10px;color:${col};margin-left:6px">${sign}${diff}</span>`;
       }
       const dateStr = new Date(e.date).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);letter-spacing:0.5px">${dateStr}</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${e.kcal}<span style="font-size:11px;color:var(--muted);margin-left:2px">kcal</span>${diffHtml}</div>
+      return `<div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);letter-spacing:0.5px">${dateStr}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${e.kcal}<span style="font-size:11px;color:var(--muted);margin-left:2px">kcal</span>${diffHtml}</div>
+            <button onclick="editKcalDay('${e.date}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px" title="Modifier">✏️</button>
+            <button onclick="delKcalDay('${e.date}')" style="background:none;border:none;cursor:pointer;padding:2px 4px" title="Supprimer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Inline edit -->
+        <div id="editKcalRow-${e.date}" style="display:none;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">Modifier les calories du ${dateStr}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="editKcalInp-${e.date}" type="number" step="1" value="${e.kcal}" class="weight-inp" style="flex:1;min-width:0" placeholder="kcal"/>
+            <button onclick="saveKcalEdit('${e.date}')" class="weight-save" style="flex-shrink:0">OK</button>
+            <button onclick="toggleEditKcal('${e.date}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--muted);cursor:pointer;font-size:10px;padding:8px 10px;font-family:'Geist Mono',monospace;flex-shrink:0">Annuler</button>
+          </div>
+        </div>
       </div>`;
     }).join('');
   }
 
-  async function delKcal(date) {
-    if (!confirm('Supprimer cette entrée ?')) return;
-    const entry = kcalEntries.find(e => e.date === date);
-    if (entry) { await sbDelete('kcal_entries', entry.id); }
-    kcalEntries = kcalEntries.filter(e => e.date !== date);
-    renderKcalHistory(); drawKcalChart(); renderKcalBadge();
+  function toggleEditKcal(date) {
+    const row = document.getElementById('editKcalRow-' + date);
+    if (row) row.style.display = row.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function editKcalDay(date) {
+    // Fermer les autres
+    document.querySelectorAll('[id^="editKcalRow-"]').forEach(r => r.style.display = 'none');
+    toggleEditKcal(date);
+  }
+
+  async function saveKcalEdit(date) {
+    const inp = document.getElementById('editKcalInp-' + date);
+    const newKcal = parseInt(inp?.value);
+    if (!newKcal || newKcal < 1) { showToast('Valeur invalide'); return; }
+
+    // Total actuel pour ce jour
+    const dayEntries = nutriEntries.filter(e => e.date === date);
+    const currentTotal = Math.round(dayEntries.reduce((s, e) => s + e.kcal, 0));
+    if (currentTotal === 0) { showToast('Aucune entrée pour ce jour'); return; }
+
+    // Recalculer chaque entrée proportionnellement
+    const ratio = newKcal / currentTotal;
+    const toUpdate = [];
+    dayEntries.forEach(e => {
+      e.kcal  = Math.round(e.kcal  * ratio);
+      e.prot  = Math.round(e.prot  * ratio * 10) / 10;
+      e.gluc  = Math.round(e.gluc  * ratio * 10) / 10;
+      e.lip   = Math.round(e.lip   * ratio * 10) / 10;
+      toUpdate.push(e);
+    });
+
+    try {
+      await Promise.all(toUpdate.map(e =>
+        supaFetch(`/rest/v1/nutrition_entries?id=eq.${e.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kcal: e.kcal, proteins: e.prot, carbs: e.gluc, fat: e.lip })
+        })
+      ));
+    } catch(err) { console.error('saveKcalEdit:', err); }
+
+    showToast('Calories mises à jour ✓');
+    renderKcalHistory();
+    drawKcalChart();
+    renderNutritionTab();
+  }
+
+  async function delKcalDay(date) {
+    if (!confirm(`Supprimer toutes les entrées du ${new Date(date).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})} ?`)) return;
+    const toDelete = nutriEntries.filter(e => e.date === date);
+    try {
+      await Promise.all(toDelete.map(e =>
+        supaFetch(`/rest/v1/nutrition_entries?id=eq.${e.id}`, { method: 'DELETE' })
+      ));
+    } catch(err) { console.error('delKcalDay:', err); }
+    nutriEntries = nutriEntries.filter(e => e.date !== date);
+    showToast('Entrées supprimées ✓');
+    renderKcalHistory();
+    drawKcalChart();
+    renderNutritionTab();
   }
 
   function drawKcalChart() {
