@@ -1588,36 +1588,46 @@
         </div>
       </div>
 
-      <!-- Macros -->
-      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Répartition des macros</div>
+      <!-- Toggle % / grammes -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Répartition des macros</div>
+        <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          <button id="nsModeBtn-pct" onclick="setNutriMode('pct')"
+            style="padding:5px 12px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;border:none;cursor:pointer;background:var(--accent);color:#fff">%</button>
+          <button id="nsModeBtn-g" onclick="setNutriMode('g')"
+            style="padding:5px 12px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;border:none;cursor:pointer;background:none;color:var(--muted)">g</button>
+        </div>
+      </div>
+
+      <!-- Macros grille -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px">
         <div style="text-align:center">
           <div style="font-size:10px;color:var(--accent);font-family:'Geist Mono',monospace;margin-bottom:6px;letter-spacing:1px">PROTÉINES</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-            <input class="inp" id="nsProt" type="number" min="5" max="60" step="1" placeholder="30" style="width:56px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('prot')"/>
-            <span style="font-size:11px;color:var(--muted)">%</span>
+            <input class="inp" id="nsProt" type="number" min="0" max="500" step="1" placeholder="30" style="width:60px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('prot')"/>
+            <span style="font-size:11px;color:var(--muted)" id="nsProtUnit">%</span>
           </div>
           <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;margin-top:4px" id="nsProtG">— g</div>
         </div>
         <div style="text-align:center">
           <div style="font-size:10px;color:#7ab893;font-family:'Geist Mono',monospace;margin-bottom:6px;letter-spacing:1px">GLUCIDES</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-            <input class="inp" id="nsGluc" type="number" min="5" max="70" step="1" placeholder="45" style="width:56px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('gluc')"/>
-            <span style="font-size:11px;color:var(--muted)">%</span>
+            <input class="inp" id="nsGluc" type="number" min="0" max="1000" step="1" placeholder="45" style="width:60px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('gluc')"/>
+            <span style="font-size:11px;color:var(--muted)" id="nsGlucUnit">%</span>
           </div>
           <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;margin-top:4px" id="nsGlucG">— g</div>
         </div>
         <div style="text-align:center">
           <div style="font-size:10px;color:#b5cfc3;font-family:'Geist Mono',monospace;margin-bottom:6px;letter-spacing:1px">LIPIDES</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:4px">
-            <input class="inp" id="nsLip" type="number" min="5" max="60" step="1" placeholder="25" style="width:56px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('lip')"/>
-            <span style="font-size:11px;color:var(--muted)">%</span>
+            <input class="inp" id="nsLip" type="number" min="0" max="500" step="1" placeholder="25" style="width:60px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:6px 4px" oninput="syncNutriMacros('lip')"/>
+            <span style="font-size:11px;color:var(--muted)" id="nsLipUnit">%</span>
           </div>
           <div style="font-size:9px;color:var(--muted2);font-family:'Geist Mono',monospace;margin-top:4px" id="nsLipG">— g</div>
         </div>
       </div>
 
-      <!-- Total -->
+      <!-- Total / Info -->
       <div style="text-align:center;font-size:10px;font-family:'Geist Mono',monospace;margin-bottom:20px" id="nsTotalPct">
         <span id="nsTotalPctVal" style="color:var(--muted)">Total : 0%</span>
       </div>
@@ -7212,17 +7222,57 @@
     } catch(e) { return { prot: 30, gluc: 45, lip: 25 }; }
   }
 
+  let _nutriSettingsMode = 'pct'; // 'pct' ou 'g'
+
+  function setNutriMode(mode) {
+    _nutriSettingsMode = mode;
+    // Boutons toggle
+    document.getElementById('nsModeBtn-pct').style.background = mode === 'pct' ? 'var(--accent)' : 'none';
+    document.getElementById('nsModeBtn-pct').style.color = mode === 'pct' ? '#fff' : 'var(--muted)';
+    document.getElementById('nsModeBtn-g').style.background = mode === 'g' ? 'var(--accent)' : 'none';
+    document.getElementById('nsModeBtn-g').style.color = mode === 'g' ? '#fff' : 'var(--muted)';
+    // Unités
+    const unit = mode === 'pct' ? '%' : 'g';
+    document.getElementById('nsProtUnit').textContent = unit;
+    document.getElementById('nsGlucUnit').textContent = unit;
+    document.getElementById('nsLipUnit').textContent = unit;
+    // Total label
+    const totalEl = document.getElementById('nsTotalPctVal');
+    if (totalEl) totalEl.textContent = mode === 'pct' ? 'Total : 0%' : 'Glucides calculés auto';
+    // Limites inputs
+    const kcal = parseFloat(document.getElementById('nsKcal')?.value) || 2400;
+    if (mode === 'g') {
+      // Convertir les % actuels en grammes
+      const prot = parseFloat(document.getElementById('nsProt')?.value) || 0;
+      const gluc = parseFloat(document.getElementById('nsGluc')?.value) || 0;
+      const lip  = parseFloat(document.getElementById('nsLip')?.value)  || 0;
+      document.getElementById('nsProt').value = Math.round(kcal * prot / 100 / 4);
+      document.getElementById('nsGluc').value = Math.round(kcal * gluc / 100 / 4);
+      document.getElementById('nsLip').value  = Math.round(kcal * lip  / 100 / 9);
+    } else {
+      // Convertir grammes en %
+      const protG = parseFloat(document.getElementById('nsProt')?.value) || 0;
+      const glucG = parseFloat(document.getElementById('nsGluc')?.value) || 0;
+      const lipG  = parseFloat(document.getElementById('nsLip')?.value)  || 0;
+      document.getElementById('nsProt').value = Math.round(protG * 4 / kcal * 100);
+      document.getElementById('nsGluc').value = Math.round(glucG * 4 / kcal * 100);
+      document.getElementById('nsLip').value  = Math.round(lipG  * 9 / kcal * 100);
+    }
+    syncNutriMacros('prot');
+  }
+
   function openNutriSettings() {
     const profile = getUserProfile() || {};
     const goalKcal = parseInt(profile.kcalTarget) || 2400;
     const ns = getNutriSettings();
+    _nutriSettingsMode = 'pct';
+    setNutriMode('pct');
     document.getElementById('nsKcal').value = goalKcal;
     document.getElementById('nsProt').value = ns.prot;
     document.getElementById('nsGluc').value = ns.gluc;
     document.getElementById('nsLip').value  = ns.lip;
     syncNutriMacros('prot');
-    const overlay = document.getElementById('nutriSettingsOverlay');
-    overlay.style.display = 'flex';
+    document.getElementById('nutriSettingsOverlay').style.display = 'flex';
   }
 
   function closeNutriSettings() {
@@ -7231,34 +7281,74 @@
 
   function syncNutriMacros(changed) {
     const kcal = parseFloat(document.getElementById('nsKcal')?.value) || 2400;
-    const prot = parseFloat(document.getElementById('nsProt')?.value) || 0;
-    const gluc = parseFloat(document.getElementById('nsGluc')?.value) || 0;
-    const lip  = parseFloat(document.getElementById('nsLip')?.value)  || 0;
-    const total = prot + gluc + lip;
     const totalEl = document.getElementById('nsTotalPctVal');
-    if (totalEl) {
-      totalEl.textContent = `Total : ${total}%`;
-      totalEl.style.color = total === 100 ? 'var(--accent)' : total > 100 ? 'var(--accent2)' : 'var(--muted)';
+
+    if (_nutriSettingsMode === 'pct') {
+      const prot = parseFloat(document.getElementById('nsProt')?.value) || 0;
+      const gluc = parseFloat(document.getElementById('nsGluc')?.value) || 0;
+      const lip  = parseFloat(document.getElementById('nsLip')?.value)  || 0;
+      const total = prot + gluc + lip;
+      if (totalEl) {
+        totalEl.textContent = `Total : ${total}%`;
+        totalEl.style.color = total === 100 ? 'var(--accent)' : total > 100 ? 'var(--accent2)' : 'var(--muted)';
+      }
+      const pg = document.getElementById('nsProtG');
+      const gg = document.getElementById('nsGlucG');
+      const lg = document.getElementById('nsLipG');
+      if (pg) pg.textContent = Math.round(kcal * prot / 100 / 4) + ' g';
+      if (gg) gg.textContent = Math.round(kcal * gluc / 100 / 4) + ' g';
+      if (lg) lg.textContent = Math.round(kcal * lip  / 100 / 9) + ' g';
+    } else {
+      // Mode grammes : glucides = kcal restantes après prot + lip
+      const protG = parseFloat(document.getElementById('nsProt')?.value) || 0;
+      const lipG  = parseFloat(document.getElementById('nsLip')?.value)  || 0;
+      const kcalProt = protG * 4;
+      const kcalLip  = lipG  * 9;
+      const kcalGluc = Math.max(0, kcal - kcalProt - kcalLip);
+      const glucG = Math.round(kcalGluc / 4);
+      // Auto-remplir les glucides si on modifie prot ou lip
+      if (changed === 'prot' || changed === 'lip' || changed === 'kcal') {
+        document.getElementById('nsGluc').value = glucG;
+      }
+      // Labels en %
+      const pg = document.getElementById('nsProtG');
+      const gg = document.getElementById('nsGlucG');
+      const lg = document.getElementById('nsLipG');
+      const curGluc = parseFloat(document.getElementById('nsGluc')?.value) || glucG;
+      if (pg) pg.textContent = Math.round(protG * 4 / kcal * 100) + '%';
+      if (gg) gg.textContent = Math.round(curGluc * 4 / kcal * 100) + '%';
+      if (lg) lg.textContent = Math.round(lipG  * 9 / kcal * 100) + '%';
+      const total = Math.round((protG*4 + curGluc*4 + lipG*9) / kcal * 100);
+      if (totalEl) {
+        totalEl.textContent = `≈ ${total}% des calories`;
+        totalEl.style.color = Math.abs(total - 100) < 5 ? 'var(--accent)' : 'var(--muted)';
+      }
     }
-    // Afficher les grammes correspondants
-    const pg = document.getElementById('nsProtG');
-    const gg = document.getElementById('nsGlucG');
-    const lg = document.getElementById('nsLipG');
-    if (pg) pg.textContent = Math.round(kcal * prot / 100 / 4) + ' g';
-    if (gg) gg.textContent = Math.round(kcal * gluc / 100 / 4) + ' g';
-    if (lg) lg.textContent = Math.round(kcal * lip  / 100 / 9) + ' g';
   }
 
   async function saveNutriSettings() {
     const kcal = parseInt(document.getElementById('nsKcal')?.value) || 2400;
-    const prot = parseInt(document.getElementById('nsProt')?.value) || 30;
-    const gluc = parseInt(document.getElementById('nsGluc')?.value) || 45;
-    const lip  = parseInt(document.getElementById('nsLip')?.value)  || 25;
-    const total = prot + gluc + lip;
-    if (total !== 100) { showToast(`Total macros = ${total}% (doit être 100%)`); return; }
-    // Sauvegarder les macros
-    localStorage.setItem('elev_nutri_settings', JSON.stringify({ prot, gluc, lip }));
-    // Sauvegarder l'objectif kcal dans le profil
+    let protG, glucG, lipG, protPct, glucPct, lipPct;
+
+    if (_nutriSettingsMode === 'pct') {
+      protPct = parseInt(document.getElementById('nsProt')?.value) || 30;
+      glucPct = parseInt(document.getElementById('nsGluc')?.value) || 45;
+      lipPct  = parseInt(document.getElementById('nsLip')?.value)  || 25;
+      const total = protPct + glucPct + lipPct;
+      if (total !== 100) { showToast(`Total macros = ${total}% (doit être 100%)`); return; }
+      protG = Math.round(kcal * protPct / 100 / 4);
+      glucG = Math.round(kcal * glucPct / 100 / 4);
+      lipG  = Math.round(kcal * lipPct  / 100 / 9);
+    } else {
+      protG = parseInt(document.getElementById('nsProt')?.value) || 0;
+      lipG  = parseInt(document.getElementById('nsLip')?.value)  || 0;
+      glucG = parseInt(document.getElementById('nsGluc')?.value) || Math.round(Math.max(0, kcal - protG*4 - lipG*9) / 4);
+      protPct = Math.round(protG * 4 / kcal * 100);
+      lipPct  = Math.round(lipG  * 9 / kcal * 100);
+      glucPct = 100 - protPct - lipPct;
+    }
+
+    localStorage.setItem('elev_nutri_settings', JSON.stringify({ prot: protPct, gluc: glucPct, lip: lipPct, protG, glucG, lipG }));
     const profile = getUserProfile() || {};
     profile.kcalTarget = kcal;
     try { await sbSave('profiles', [profile]); } catch(e) {}
