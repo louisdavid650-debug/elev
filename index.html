@@ -7648,7 +7648,7 @@
           ontouchstart="nutriSwipeStart(event,${e.id})"
           ontouchmove="nutriSwipeMove(event,${e.id})"
           ontouchend="nutriSwipeEnd(event,${e.id})"
-          onclick="openEditNutriEntry(${e.id})">
+          onclick="openNutriQtyModal(encodeURIComponent('${e.name.replace(/'/g,"\\'")}'),${e.kcal100||Math.round(e.kcal/(e.qty||100)*100)},${e.prot100||Math.round(e.prot/(e.qty||100)*1000)/10},${e.gluc100||Math.round(e.gluc/(e.qty||100)*1000)/10},${e.lip100||Math.round(e.lip/(e.qty||100)*1000)/10},${e.fib100||0},${e.qty},'${(e.brand||'').replace(/'/g,"\\'")}',null,null)">
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.name}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:3px">${e.brand ? e.brand + ', ' : ''}${e.qty} g</div>
