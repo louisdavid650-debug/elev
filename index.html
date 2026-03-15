@@ -1296,8 +1296,8 @@
   <div class="section" id="tab-routines">
 
     <!-- ══ PROGRAMMES ══ -->
-    <div class="label">Mes programmes</div>
-    <button id="createProgToggleBtn" class="btn-add" style="width:100%;margin-bottom:12px" onclick="toggleCreateProgForm()">+ Créer un programme</button>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:12px">Programme</div>
+    <button id="createProgToggleBtn" style="width:100%;margin-bottom:12px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="toggleCreateProgForm()">+ CRÉER UN PROGRAMME</button>
     <div class="create-prog-form" id="createProgForm" style="display:none">
       <div class="label" style="margin-bottom:10px">Nouveau programme</div>
       <input class="inp" id="progFormName" placeholder="Nom du programme (ex: PPL, Full Body…)" style="width:100%;box-sizing:border-box;margin-bottom:12px"/>
@@ -1323,8 +1323,8 @@
 
     <!-- ══ SÉANCES ══ -->
     <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
-    <div class="label" style="margin-bottom:12px">Mes séances</div>
-    <button id="createRoutineToggleBtn" class="btn-add" style="width:100%;margin-bottom:16px" onclick="toggleCreateRoutineForm()">+ Créer une séance</button>
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:12px">Séances</div>
+    <button id="createRoutineToggleBtn" style="width:100%;margin-bottom:16px;background:#1c1c1e;color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="toggleCreateRoutineForm()">+ CRÉER UNE SÉANCE</button>
     <div class="create-routine-form" id="createRoutineForm" style="display:none">
       <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
@@ -3591,7 +3591,7 @@
     const btn = document.getElementById('createProgToggleBtn');
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
-    btn.textContent = isOpen ? '+ Créer un programme' : '✕ Fermer';
+    btn.textContent = isOpen ? '+ CRÉER UN PROGRAMME' : '✕ FERMER';
     if (isOpen) {
       // Reset all state when closing/cancelling
       document.getElementById('progFormName').value = '';
@@ -3964,39 +3964,34 @@
       el.innerHTML = '<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted2);font-family:DM Serif Display,serif;font-style:italic">Aucun programme — crée le tien ci-dessus.</div>';
       return;
     }
+    const DAY_LETTER = { 1:'L', 2:'M', 3:'M', 4:'J', 5:'V', 6:'S', 0:'D' };
+    const ALL_DAYS = [1,2,3,4,5,6,0];
     el.innerHTML = programs.map(p => {
       const isActive = p.id === activeProgId;
-      const isOpen = openProgIds.has(p.id);
-      const dayLabels = p.trainingDays.map(td => DAY_FULL[td.day].substring(0,3)).join(' · ');
-      const isEditing = _editingProgId === p.id;
-      return `<div class="prog-card ${isActive ? 'active-prog' : ''}">
-        <div class="prog-head" onclick="toggleProgCard(${p.id})">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <div class="prog-name">${p.name}</div>
-              ${isActive ? '<span class="prog-active-badge">Actif</span>' : ''}
-            </div>
-            <div class="prog-meta">${p.trainingDays.length}j/sem · ${dayLabels}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:11px;color:var(--muted)">${isOpen ? '▲' : '▼'}</span>
+      const activeDays = new Set(p.trainingDays.map(td => td.day));
+      return `<div style="background:var(--surface);border-radius:14px;padding:14px;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};box-shadow:var(--card-shadow)">
+        <!-- Badge + actions -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          ${isActive
+            ? `<span style="font-size:8px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace">● ACTIF</span>`
+            : `<button onclick="setActiveProgram(${p.id})" style="font-size:8px;background:var(--warm);color:var(--muted);padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace;border:1px solid var(--border);cursor:pointer">Activer</button>`}
+          <div style="display:flex;gap:6px">
+            <button onclick="toggleInlineProgEdit(${p.id})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button onclick="deleteProgram(${p.id})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
           </div>
         </div>
-        <div class="prog-body ${isOpen ? 'open' : ''}">
-          ${p.trainingDays.map(td => {
-            const sess = routines.find(r => r.id === td.sessionId);
-            return `<div class="prog-day-row">
-              <div class="prog-day-label">${DAY_FULL[td.day].substring(0,3)}</div>
-              <div class="prog-day-session ${sess ? 'has-session' : ''}">${sess ? sess.name : 'Repos actif / libre'}</div>
-            </div>`;
-          }).join('')}
-          <div style="display:flex;gap:8px;margin-top:14px">
-            ${!isActive ? `<button class="btn-add" style="flex:1" onclick="event.stopPropagation();setActiveProgram(${p.id})">✓ Activer</button>` : '<div style="flex:1;text-align:center;font-size:10px;color:var(--accent);font-family:Geist Mono,monospace;letter-spacing:1px;padding:8px">Programme actif</div>'}
-            <button class="btn-ghost ${isEditing ? 'active' : ''}" onclick="event.stopPropagation();toggleInlineProgEdit(${p.id})">✏️</button>
-            <button class="btn-ghost danger" onclick="event.stopPropagation();deleteProgram(${p.id})">✕</button>
-          </div>
-          <div id="inlineProgEdit-${p.id}" style="display:${isEditing ? 'block' : 'none'};border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
+        <!-- Nom -->
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:3px">${p.name}</div>
+        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">${p.trainingDays.length} JOURS / SEMAINE</div>
+        <!-- Cercles jours -->
+        <div style="display:flex;gap:5px">
+          ${ALL_DAYS.map(d => `<span style="width:28px;height:28px;border-radius:50%;background:${activeDays.has(d) ? 'var(--accent)' : 'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${activeDays.has(d) ? '#fff' : 'var(--muted)'};font-family:'Geist Mono',monospace">${DAY_LETTER[d]}</span>`).join('')}
         </div>
+        <div id="inlineProgEdit-${p.id}" style="display:none;border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
       </div>`;
     }).join('');
   }
@@ -4138,7 +4133,7 @@
     const btn = document.getElementById('createRoutineToggleBtn');
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
-    btn.textContent = isOpen ? '+ Créer une séance' : '✕ Fermer';
+    btn.textContent = isOpen ? '+ CRÉER UNE SÉANCE' : '✕ FERMER';
   }
 
   // ── Routine form autocomplete ──
@@ -4330,7 +4325,7 @@
     document.getElementById('saveRoutineBtn').textContent = 'Enregistrer la routine';
     document.getElementById('cancelEditRoutineBtn').style.display = 'none';
     document.getElementById('createRoutineForm').style.display = 'none';
-    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une séance';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ CRÉER UNE SÉANCE';
   }
 
   async function saveRoutine() {
@@ -4363,7 +4358,7 @@
     showSyncBadge('✓ Sync', true);
     draftRoutineExs=[]; document.getElementById('routineName').value='';
     document.getElementById('createRoutineForm').style.display = 'none';
-    document.getElementById('createRoutineToggleBtn').textContent = '+ Créer une séance';
+    document.getElementById('createRoutineToggleBtn').textContent = '+ CRÉER UNE SÉANCE';
     renderDraftRoutineExs(); renderRoutinesList(); renderRoutinePicker();
     showToast(`"${name}" créée !`);
   }
@@ -4379,38 +4374,46 @@
 
   function renderRoutinesList() {
     const el = document.getElementById('routinesList');
-    if (!routines.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">Aucune routine</div><div class="empty-sub">Crée ta première routine ci-dessus.</div></div>`; return; }
-    el.innerHTML = routines.map((r,ri)=>{
-      const muscles=[...new Set(r.exercises.map(e=>e.muscle).filter(Boolean))];
-      const isOpen = openRoutineIds.has(r.id);
+    if (!routines.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">Aucune séance</div><div class="empty-sub">Crée ta première séance ci-dessus.</div></div>`; return; }
+    const CIRCLE_COLORS = ['#c8956c','#2C5F4A','#5b8ccc','#7ab893','#9b59b6','#e05c4b'];
+    el.innerHTML = routines.map((r, ri) => {
+      const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isEditing = inlineEditRoutineId === r.id;
-      return `<div class="routine-card" draggable="true" data-ri="${ri}"
+      const color = CIRCLE_COLORS[ri % CIRCLE_COLORS.length];
+      return `<div style="background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--card-shadow);cursor:pointer"
+        draggable="true" data-ri="${ri}"
         ondragstart="onRoutineDragStart(event,${ri})"
         ondragover="onRoutineDragOver(event)"
         ondrop="onRoutineDrop(event,${ri})"
         ondragend="onRoutineDragEnd(event)"
         ontouchstart="onRoutineTouchStart(event,${ri})">
-        <div class="rc-head">
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
-            <span class="rc-drag-handle" title="Déplacer">⠿</span>
-            <div onclick="toggleRoutineExs(${r.id})" style="cursor:pointer;min-width:0">
-              <div class="rc-name">${r.name}</div>
-              <div class="rc-meta">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
-            </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <!-- Cercle J -->
+          <div style="width:40px;height:40px;border-radius:50%;border:2px solid ${color};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:12px;font-family:'DM Serif Display',serif;color:${color}">J${ri+1}</span>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-            <button onclick="launchRoutineFromList(${r.id})"
-              style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;gap:5px">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-              Lancer
+          <!-- Infos -->
+          <div style="flex:1;min-width:0" onclick="toggleRoutineExs(${r.id})">
+            <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
+          </div>
+          <!-- Actions -->
+          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+            <button onclick="launchRoutineFromList(${r.id})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-family:'Geist Mono',monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             </button>
-            <button class="rc-toggle-btn ${isOpen?'open':''}" onclick="toggleRoutineExs(${r.id})">▼</button>
-            <button class="btn-ghost ${isEditing?'active':''}" onclick="toggleInlineEdit(${ri})" title="Modifier">✏️</button>
-            <button class="btn-ghost danger" onclick="deleteRoutine(${ri})">✕</button>
+            <button onclick="toggleInlineEdit(${ri})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button onclick="deleteRoutine(${ri})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
           </div>
         </div>
-        ${muscles.length?`<div class="rc-chip-row">${muscles.map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>`:''}
-        <div class="rc-exs-list ${(isOpen&&!isEditing)?'open':''}">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
+        <!-- Tags muscles -->
+        ${muscles.length ? `<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">${muscles.map(m => `<span style="font-size:8px;font-family:'Geist Mono',monospace;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted)">${m.toUpperCase()}</span>`).join('')}</div>` : ''}
+        <!-- Détail exercices -->
+        <div class="rc-exs-list ${(openRoutineIds.has(r.id)&&!isEditing)?'open':''}" onclick="toggleRoutineExs(${r.id})">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
         <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
     }).join('');
