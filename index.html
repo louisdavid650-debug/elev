@@ -8292,12 +8292,16 @@
 
     const remainingEl = document.getElementById('nutriKcalRemaining');
     if (remainingEl) {
-      if (diff > -50) {
-        // Dans les clous ou dépassement ≤ 50 kcal → afficher le diff réel en blanc
-        remainingEl.textContent = Math.max(diff, 0).toLocaleString('fr-FR');
+      if (diff >= 0) {
+        // Dans les clous → afficher le restant en blanc
+        remainingEl.textContent = diff.toLocaleString('fr-FR');
+        remainingEl.style.color = '#fff';
+      } else if (diff > -50) {
+        // Dépassement ≤ 50 kcal → afficher le chiffre négatif en blanc
+        remainingEl.textContent = diff.toLocaleString('fr-FR');
         remainingEl.style.color = '#fff';
       } else {
-        // Dépassement > 50 kcal → chiffre négatif en rouge
+        // Dépassement > 50 kcal → rouge
         remainingEl.textContent = diff.toLocaleString('fr-FR');
         remainingEl.style.color = '#ff6b6b';
       }
