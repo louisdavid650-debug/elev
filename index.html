@@ -7537,8 +7537,8 @@
             </div>
             <div style="flex:1;min-width:0">
               <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px">${meal}</div>
-              <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">${mealKcal} / ${mealGoal} kcal</div>
-              ${preview ? `<div style="font-size:10px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}${items.length > 3 ? '…' : ''}</div>` : ''}
+              <div style="font-size:11px;color:var(--text);font-family:'Geist Mono',monospace;opacity:0.7">${mealKcal} / ${mealGoal} kcal</div>
+              ${preview ? `<div style="font-size:10px;color:var(--text);opacity:0.5;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}${items.length > 3 ? '…' : ''}</div>` : ''}
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
