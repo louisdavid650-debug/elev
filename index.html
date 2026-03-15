@@ -66,8 +66,8 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   input, textarea, select { touch-action: auto; }
-  html, body { background: var(--bg); color: var(--text); }
-  body { font-family: 'Geist Mono', monospace; min-height: 100vh; font-weight: 400; }
+  html, body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+  body { font-family: 'Geist Mono', monospace; min-height: 100vh; font-weight: 400; max-width: 100vw; }
   .app { max-width: 460px; margin: 0 auto; padding-bottom: 100px; overflow-x: hidden; }
 
   /* Header — Option C */
@@ -1424,12 +1424,12 @@
       </div>
 
       <!-- Saisie poids -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--card-shadow);margin-bottom:16px;overflow:hidden;min-width:0">
-        <div style="margin-bottom:10px">
-          <input type="date" id="weightDate" class="inp" style="width:100%;box-sizing:border-box;max-width:100%;min-width:0;display:block"/>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--card-shadow);margin-bottom:16px;box-sizing:border-box;width:100%">
+        <div style="margin-bottom:10px;width:100%;overflow:hidden">
+          <input type="date" id="weightDate" style="width:100%;box-sizing:border-box;min-width:0;display:block;background:var(--warm);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:'Geist Mono',monospace;font-size:13px;outline:none;-webkit-appearance:none;appearance:none"/>
         </div>
-        <div class="weight-input-row" style="min-width:0;overflow:hidden">
-          <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Votre poids" style="min-width:0"/>
+        <div style="display:flex;gap:10px;align-items:center;width:100%;box-sizing:border-box">
+          <input class="weight-inp" id="weightInput" type="number" step="0.1" placeholder="Votre poids" style="min-width:0;flex:1"/>
           <button class="weight-save" onclick="logWeight()">Ajouter</button>
         </div>
       </div>
