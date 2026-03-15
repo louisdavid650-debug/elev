@@ -272,8 +272,8 @@
   .ex-drag-handle { cursor: grab; color: var(--muted); font-size: 16px; padding: 0 4px; flex-shrink: 0; touch-action: none; user-select: none; }
   .ex-drag-handle:active { cursor: grabbing; }
   .routine-ex-edit-top { display:flex; gap:6px; align-items:center; }
-  .routine-ex-edit-bot { display:flex; gap:6px; align-items:center; }
-  .rex-inp { border:1px solid var(--border2); border-radius:6px; padding:6px 9px; font-size:13px; background:var(--surface); color:var(--text); outline:none; }
+  .routine-ex-edit-bot { display:flex; gap:6px; align-items:center; flex-wrap:wrap; overflow:hidden; }
+  .rex-inp { border:1px solid var(--border2); border-radius:6px; padding:6px 9px; font-size:13px; background:var(--surface); color:var(--text); outline:none; box-sizing:border-box; max-width:100%; min-width:0; }
   .rex-inp:focus { border-color:var(--accent); }
   .rex-name-wrap { position:relative; flex:1; }
   .rex-name-inp { width:100%; box-sizing:border-box; font-family:DM Serif Display,serif; font-size:15px; }
@@ -4617,8 +4617,11 @@
   function renderInlineDraftExs(routineId) {
     const el = document.getElementById('inlineDraftExList-' + routineId);
     if (!el) return;
-    el.innerHTML = draftRoutineExs.map((ex, i) => `
-      <div class="routine-ex-edit-row" draggable="true"
+    el.innerHTML = draftRoutineExs.map((ex, i) => {
+      const isInSS = ex.supersetWith !== undefined;
+      const showConnector = isInSS && i > 0 && draftRoutineExs[i-1].supersetWith === i;
+      return `${showConnector ? `<div style="text-align:center;margin:-4px 0;font-size:9px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;padding:3px 0;background:rgba(74,140,92,0.08);border-radius:4px">⇄ SUPERSET</div>` : ''}
+      <div class="routine-ex-edit-row${isInSS ? ' rex-superset' : ''}" draggable="true"
         ondragstart="inlineExDragSrc=${i};this.classList.add('ex-dragging');event.dataTransfer.effectAllowed='move'"
         ondragend="this.classList.remove('ex-dragging');document.querySelectorAll('.routine-ex-edit-row').forEach(r=>r.classList.remove('ex-drag-over'))"
         ondragover="event.preventDefault();this.classList.add('ex-drag-over')"
@@ -4626,32 +4629,56 @@
         ondrop="event.preventDefault();this.classList.remove('ex-drag-over');if(inlineExDragSrc!==null&&inlineExDragSrc!==${i}){const moved=draftRoutineExs.splice(inlineExDragSrc,1)[0];draftRoutineExs.splice(${i},0,moved);inlineExDragSrc=null;renderInlineDraftExs('${routineId}');}">
         <div class="routine-ex-edit-top">
           <span class="ex-drag-handle" title="Déplacer">⠿</span>
-          <div class="rex-name-wrap">
+          <div class="rex-name-wrap" style="flex:1">
             <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
               oninput="draftRoutineExs[${i}].name=this.value"
               autocomplete="off"/>
           </div>
-          <button class="routine-ex-del" onclick="draftRoutineExs.splice(${i},1);renderInlineDraftExs('${routineId}')" style="font-size:14px;padding:4px 8px;">✕</button>
+          <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+            <button onclick="toggleInlineDraftSuperset(${i},'${routineId}')"
+              title="${isInSS ? 'Retirer du superset' : 'Lier en superset avec le suivant'}"
+              style="background:${isInSS?'var(--accent)':'none'};color:${isInSS?'#fff':'var(--muted)'};border:1px solid ${isInSS?'var(--accent)':'var(--border)'};border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;font-family:'Geist Mono',monospace">⇄</button>
+            <button class="routine-ex-del" onclick="draftRoutineExs.splice(${i},1);renderInlineDraftExs('${routineId}')" style="font-size:14px;padding:4px 8px;">✕</button>
+          </div>
         </div>
-        <div class="routine-ex-edit-bot">
-          <select class="rex-inp" style="flex:1" onchange="draftRoutineExs[${i}].muscle=this.value">
+        <div class="routine-ex-edit-bot" style="flex-wrap:wrap;gap:6px">
+          <select class="rex-inp" style="flex:1;min-width:100px" onchange="draftRoutineExs[${i}].muscle=this.value">
             <option value="">Muscle</option>
             ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdos','Fessiers','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
           </select>
-          <input class="rex-inp" type="number" style="width:54px;text-align:center" placeholder="Séries" value="${ex.sets}" min="1" max="10"
+          <input class="rex-inp" type="number" style="width:50px;text-align:center;flex-shrink:0" placeholder="Séries" value="${ex.sets}" min="1" max="10"
             oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3"/>
-          <input class="rex-inp" type="text" style="width:64px;text-align:center" placeholder="Reps cible" value="${ex.repsTarget||''}" maxlength="8"
+          <input class="rex-inp" type="text" style="width:58px;text-align:center;flex-shrink:0" placeholder="${ex.unit==='sec'?'Durée':'Reps'}" value="${ex.repsTarget||''}" maxlength="8"
             oninput="draftRoutineExs[${i}].repsTarget=this.value.trim()"/>
-          <select class="rex-inp" style="width:100px" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
+          <select class="rex-inp" style="width:80px;flex-shrink:0" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
             ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans'],['custom','Perso.']].map(([v,l])=>`<option value="${v}" ${v!=='custom'&&parseInt(ex.restTime)===parseInt(v)?'selected':v==='custom'&&![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'selected':''}>${l}</option>`).join('')}
           </select>
           <input class="rex-inp" type="number" placeholder="Sec." min="5" max="600"
             id="inlineDraftRest-${routineId}-${i}"
-            style="width:60px;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'}"
+            style="width:52px;flex-shrink:0;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'}"
             value="${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?ex.restTime:''}"
             oninput="draftRoutineExs[${i}].restTime=parseInt(this.value)||90"/>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+  }
+
+  function toggleInlineDraftSuperset(i, routineId) {
+    const ex = draftRoutineExs[i];
+    if (ex.supersetWith !== undefined) {
+      const pi = ex.supersetWith;
+      if (draftRoutineExs[pi]) delete draftRoutineExs[pi].supersetWith;
+      delete ex.supersetWith;
+      showToast('Superset retiré');
+    } else {
+      const nextIdx = i + 1;
+      if (nextIdx >= draftRoutineExs.length) { showToast('Ajoute un exercice suivant'); return; }
+      if (draftRoutineExs[nextIdx].supersetWith !== undefined) { showToast('L\'exercice suivant est déjà en superset'); return; }
+      ex.supersetWith = nextIdx;
+      draftRoutineExs[nextIdx].supersetWith = i;
+      showToast('⇄ Superset créé');
+    }
+    renderInlineDraftExs(routineId);
   }
 
   function onInlineDraftRestChange(routineId, i, sel) {
