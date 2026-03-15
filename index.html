@@ -4306,7 +4306,7 @@
             const order = [1,2,3,4,5,6,0];
             return order.indexOf(a.day) - order.indexOf(b.day);
           }).map(td => {
-            const r = routines.find(r => r.id === td.routineId);
+            const r = routines.find(r => r.id === td.sessionId || String(r.id) === String(td.sessionId));
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--warm);border-radius:8px;margin-bottom:6px">
               <div>
                 <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:2px">${DAY_NAMES[td.day]}</div>
