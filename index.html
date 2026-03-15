@@ -7086,7 +7086,7 @@
           <button onclick="document.getElementById('nutriQtyModal').remove()" style="position:absolute;top:calc(env(safe-area-inset-top)+10px);left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;display:flex;align-items:center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <button onclick="openEditNutriEntry(null,'${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${brand||''}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${encodeURIComponent(name)}','${brand||''}')" style="position:absolute;top:calc(env(safe-area-inset-top)+10px);right:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;display:flex;align-items:center">
+          <button onclick="openFoodEditModal('${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${(brand||'').replace(/'/g,"\\'")}',${servingG||'null'})" style="position:absolute;top:calc(env(safe-area-inset-top)+10px);right:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;display:flex;align-items:center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
           <div style="font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;color:var(--text);line-height:1.2;margin-top:8px">${name}</div>
@@ -7203,6 +7203,106 @@
         }).catch(() => {});
       }).catch(() => {});
     }
+  }
+
+  function openFoodEditModal(encodedName, kcal100, prot100, gluc100, lip100, fib100, brand, servingG) {
+    const name = decodeURIComponent(encodedName);
+    const currentPortion = getPortionDef(name) || servingG || '';
+
+    const existing = document.getElementById('foodEditModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'foodEditModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:995;display:flex;align-items:flex-end;justify-content:center;overflow-y:auto';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;overflow:hidden" onclick="event.stopPropagation()">
+        <div style="background:var(--surface2);padding:16px 16px 14px;position:relative;text-align:center">
+          <button onclick="document.getElementById('foodEditModal').remove()" style="position:absolute;top:14px;left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)">Modifier l'aliment</div>
+          <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">POUR 100G</div>
+        </div>
+
+        <div style="padding:18px 16px calc(env(safe-area-inset-bottom)+18px);display:flex;flex-direction:column;gap:12px">
+          <!-- Nom -->
+          <div>
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Nom</div>
+            <input class="inp" id="feNom" type="text" value="${name}" style="width:100%;font-size:15px;font-family:'DM Serif Display',serif"/>
+          </div>
+          <!-- Marque -->
+          <div>
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Marque (optionnel)</div>
+            <input class="inp" id="feBrand" type="text" value="${brand||''}" style="width:100%;font-size:15px"/>
+          </div>
+          <!-- Macros grille -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Calories (kcal)</div>
+              <input class="inp" id="feKcal" type="number" value="${kcal100}" min="0" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-family:'Geist Mono',monospace;margin-bottom:5px">Protéines (g)</div>
+              <input class="inp" id="feProt" type="number" value="${prot100}" min="0" step="0.1" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Glucides (g)</div>
+              <input class="inp" id="feGluc" type="number" value="${gluc100}" min="0" step="0.1" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Lipides (g)</div>
+              <input class="inp" id="feLip" type="number" value="${lip100}" min="0" step="0.1" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Fibres (g)</div>
+              <input class="inp" id="feFib" type="number" value="${fib100||0}" min="0" step="0.1" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px">Ma portion (g)</div>
+              <input class="inp" id="fePortion" type="number" value="${currentPortion}" min="0" placeholder="ex: 30" style="width:100%;text-align:center;font-size:18px;font-family:'DM Serif Display',serif"/>
+            </div>
+          </div>
+
+          <button onclick="saveFoodEdit('${encodedName}')"
+            style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer;margin-top:4px">
+            Enregistrer
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  async function saveFoodEdit(encodedOriginalName) {
+    const originalName = decodeURIComponent(encodedOriginalName);
+    const newName  = document.getElementById('feNom')?.value.trim() || originalName;
+    const newBrand = document.getElementById('feBrand')?.value.trim() || null;
+    const newKcal  = parseFloat(document.getElementById('feKcal')?.value) || 0;
+    const newProt  = parseFloat(document.getElementById('feProt')?.value) || 0;
+    const newGluc  = parseFloat(document.getElementById('feGluc')?.value) || 0;
+    const newLip   = parseFloat(document.getElementById('feLip')?.value)  || 0;
+    const newFib   = parseFloat(document.getElementById('feFib')?.value)  || 0;
+    const newPortion = parseFloat(document.getElementById('fePortion')?.value) || 0;
+
+    // Sauvegarder la portion personnalisée
+    if (newPortion > 0) savePortionDef(newName, newPortion);
+    else if (newPortion === 0 && getPortionDef(originalName)) savePortionDef(originalName, null);
+
+    // Mettre à jour dans Supabase (PATCH sur foods par nom)
+    try {
+      await supaFetch(`/rest/v1/foods?name=eq.${encodeURIComponent(originalName)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ name: newName, brand: newBrand, kcal: newKcal, proteins: newProt, carbs: newGluc, fat: newLip, fiber: newFib })
+      });
+    } catch(e) {}
+
+    document.getElementById('foodEditModal').remove();
+    // Rouvrir la fiche avec les nouvelles valeurs
+    openNutriQtyModal(encodeURIComponent(newName), newKcal, newProt, newGluc, newLip, newFib, undefined, newBrand, newPortion || null, null);
+    showToast('Aliment modifié ✓');
   }
 
   function onNutriUnitChange() {
