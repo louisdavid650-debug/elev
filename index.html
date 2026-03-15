@@ -7678,6 +7678,21 @@
     const gdEl = document.getElementById('previewGlucDetail'); if (gdEl) gdEl.textContent = gluc + ' g';
     const ldEl = document.getElementById('previewLipDetail');  if (ldEl) ldEl.textContent = lip  + ' g';
     const fdEl = document.getElementById('previewFibDetail');  if (fdEl) fdEl.textContent = fib  + ' g';
+
+    // Mise à jour temps réel dans le journal si on édite une entrée existante
+    if (f.entryId) {
+      const idx = nutriEntries.findIndex(e => e.id === f.entryId);
+      if (idx >= 0) {
+        nutriEntries[idx] = {
+          ...nutriEntries[idx],
+          qty: Math.round(qty),
+          kcal, prot, gluc, lip, fib,
+        };
+        renderNutritionTab();
+        renderHomeNutriWidget();
+        if (window._mealPageCurrent) renderMealPage();
+      }
+    }
   }
 
   async function confirmNutriEntry() {
