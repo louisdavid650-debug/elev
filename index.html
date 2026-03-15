@@ -773,8 +773,8 @@
   .nutri-search-item { display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border); }
   .nutri-search-item:last-child { border-bottom:none; }
   .nutri-add-btn { background:var(--accent);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:10px; }
-  .nutri-qty-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:985;display:flex;align-items:flex-end;justify-content:center; }
-  .nutri-qty-sheet { background:var(--surface);border-radius:18px 18px 0 0;padding:28px 22px 40px;width:100%;max-width:480px; }
+  .nutri-qty-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:985;display:flex;align-items:center;justify-content:center;padding:16px; }
+  .nutri-qty-sheet { background:var(--surface);border-radius:18px;padding:28px 22px 40px;width:100%;max-width:480px; }
   /* Widget accueil nutrition */
   .sound-sel { background:rgba(44,95,74,0.12) !important; border-color:var(--accent) !important; }
   .home-nutri-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px;cursor:pointer;transition:all 0.15s;box-shadow:var(--card-shadow); }
@@ -6535,7 +6535,118 @@
     _nutriSearchTimer = setTimeout(doNutriSearch, 200);
   }
 
-  const NUTRI_LOCAL = []; // Retiré — base OFF dans Supabase
+  const NUTRI_LOCAL = [
+    // Féculents — noms simples en premier
+    { name:'Riz', kcal:130, prot:2.7, gluc:28, lip:0.3, fib:0.4 },
+    { name:'Riz blanc cuit', kcal:130, prot:2.7, gluc:28, lip:0.3, fib:0.4 },
+    { name:'Riz basmati cuit', kcal:135, prot:2.8, gluc:29, lip:0.3, fib:0.5 },
+    { name:'Riz complet cuit', kcal:110, prot:2.6, gluc:22, lip:0.9, fib:1.8 },
+    { name:'Pâtes', kcal:158, prot:5.8, gluc:31, lip:0.9, fib:1.8 },
+    { name:'Pâtes cuites', kcal:158, prot:5.8, gluc:31, lip:0.9, fib:1.8 },
+    { name:'Pâtes complètes cuites', kcal:140, prot:5.5, gluc:27, lip:1.0, fib:3.5 },
+    { name:'Baguette', kcal:262, prot:8.5, gluc:55, lip:1.2, fib:2.7 },
+    { name:'Pain baguette', kcal:262, prot:8.5, gluc:55, lip:1.2, fib:2.7 },
+    { name:'Pain de mie', kcal:265, prot:8.0, gluc:50, lip:3.5, fib:2.5 },
+    { name:'Pain complet', kcal:235, prot:9.0, gluc:44, lip:2.0, fib:6.5 },
+    { name:'Pomme de terre', kcal:77, prot:2.0, gluc:17, lip:0.1, fib:1.8 },
+    { name:'Pomme de terre cuite vapeur', kcal:77, prot:2.0, gluc:17, lip:0.1, fib:1.8 },
+    { name:'Patate douce', kcal:90, prot:1.6, gluc:21, lip:0.1, fib:2.5 },
+    { name:'Patate douce cuite', kcal:90, prot:1.6, gluc:21, lip:0.1, fib:2.5 },
+    { name:'Quinoa cuit', kcal:143, prot:5.3, gluc:25, lip:2.3, fib:2.8 },
+    { name:'Avoine', kcal:372, prot:13, gluc:60, lip:7, fib:10 },
+    { name:'Flocons d\'avoine', kcal:372, prot:13, gluc:60, lip:7, fib:10 },
+    { name:'Porridge', kcal:71, prot:2.5, gluc:12, lip:1.4, fib:1.7 },
+    // Protéines animales
+    { name:'Poulet', kcal:165, prot:31, gluc:0, lip:3.6, fib:0 },
+    { name:'Poulet grillé', kcal:165, prot:31, gluc:0, lip:3.6, fib:0 },
+    { name:'Poulet blanc grillé', kcal:165, prot:31, gluc:0, lip:3.6, fib:0 },
+    { name:'Poulet cuisse', kcal:185, prot:26, gluc:0, lip:9, fib:0 },
+    { name:'Bœuf haché', kcal:215, prot:17, gluc:0, lip:16, fib:0 },
+    { name:'Bœuf haché 5%', kcal:137, prot:20, gluc:0, lip:6, fib:0 },
+    { name:'Bœuf haché 15%', kcal:215, prot:17, gluc:0, lip:16, fib:0 },
+    { name:'Steak', kcal:202, prot:28, gluc:0, lip:10, fib:0 },
+    { name:'Saumon', kcal:208, prot:25, gluc:0, lip:12, fib:0 },
+    { name:'Saumon grillé', kcal:208, prot:25, gluc:0, lip:12, fib:0 },
+    { name:'Thon', kcal:103, prot:23, gluc:0, lip:1, fib:0 },
+    { name:'Thon au naturel', kcal:103, prot:23, gluc:0, lip:1, fib:0 },
+    { name:'Cabillaud', kcal:105, prot:23, gluc:0, lip:1.3, fib:0 },
+    { name:'Cabillaud cuit', kcal:105, prot:23, gluc:0, lip:1.3, fib:0 },
+    { name:'Crevettes cuites', kcal:99, prot:21, gluc:0, lip:1.1, fib:0 },
+    { name:'Dinde grillée', kcal:135, prot:29, gluc:0, lip:1.5, fib:0 },
+    // Œufs & laitiers
+    { name:'Œuf', kcal:147, prot:12.5, gluc:0.6, lip:10, fib:0 },
+    { name:'Œuf entier', kcal:147, prot:12.5, gluc:0.6, lip:10, fib:0 },
+    { name:'Blanc d\'œuf', kcal:47, prot:11, gluc:0.7, lip:0.2, fib:0 },
+    { name:'Lait', kcal:46, prot:3.3, gluc:4.8, lip:1.6, fib:0 },
+    { name:'Lait entier', kcal:65, prot:3.2, gluc:4.8, lip:3.6, fib:0 },
+    { name:'Lait demi-écrémé', kcal:46, prot:3.3, gluc:4.8, lip:1.6, fib:0 },
+    { name:'Yaourt nature', kcal:59, prot:3.8, gluc:4.5, lip:3.2, fib:0 },
+    { name:'Yaourt 0%', kcal:36, prot:4.4, gluc:4.4, lip:0.1, fib:0 },
+    { name:'Fromage blanc', kcal:47, prot:7.2, gluc:4.0, lip:0.2, fib:0 },
+    { name:'Fromage blanc 0%', kcal:47, prot:7.2, gluc:4.0, lip:0.2, fib:0 },
+    { name:'Skyr', kcal:63, prot:11, gluc:4.0, lip:0.2, fib:0 },
+    { name:'Skyr nature', kcal:63, prot:11, gluc:4.0, lip:0.2, fib:0 },
+    { name:'Cottage cheese', kcal:98, prot:11, gluc:3.4, lip:4.3, fib:0 },
+    { name:'Mozzarella', kcal:280, prot:18, gluc:2.2, lip:22, fib:0 },
+    { name:'Emmental', kcal:382, prot:28, gluc:0.5, lip:30, fib:0 },
+    { name:'Camembert', kcal:300, prot:19, gluc:0.5, lip:25, fib:0 },
+    { name:'Parmesan', kcal:431, prot:38, gluc:3.2, lip:29, fib:0 },
+    // Légumineuses
+    { name:'Lentilles', kcal:116, prot:9, gluc:20, lip:0.4, fib:7.9 },
+    { name:'Lentilles cuites', kcal:116, prot:9, gluc:20, lip:0.4, fib:7.9 },
+    { name:'Pois chiches', kcal:164, prot:8.9, gluc:27, lip:2.6, fib:7.6 },
+    { name:'Pois chiches cuits', kcal:164, prot:8.9, gluc:27, lip:2.6, fib:7.6 },
+    { name:'Haricots rouges', kcal:127, prot:8.7, gluc:22, lip:0.5, fib:6.4 },
+    { name:'Haricots verts cuits', kcal:31, prot:1.8, gluc:6.9, lip:0.1, fib:3.4 },
+    { name:'Edamame', kcal:122, prot:11, gluc:9, lip:5, fib:5 },
+    // Oléagineux & graisses
+    { name:'Amandes', kcal:579, prot:21, gluc:22, lip:50, fib:12 },
+    { name:'Noix', kcal:654, prot:15, gluc:14, lip:65, fib:6.7 },
+    { name:'Noix de cajou', kcal:553, prot:18, gluc:30, lip:44, fib:3.3 },
+    { name:'Beurre de cacahuète', kcal:588, prot:25, gluc:20, lip:50, fib:6 },
+    { name:'Huile d\'olive', kcal:884, prot:0, gluc:0, lip:100, fib:0 },
+    { name:'Beurre', kcal:717, prot:0.9, gluc:0.1, lip:81, fib:0 },
+    { name:'Avocat', kcal:160, prot:2.0, gluc:9, lip:15, fib:7 },
+    // Fruits
+    { name:'Banane', kcal:89, prot:1.1, gluc:23, lip:0.3, fib:2.6 },
+    { name:'Pomme', kcal:52, prot:0.3, gluc:14, lip:0.2, fib:2.4 },
+    { name:'Orange', kcal:47, prot:0.9, gluc:12, lip:0.1, fib:2.4 },
+    { name:'Fraise', kcal:32, prot:0.7, gluc:7.7, lip:0.3, fib:2.0 },
+    { name:'Myrtille', kcal:57, prot:0.7, gluc:14, lip:0.3, fib:2.4 },
+    { name:'Raisin', kcal:69, prot:0.6, gluc:18, lip:0.2, fib:0.9 },
+    { name:'Mangue', kcal:60, prot:0.8, gluc:15, lip:0.4, fib:1.6 },
+    { name:'Kiwi', kcal:61, prot:1.1, gluc:15, lip:0.5, fib:3.0 },
+    { name:'Poire', kcal:57, prot:0.4, gluc:15, lip:0.1, fib:3.1 },
+    { name:'Ananas', kcal:50, prot:0.5, gluc:13, lip:0.1, fib:1.4 },
+    // Légumes
+    { name:'Carotte', kcal:41, prot:0.9, gluc:10, lip:0.2, fib:2.8 },
+    { name:'Brocoli', kcal:35, prot:2.8, gluc:7, lip:0.4, fib:3.3 },
+    { name:'Épinards', kcal:23, prot:2.9, gluc:3.6, lip:0.3, fib:2.2 },
+    { name:'Tomate', kcal:18, prot:0.9, gluc:3.9, lip:0.2, fib:1.2 },
+    { name:'Concombre', kcal:16, prot:0.7, gluc:3.6, lip:0.1, fib:0.5 },
+    { name:'Courgette', kcal:17, prot:1.2, gluc:3.5, lip:0.2, fib:1.0 },
+    { name:'Aubergine cuite', kcal:35, prot:0.8, gluc:8.7, lip:0.2, fib:2.5 },
+    { name:'Poivron', kcal:31, prot:1.0, gluc:6, lip:0.3, fib:2.1 },
+    { name:'Champignon', kcal:22, prot:3.1, gluc:3.3, lip:0.3, fib:1.0 },
+    { name:'Maïs', kcal:86, prot:3.2, gluc:19, lip:1.2, fib:2.7 },
+    { name:'Chou-fleur cuit', kcal:25, prot:1.9, gluc:4.9, lip:0.3, fib:2.3 },
+    // Divers
+    { name:'Miel', kcal:304, prot:0.3, gluc:82, lip:0, fib:0.2 },
+    { name:'Sucre', kcal:399, prot:0, gluc:100, lip:0, fib:0 },
+    { name:'Chocolat noir', kcal:598, prot:7.8, gluc:46, lip:42, fib:11 },
+    { name:'Chocolat noir 70%', kcal:598, prot:7.8, gluc:46, lip:42, fib:11 },
+    { name:'Whey protéine', kcal:380, prot:75, gluc:8, lip:5, fib:1 },
+    { name:'Crème de riz', kcal:371, prot:6.8, gluc:82, lip:1.5, fib:0.5 },
+    { name:'Galette de riz', kcal:387, prot:7.5, gluc:82, lip:2.5, fib:2.5 },
+    { name:'Confiture', kcal:250, prot:0.5, gluc:62, lip:0.1, fib:1.0 },
+    { name:'Nutella', kcal:539, prot:6.3, gluc:57, lip:31, fib:3.4 },
+    { name:'Jambon blanc', kcal:107, prot:17, gluc:1.0, lip:3.7, fib:0 },
+    { name:'Jambon cru', kcal:196, prot:25, gluc:0.3, lip:11, fib:0 },
+    { name:'Saucisse', kcal:301, prot:11, gluc:2.0, lip:27, fib:0 },
+    { name:'Lardons', kcal:293, prot:18, gluc:0, lip:24, fib:0 },
+    { name:'Crème fraîche', kcal:292, prot:2.1, gluc:3.1, lip:30, fib:0 },
+    { name:'Crème fraîche légère', kcal:115, prot:3.0, gluc:3.5, lip:10, fib:0 },
+  ];
 
 
   async function doNutriSearch() {
@@ -6576,9 +6687,8 @@
       const sorted = [...items]
         .filter(f => {
           const k = norm(f.name);
-          // Toujours inclure les aliments déjà utilisés
           if (usageMap[k] > 0) return true;
-          // Pour les autres, filtrer par pertinence
+          if (f._generic) return true; // toujours inclure les génériques
           return relevance(f.name) < 4;
         })
         .map(f => {
@@ -6592,7 +6702,11 @@
           // 1. Déjà utilisé VS jamais utilisé
           const ua = a._usage, ub = b._usage;
           if ((ua > 0) !== (ub > 0)) return ub > 0 ? 1 : -1;
-          // 2. Dans le groupe "utilisé" → fréquence desc (le plus utilisé en premier)
+          // 1b. Génériques avant les non-utilisés
+          if (ua === 0 && ub === 0) {
+            if (a._generic && !b._generic) return -1;
+            if (!a._generic && b._generic) return 1;
+          }
           if (ua > 0 && ub > 0) return ub - ua || relevance(a.name) - relevance(b.name);
           // 3. Dans le groupe "non utilisé" → pertinence puis alpha
           const ra = relevance(a.name), rb = relevance(b.name);
@@ -6616,6 +6730,8 @@
             <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
               ${isRecent
                 ? `<span style="background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1px">✓ Déjà utilisé${useCount > 1 ? ' · ' + useCount + 'x' : ''}</span>`
+                : f._generic
+                ? `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace">Générique</span>`
                 : `<span style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace">Aliment</span>`}
             </div>
           </div>
@@ -6675,8 +6791,22 @@
         });
       });
 
-    // Afficher immédiatement (historique + Supabase)
-    renderResults([...histMatches, ...supaItems], isOnline());
+    // ── Injecter LE générique le plus pertinent (1 seul) ──
+    const allSeen = new Set([...seen, ...histMatches.map(f => norm(f.name))]);
+    const genericMatch = NUTRI_LOCAL
+      .filter(f => norm(f.name).includes(qNorm) && !allSeen.has(norm(f.name)))
+      .sort((a, b) => {
+        const na = norm(a.name), nb = norm(b.name);
+        if (na === qNorm) return -1; if (nb === qNorm) return 1;
+        if (na.startsWith(qNorm + ' ') || na.startsWith(qNorm + ',')) return -1;
+        if (nb.startsWith(qNorm + ' ') || nb.startsWith(qNorm + ',')) return 1;
+        return na.localeCompare(nb);
+      })
+      .slice(0, 1)
+      .map(f => ({ ...f, kcal100: f.kcal, prot100: f.prot, gluc100: f.gluc, lip100: f.lip, fib100: f.fib||0, _generic: true }));
+
+    // Afficher immédiatement (historique + générique + Supabase)
+    renderResults([...histMatches, ...genericMatch, ...supaItems], isOnline());
 
     // ── 2. OFF en arrière-plan (silencieux) ──
     if (!isOnline()) return;
@@ -6704,7 +6834,7 @@
             servingLabel: servingG ? (p.serving_size || servingG + 'g') : null };
         })
         .filter(f => f.name && (f.kcal||f.prot) && !seenOff.has(norm(f.name)));
-      if (offItems.length) renderResults([...histMatches, ...supaItems, ...offItems], false);
+      if (offItems.length) renderResults([...histMatches, ...genericMatch, ...supaItems, ...offItems], false);
     } catch(e) {}
   }
   async function searchByBarcode(code) {
@@ -6949,7 +7079,7 @@
     if (gluc100 >= 50) tags.push({ label: 'Riche en glucides', color: '#b8860b', bg: '#fdf6e3', icon: '⚠️' });
 
     modal.innerHTML = `
-      <div class="nutri-qty-sheet" style="padding:0;border-radius:20px 20px 0 0;overflow:hidden;max-height:90vh;display:flex;flex-direction:column">
+      <div class="nutri-qty-sheet" style="padding:0;border-radius:20px;overflow:hidden;max-height:90vh;display:flex;flex-direction:column">
 
         <!-- Header -->
         <div style="background:var(--surface2);padding:28px 22px 22px;text-align:center;flex-shrink:0;position:relative">
