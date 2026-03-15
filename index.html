@@ -4269,8 +4269,10 @@
     el.innerHTML = programs.map(p => {
       const isActive = p.id === activeProgId;
       const isEditing = _editingProgId === p.id;
+      const isOpen = openProgIds.has(p.id);
       const activeDays = new Set(p.trainingDays.map(td => td.day));
-      return `<div style="background:var(--surface);border-radius:14px;padding:14px;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};box-shadow:var(--card-shadow)">
+      const DAY_NAMES = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+      return `<div style="background:var(--surface);border-radius:14px;padding:14px;border:2px solid ${isActive ? 'var(--accent)' : 'var(--border)'};box-shadow:var(--card-shadow);margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           ${isActive
             ? `<span style="font-size:8px;background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace">● ACTIF</span>`
@@ -4284,11 +4286,37 @@
             </button>
           </div>
         </div>
-        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:3px">${p.name}</div>
-        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">${p.trainingDays.length} JOURS / SEMAINE</div>
-        <div style="display:flex;gap:5px">
-          ${ALL_DAYS.map(d => `<span style="width:28px;height:28px;border-radius:50%;background:${activeDays.has(d) ? 'var(--accent)' : 'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${activeDays.has(d) ? '#fff' : 'var(--muted)'};font-family:'Geist Mono',monospace">${DAY_LETTER[d]}</span>`).join('')}
+        <!-- Nom + jours → cliquable pour voir les séances -->
+        <div onclick="toggleProgCard(${p.id})" style="cursor:pointer">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:3px">${p.name}</div>
+              <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">${p.trainingDays.length} JOUR${p.trainingDays.length > 1 ? 'S' : ''} / SEMAINE</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="flex-shrink:0;transition:transform 0.2s;transform:rotate(${isOpen ? '180deg' : '0deg'})"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style="display:flex;gap:5px">
+            ${ALL_DAYS.map(d => `<span style="width:28px;height:28px;border-radius:50%;background:${activeDays.has(d) ? 'var(--accent)' : 'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${activeDays.has(d) ? '#fff' : 'var(--muted)'};font-family:'Geist Mono',monospace">${DAY_LETTER[d]}</span>`).join('')}
+          </div>
         </div>
+        <!-- Liste des séances associées -->
+        ${isOpen ? `<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px">
+          <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">Séances associées</div>
+          ${p.trainingDays.length ? p.trainingDays.sort((a,b) => {
+            const order = [1,2,3,4,5,6,0];
+            return order.indexOf(a.day) - order.indexOf(b.day);
+          }).map(td => {
+            const r = routines.find(r => r.id === td.routineId);
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--warm);border-radius:8px;margin-bottom:6px">
+              <div>
+                <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:2px">${DAY_NAMES[td.day]}</div>
+                <div style="font-size:14px;font-weight:500;color:var(--text);font-family:'DM Serif Display',serif">${r ? r.name : '<em style="color:var(--muted)">Aucune séance</em>'}</div>
+                ${r ? `<div style="font-size:10px;color:var(--muted);margin-top:1px">${r.exercises.length} exercice${r.exercises.length > 1 ? 's' : ''}</div>` : ''}
+              </div>
+              ${r ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>` : ''}
+            </div>`;
+          }).join('') : `<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Aucun jour configuré.</div>`}
+        </div>` : ''}
         <div id="inlineProgEdit-${p.id}" style="display:${isEditing ? 'block' : 'none'};border-top:1px solid var(--border);margin-top:14px;padding-top:14px"></div>
       </div>`;
     }).join('');
