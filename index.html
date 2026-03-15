@@ -6543,7 +6543,13 @@
       });
 
       const sorted = [...items]
-        .filter(f => relevance(f.name) < 4)
+        .filter(f => {
+          const k = norm(f.name);
+          // Toujours inclure les aliments déjà utilisés
+          if (usageMap[k] > 0) return true;
+          // Pour les autres, filtrer par pertinence
+          return relevance(f.name) < 4;
+        })
         .map(f => {
           const k = norm(f.name);
           const usage = usageMap[k] || 0;
@@ -6612,8 +6618,32 @@
       }));
     } catch(e) {}
 
-    // Afficher immédiatement
-    renderResults(supaItems, isOnline());
+    // ── Injecter les aliments de l'historique qui matchent la recherche ──
+    // (au cas où ils ne sont pas dans les résultats Supabase)
+    const seen = new Set(supaItems.map(f => norm(f.name)));
+    const histMatches = [];
+    const histSeen = new Set();
+    nutriEntries
+      .filter(e => norm(e.name).includes(qNorm) && !seen.has(norm(e.name)) && !histSeen.has(norm(e.name)))
+      .forEach(e => {
+        histSeen.add(norm(e.name));
+        histMatches.push({
+          name: e.name, brand: e.brand || null,
+          kcal: e.kcal100 || Math.round(e.kcal / (e.qty||100) * 100),
+          prot: e.prot100 || Math.round(e.prot / (e.qty||100) * 1000) / 10,
+          gluc: e.gluc100 || Math.round(e.gluc / (e.qty||100) * 1000) / 10,
+          lip:  e.lip100  || Math.round(e.lip  / (e.qty||100) * 1000) / 10,
+          fib:  e.fib100  || 0,
+          kcal100: e.kcal100 || Math.round(e.kcal / (e.qty||100) * 100),
+          prot100: e.prot100 || Math.round(e.prot / (e.qty||100) * 1000) / 10,
+          gluc100: e.gluc100 || Math.round(e.gluc / (e.qty||100) * 1000) / 10,
+          lip100:  e.lip100  || Math.round(e.lip  / (e.qty||100) * 1000) / 10,
+          fib100:  e.fib100  || 0,
+        });
+      });
+
+    // Afficher immédiatement (historique + Supabase)
+    renderResults([...histMatches, ...supaItems], isOnline());
 
     // ── 2. OFF en arrière-plan (silencieux) ──
     if (!isOnline()) return;
@@ -6625,7 +6655,7 @@
       });
       if (document.getElementById('nutriSearch')?.value.trim() !== q) return;
       const offData = offRes.ok ? await offRes.json() : { products: [] };
-      const seen = new Set(supaItems.map(f => norm(f.name)));
+      const seenOff = new Set([...supaItems, ...histMatches].map(f => norm(f.name)));
       const offItems = (offData.products || [])
         .filter(p => (p.product_name_fr || p.product_name) && p.nutriments)
         .map(p => {
@@ -6637,8 +6667,8 @@
             gluc: Math.round((n.carbohydrates_100g||0)*10)/10,
             lip:  Math.round((n.fat_100g||0)*10)/10, fib: 0 };
         })
-        .filter(f => f.name && (f.kcal||f.prot) && !seen.has(norm(f.name)));
-      if (offItems.length) renderResults([...supaItems, ...offItems], false);
+        .filter(f => f.name && (f.kcal||f.prot) && !seenOff.has(norm(f.name)));
+      if (offItems.length) renderResults([...histMatches, ...supaItems, ...offItems], false);
     } catch(e) {}
   }
   async function searchByBarcode(code) {
