@@ -1497,12 +1497,9 @@
   <!-- ══ NUTRITION ══ -->
   <div class="section" id="tab-nutrition">
 
-    <!-- En-tête date + réglages -->
+    <!-- En-tête + réglages -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.1">Résumé</div>
-        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:0.5px" id="nutri-date-label"></div>
-      </div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.1">Résumé</div>
       <button onclick="openNutriSettings()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);flex-shrink:0">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
@@ -1511,74 +1508,93 @@
     </div>
 
     <!-- Bilan carte principale -->
-    <div id="nutriSummaryCard" style="background:#1e3d2f;border-radius:16px;overflow:hidden;margin-bottom:20px;padding:16px 16px 14px">
+    <div id="nutriSummaryCard" style="background:#1e3d2f;border-radius:16px;margin-bottom:20px;padding:16px 16px 14px">
 
       <!-- Date -->
-      <div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-family:'Geist Mono',monospace" id="nutri-date-label-hero">—</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-family:'Geist Mono',monospace" id="nutri-date-label-hero">—</div>
 
       <!-- Anneau + kcal + macros -->
-      <div style="display:flex;align-items:center;gap:18px">
+      <div style="display:flex;align-items:center;gap:16px">
 
-        <!-- Triple anneau SVG plus grand -->
+        <!-- Triple anneau SVG -->
         <div style="position:relative;width:110px;height:110px;flex-shrink:0">
           <svg width="110" height="110" viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="50" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-            <circle cx="55" cy="55" r="37" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-            <circle cx="55" cy="55" r="24" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="5"/>
-            <!-- Gluc ext r=50, circ=314.2 -->
+            <circle cx="55" cy="55" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+            <circle cx="55" cy="55" r="37" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+            <circle cx="55" cy="55" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
             <circle cx="55" cy="55" r="50" fill="none" stroke="#a8d5c2" stroke-width="5"
               stroke-dasharray="0 314.2" stroke-linecap="round"
               transform="rotate(-90 55 55)" id="ringGluc"/>
-            <!-- Prot mid r=37, circ=232.5 -->
             <circle cx="55" cy="55" r="37" fill="none" stroke="#7ab893" stroke-width="5"
               stroke-dasharray="0 232.5" stroke-linecap="round"
               transform="rotate(-90 55 55)" id="ringProt"/>
-            <!-- Lip int r=24, circ=150.8 -->
             <circle cx="55" cy="55" r="24" fill="none" stroke="#d4e9e1" stroke-width="5"
               stroke-dasharray="0 150.8" stroke-linecap="round"
               transform="rotate(-90 55 55)" id="ringLip"/>
           </svg>
         </div>
 
-        <!-- Kcal + macros légende -->
+        <!-- Kcal + macros avec barres -->
         <div style="flex:1;min-width:0">
           <div style="font-family:'DM Serif Display',serif;font-size:38px;color:#fff;line-height:1" id="nutriKcalConsumed">0</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">KCAL MANGÉES</div>
-          <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:7px;height:7px;border-radius:50%;background:#a8d5c2;flex-shrink:0"></div>
-              <span style="font-size:10px;color:rgba(255,255,255,0.4);width:32px;font-family:'Geist Mono',monospace">Gluc</span>
-              <span style="font-size:11px;color:#fff;font-family:'DM Serif Display',serif;font-weight:400" id="valGluc">0g</span>
-              <span style="font-size:9px;color:rgba(255,255,255,0.25)">/ <span id="goalGluc">—</span></span>
+          <div style="font-size:9px;color:rgba(255,255,255,0.55);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">KCAL MANGÉES</div>
+
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">
+            <!-- Gluc -->
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#a8d5c2;flex-shrink:0"></div>
+                  <span style="font-size:9px;color:rgba(255,255,255,0.55);font-family:'Geist Mono',monospace">GLUC</span>
+                </div>
+                <span style="font-size:9px;color:#fff;font-family:'DM Serif Display',serif"><span id="valGluc">0</span><span style="color:rgba(255,255,255,0.35);font-size:8px"> / <span id="goalGluc">—</span>g</span></span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px">
+                <div id="barGluc" style="height:100%;background:#a8d5c2;border-radius:2px;width:0%;transition:width 0.4s"></div>
+              </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:7px;height:7px;border-radius:50%;background:#7ab893;flex-shrink:0"></div>
-              <span style="font-size:10px;color:rgba(255,255,255,0.4);width:32px;font-family:'Geist Mono',monospace">Prot</span>
-              <span style="font-size:11px;color:#fff;font-family:'DM Serif Display',serif;font-weight:400" id="valProt">0g</span>
-              <span style="font-size:9px;color:rgba(255,255,255,0.25)">/ <span id="goalProt">—</span></span>
+            <!-- Prot -->
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#7ab893;flex-shrink:0"></div>
+                  <span style="font-size:9px;color:rgba(255,255,255,0.55);font-family:'Geist Mono',monospace">PROT</span>
+                </div>
+                <span style="font-size:9px;color:#fff;font-family:'DM Serif Display',serif"><span id="valProt">0</span><span style="color:rgba(255,255,255,0.35);font-size:8px"> / <span id="goalProt">—</span>g</span></span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px">
+                <div id="barProt" style="height:100%;background:#7ab893;border-radius:2px;width:0%;transition:width 0.4s"></div>
+              </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:7px;height:7px;border-radius:50%;background:#d4e9e1;flex-shrink:0"></div>
-              <span style="font-size:10px;color:rgba(255,255,255,0.4);width:32px;font-family:'Geist Mono',monospace">Lip</span>
-              <span style="font-size:11px;color:#fff;font-family:'DM Serif Display',serif;font-weight:400" id="valLip">0g</span>
-              <span style="font-size:9px;color:rgba(255,255,255,0.25)">/ <span id="goalLip">—</span></span>
+            <!-- Lip -->
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#d4e9e1;flex-shrink:0"></div>
+                  <span style="font-size:9px;color:rgba(255,255,255,0.55);font-family:'Geist Mono',monospace">LIP</span>
+                </div>
+                <span style="font-size:9px;color:#fff;font-family:'DM Serif Display',serif"><span id="valLip">0</span><span style="color:rgba(255,255,255,0.35);font-size:8px"> / <span id="goalLip">—</span>g</span></span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px">
+                <div id="barLip" style="height:100%;background:#d4e9e1;border-radius:2px;width:0%;transition:width 0.4s"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Séparateur + barre restantes/objectif -->
-      <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <!-- Séparateur + restantes/objectif -->
+      <div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:14px;padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div>
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:rgba(255,255,255,0.75);line-height:1" id="nutriKcalRemaining">—</div>
-          <div style="font-size:8px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">RESTANTES</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;line-height:1" id="nutriKcalRemaining">—</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.45);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">RESTANTES</div>
         </div>
         <div style="height:3px;flex:1;background:rgba(255,255,255,0.1);border-radius:2px">
-          <div style="height:100%;background:rgba(255,255,255,0.5);border-radius:2px;transition:width 0.4s;width:0%" id="nutriKcalBar"></div>
+          <div style="height:100%;background:rgba(255,255,255,0.6);border-radius:2px;transition:width 0.4s;width:0%" id="nutriKcalBar"></div>
         </div>
         <div style="text-align:right">
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:rgba(255,255,255,0.35);line-height:1" id="nutriKcalGoal">—</div>
-          <div style="font-size:8px;color:rgba(255,255,255,0.25);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">OBJECTIF</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:rgba(255,255,255,0.45);line-height:1" id="nutriKcalGoal">—</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.3);margin-top:2px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">OBJECTIF</div>
         </div>
       </div>
     </div>
@@ -7474,16 +7490,18 @@
     set('nutriKcalRemaining', remaining.toLocaleString('fr-FR'));
     set('nutriKcalGoal', goalKcal.toLocaleString('fr-FR'));
 
-    // Macros texte
-    const setMacro = (valId, goalId, val, goal) => {
+    // Macros texte + barres
+    const setMacro = (valId, goalId, barId, val, goal) => {
       const v = document.getElementById(valId);
       const g = document.getElementById(goalId);
-      if (v) v.textContent = val + 'g';
-      if (g) g.textContent = goal + 'g';
+      const b = document.getElementById(barId);
+      if (v) v.textContent = val;
+      if (g) g.textContent = goal;
+      if (b) b.style.width = Math.min(val / goal * 100, 100) + '%';
     };
-    setMacro('valGluc', 'goalGluc', totalGluc, goalGluc);
-    setMacro('valProt', 'goalProt', totalProt, goalProt);
-    setMacro('valLip',  'goalLip',  totalLip,  goalLip);
+    setMacro('valGluc', 'goalGluc', 'barGluc', totalGluc, goalGluc);
+    setMacro('valProt', 'goalProt', 'barProt', totalProt, goalProt);
+    setMacro('valLip',  'goalLip',  'barLip',  totalLip,  goalLip);
 
     // Repas — style liste avec icône circulaire + barre de progression
     const journal = document.getElementById('nutriJournal');
