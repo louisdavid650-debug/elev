@@ -968,34 +968,35 @@
 </style>
 
 <!-- ══ LOGIN SCREEN ══ -->
-<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;">
+<div id="loginScreen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px;min-height:100%;">
   <div style="width:100%;max-width:400px;">
 
     <!-- Card centrale -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px 36px 36px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 28px 28px;">
 
       <!-- Logo centré -->
-      <div style="text-align:center;margin-bottom:32px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="140" height="40">
+      <div style="text-align:center;margin-bottom:24px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="120" height="34">
           <text x="140" y="62" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="currentColor" text-anchor="middle" letter-spacing="18" style="fill:var(--text)">ÉLEV</text>
           <line x1="50" y1="71" x2="230" y2="71" stroke="currentColor" stroke-width="0.6" opacity="0.25" style="stroke:var(--text)"/>
         </svg>
       </div>
 
-      <div style="font-family:DM Serif Display,serif;font-size:40px;font-weight:300;color:var(--text);line-height:1.05;margin-bottom:6px;">Bienvenue.</div>
-      <div style="font-family:DM Serif Display,serif;font-size:14px;font-style:italic;color:var(--muted);line-height:1.7;margin-bottom:36px;">Chaque séance est une promesse tenue à toi-même.</div>
+      <div style="font-family:DM Serif Display,serif;font-size:36px;font-weight:300;color:var(--text);line-height:1.05;margin-bottom:4px;">Bienvenue.</div>
+      <div style="font-family:DM Serif Display,serif;font-size:13px;font-style:italic;color:var(--muted);line-height:1.7;margin-bottom:28px;">Chaque séance est une promesse tenue à toi-même.</div>
 
       <div id="loginForm">
-        <div style="margin-bottom:20px;">
+        <div style="margin-bottom:18px;">
           <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px;">E-mail</div>
-          <input id="loginEmail" type="email" placeholder="Votre e-mail" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;"/>
+          <input id="loginEmail" type="email" placeholder="Votre e-mail" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;" autocomplete="email"/>
         </div>
-        <div style="margin-bottom:28px;">
+        <div style="margin-bottom:24px;">
           <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px;">Mot de passe</div>
-          <input id="loginPassword" type="password" placeholder="••••••••" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;"/>
+          <input id="loginPassword" type="password" placeholder="••••••••" style="width:100%;background:none;border:none;border-bottom:1px solid var(--border2);padding:8px 0;font-family:Geist Mono,monospace;font-size:13px;color:var(--text);outline:none;" autocomplete="current-password"/>
         </div>
-        <button onclick="signIn()" style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:20px;padding:13px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;transition:background 0.2s;">Se connecter</button>
-        <button onclick="signUp()" style="width:100%;background:none;color:var(--muted);border:1px solid var(--border2);border-radius:20px;padding:11px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">Créer un compte</button>
+        <button onclick="signIn()" style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:20px;padding:14px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;transition:background 0.2s;">Se connecter</button>
+        <button onclick="signUp()" style="width:100%;background:none;color:var(--muted);border:1px solid var(--border2);border-radius:20px;padding:12px;font-family:Geist Mono,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;">Créer un compte</button>
         <div id="loginError" style="margin-top:14px;font-size:11px;color:var(--accent2);text-align:center;display:none;font-family:Geist Mono,monospace;"></div>
       </div>
 
@@ -1008,12 +1009,13 @@
     </div><!-- /card -->
 
     <!-- Logo bas -->
-    <div style="text-align:center;margin-top:20px;">
+    <div style="text-align:center;margin-top:16px;padding-bottom:24px;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="56" height="16">
         <text x="140" y="62" font-family="'Cormorant Garamond','Georgia',serif" font-size="56" font-weight="300" fill="#b5b2ae" text-anchor="middle" letter-spacing="14">ÉLEV</text>
       </svg>
     </div>
 
+  </div>
   </div>
 </div>
 
