@@ -4381,11 +4381,30 @@
   function renderRoutinesList() {
     const el = document.getElementById('routinesList');
     if (!routines.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">Aucune séance</div><div class="empty-sub">Crée ta première séance ci-dessus.</div></div>`; return; }
-    const CIRCLE_COLORS = ['#c8956c','#2C5F4A','#5b8ccc','#7ab893','#9b59b6','#e05c4b'];
+
+    const MUSCLE_COLORS = {
+      'épaules':   { bg:'#fdf1e8', color:'#c8956c' },
+      'pectoraux': { bg:'#edf6f1', color:'#2C5F4A' },
+      'triceps':   { bg:'#f0edf9', color:'#7b68b5' },
+      'dos':       { bg:'#e8f0fa', color:'#5b8ccc' },
+      'biceps':    { bg:'#edf9f6', color:'#2C8A6E' },
+      'jambes':    { bg:'#fdf1e8', color:'#c8956c' },
+      'quadriceps':{ bg:'#fdf1e8', color:'#c8956c' },
+      'quads':     { bg:'#fdf1e8', color:'#c8956c' },
+      'ischios':   { bg:'#e8f0fa', color:'#5b8ccc' },
+      'mollets':   { bg:'#edf9f6', color:'#2C8A6E' },
+      'abdos':     { bg:'#f0edf9', color:'#7b68b5' },
+      'fessiers':  { bg:'#fde8ee', color:'#c0396b' },
+    };
+    const getTagStyle = (muscle) => {
+      const key = muscle.toLowerCase();
+      const c = MUSCLE_COLORS[key] || { bg:'var(--warm)', color:'var(--muted)' };
+      return `background:${c.bg};color:${c.color}`;
+    };
+
     el.innerHTML = routines.map((r, ri) => {
       const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
       const isEditing = inlineEditRoutineId === r.id;
-      const color = CIRCLE_COLORS[ri % CIRCLE_COLORS.length];
       return `<div style="background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--card-shadow)"
         draggable="true" data-ri="${ri}"
         ondragstart="onRoutineDragStart(event,${ri})"
@@ -4393,16 +4412,14 @@
         ondrop="onRoutineDrop(event,${ri})"
         ondragend="onRoutineDragEnd(event)"
         ontouchstart="onRoutineTouchStart(event,${ri})">
-        <div style="display:flex;align-items:center;gap:10px">
-          <!-- Infos -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:${muscles.length ? '8px' : '0'}">
           <div style="flex:1;min-width:0" onclick="toggleRoutineExs(${r.id})">
             <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
             <div style="font-size:10px;color:var(--muted);margin-top:1px">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
           </div>
-          <!-- Actions -->
-          <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-            <button onclick="launchRoutineFromList(${r.id})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-family:'Geist Mono',monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:4px">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+            <button onclick="launchRoutineFromList(${r.id})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
             </button>
             <button onclick="toggleInlineEdit(${ri})" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -4412,9 +4429,7 @@
             </button>
           </div>
         </div>
-        <!-- Tags muscles -->
-        ${muscles.length ? `<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">${muscles.map(m => `<span style="font-size:8px;font-family:'Geist Mono',monospace;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted)">${m.toUpperCase()}</span>`).join('')}</div>` : ''}
-        <!-- Détail exercices -->
+        ${muscles.length ? `<div style="display:flex;gap:5px;flex-wrap:wrap">${muscles.map(m => `<span style="font-size:8px;${getTagStyle(m)};padding:2px 8px;border-radius:20px;font-family:'Geist Mono',monospace">${m.toUpperCase()}</span>`).join('')}</div>` : ''}
         <div class="rc-exs-list ${(openRoutineIds.has(r.id)&&!isEditing)?'open':''}" onclick="toggleRoutineExs(${r.id})">${r.exercises.map(ex=>`<div class="rc-ex-row"><div><div class="rc-ex-name">${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets} série${ex.sets>1?'s':''} ${ex.repsTarget ? '· ' + ex.repsTarget + ' reps' : ''} · ${ex.restTime??90}s</div></div>`).join('')}</div>
         <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
