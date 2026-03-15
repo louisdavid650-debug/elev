@@ -1491,7 +1491,10 @@
     </div>
 
     <!-- Bilan carte principale -->
-    <div id="nutriSummaryCard" style="background:#1e3d2f;border-radius:16px;margin-bottom:20px;padding:16px 16px 14px">
+    <div id="nutriSummaryCard" style="background:#1e3d2f;border-radius:16px;margin-bottom:20px;padding:16px 16px 14px;user-select:none"
+      ontouchstart="nutriCardSwipeStart(event)"
+      ontouchmove="nutriCardSwipeMove(event)"
+      ontouchend="nutriCardSwipeEnd(event)">
 
       <!-- Date -->
       <div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-family:'Geist Mono',monospace" id="nutri-date-label-hero">—</div>
@@ -2499,7 +2502,7 @@
     if (tab === 'home') renderHome();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
-    if (tab === 'nutrition') { renderNutritionTab(); }
+    if (tab === 'nutrition') { _nutriViewDate = new Date().toISOString().split('T')[0]; renderNutritionTab(); }
     if (tab === 'poids') {
       sbLoad('body_weights').then(data => { bodyWeights = data; bodyWeights.sort((a,b)=>a.date.localeCompare(b.date)); });
       sbLoad('kcal_entries').then(data => { kcalEntries = data; kcalEntries.sort((a,b)=>a.date.localeCompare(b.date)); renderKcalHistory(); drawKcalChart(); renderKcalBadge(); });
@@ -2519,7 +2522,7 @@
     if (tab === 'home') renderHome();
     if (tab === 'stats') { renderCalendar(); renderStats(); renderWeeklySummary(); }
     if (tab === 'routines') { renderRoutinesList(); renderProgramsList(); }
-    if (tab === 'nutrition') { renderNutritionTab(); }
+    if (tab === 'nutrition') { _nutriViewDate = new Date().toISOString().split('T')[0]; renderNutritionTab(); }
     if (tab === 'poids') { checkWeightOnboarding(); }
   }
 
@@ -6127,6 +6130,7 @@
   // ── NUTRITION ──
   // ══════════════════════════════════════════
   let nutriEntries = [];
+  let _nutriViewDate = new Date().toISOString().split('T')[0]; // date affichée dans nutrition
   let _nutriSearchTimer = null;
   let _nutriPendingFood = null;
   let _nutriActiveMeal = null;
@@ -7715,12 +7719,16 @@
 
   // ── Rendu principal ──
   function renderNutritionTab() {
-    const today = new Date();
-    const dateLabel = today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+    // Toujours remettre à aujourd'hui si on ouvre l'onglet depuis un autre onglet
+    const todayStr = new Date().toISOString().split('T')[0];
+    const viewDate = new Date(_nutriViewDate + 'T00:00:00');
+    const isToday = _nutriViewDate === todayStr;
+
+    const dateLabel = viewDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
     const el = document.getElementById('nutri-date-label');
     if (el) el.textContent = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
 
-    const todayEntries = getTodayNutri();
+    const todayEntries = nutriEntries.filter(e => e.date === _nutriViewDate);
     const totalKcal = todayEntries.reduce((s, e) => s + e.kcal, 0);
     const totalProt = Math.round(todayEntries.reduce((s, e) => s + e.prot, 0) * 10) / 10;
     const totalGluc = Math.round(todayEntries.reduce((s, e) => s + e.gluc, 0) * 10) / 10;
@@ -7735,9 +7743,12 @@
     const goalLip  = Math.round(goalKcal * (ns.lip  / 100) / 9);
     const remaining = Math.max(goalKcal - totalKcal, 0);
 
-    // Date label hero
+    // Date label hero avec indicateurs navigation
     const heroLabel = document.getElementById('nutri-date-label-hero');
-    if (heroLabel) heroLabel.textContent = today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }).charAt(0).toUpperCase() + today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }).slice(1);
+    if (heroLabel) {
+      const label = viewDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+      heroLabel.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+    }
 
     // Triple anneau I-3
     const animRing = (id, circ, pct) => {
@@ -8276,7 +8287,44 @@
   // ── Swipe to delete (history) ──
   let swipeSessions = {}, swipeThreshold = 72;
 
-  // ── Swipe-to-delete aliments nutrition ──
+  // ── Navigation date nutrition par swipe ──
+  let _nutriSwipeStartX = null;
+
+  function nutriCardSwipeStart(e) {
+    _nutriSwipeStartX = e.touches[0].clientX;
+  }
+
+  function nutriCardSwipeMove(e) {
+    // Pas de scroll pendant le swipe horizontal
+    if (_nutriSwipeStartX === null) return;
+    const dx = e.touches[0].clientX - _nutriSwipeStartX;
+    if (Math.abs(dx) > 10) e.preventDefault();
+  }
+
+  function nutriCardSwipeEnd(e) {
+    if (_nutriSwipeStartX === null) return;
+    const dx = e.changedTouches[0].clientX - _nutriSwipeStartX;
+    _nutriSwipeStartX = null;
+    if (Math.abs(dx) < 50) return; // seuil minimum
+    nutriNavigateDate(dx > 0 ? -1 : 1);
+  }
+
+  function nutriNavigateDate(delta) {
+    const d = new Date(_nutriViewDate + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    const todayStr = new Date().toISOString().split('T')[0];
+    // Pas de navigation dans le futur
+    if (d.toISOString().split('T')[0] > todayStr) return;
+    _nutriViewDate = d.toISOString().split('T')[0];
+    // Animation flash
+    const card = document.getElementById('nutriSummaryCard');
+    if (card) {
+      card.style.transition = 'opacity 0.12s';
+      card.style.opacity = '0.5';
+      setTimeout(() => { card.style.opacity = '1'; }, 120);
+    }
+    renderNutritionTab();
+  }
   let nutriSwipeSessions = {};
   function nutriSwipeStart(e, id) {
     nutriSwipeSessions[id] = { startX: e.touches[0].clientX, swiping: false };
