@@ -5902,7 +5902,7 @@
               <button onclick="event.stopPropagation();deleteSession(${s.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;" title="Supprimer">🗑</button>
             </div>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length?'6px':'0'}">${s.muscles?.map(m=>`<span class="h-chip">${m}</span>`).join('')||''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:${s.muscles?.length?'6px':'0'}">${[...new Set(s.muscles||[])].map(m=>`<span class="h-chip">${m}</span>`).join('')}</div>
           ${detail}
         </div>
       </div>`;
