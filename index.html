@@ -1379,14 +1379,40 @@
     <!-- Main content (shown after onboarding) -->
     <div id="weightMain" style="display:none">
 
-      <!-- Panel Poids uniquement -->
-      <div class="weight-entry-card" style="border-radius:6px">
-        <div class="weight-big-display">
-          <div class="weight-current" id="weightCurrent">—</div>
-          <div class="weight-unit">kg</div>
-          <div class="weight-delta" id="weightDelta" style="display:none"></div>
+      <!-- ── Hero poids centré style B ── -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;text-align:center;padding:24px 16px 20px;box-shadow:var(--card-shadow);margin-bottom:16px">
+        <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-bottom:10px" id="weightDateLabel">—</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:4px">
+          <div style="font-family:'DM Serif Display',serif;font-size:56px;color:var(--text);line-height:1" id="weightCurrent">—</div>
+          <div style="font-size:14px;color:var(--muted)">kg</div>
+          <div id="weightDelta" style="display:none;font-size:12px;margin-left:4px"></div>
         </div>
-        <div style="margin-bottom:12px;">
+        <!-- Stats départ/objectif/cible — masquées en mode maintien -->
+        <div id="goalStatsRow" style="display:none;justify-content:center;gap:24px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+          <div><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--muted)" id="statDepart">—</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">DÉPART</div></div>
+          <div><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent)" id="statPct">—</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">OBJECTIF</div></div>
+          <div><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--muted)" id="statCible">—</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">CIBLE</div></div>
+        </div>
+        <!-- Message motivationnel + progression — masqués en mode maintien -->
+        <div id="goalProgressRow" style="display:none;margin-top:12px;padding:0 8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace" id="goalMsg"></div>
+            <button onclick="resetOnboarding()" style="background:none;border:none;color:var(--muted2);font-size:9px;font-family:'Geist Mono',monospace;cursor:pointer;letter-spacing:1px">Modifier ✏</button>
+          </div>
+          <div style="height:5px;background:var(--border2);border-radius:3px;overflow:hidden">
+            <div id="goalFill" style="height:100%;width:0%;background:var(--accent);border-radius:3px;transition:width 0.5s ease"></div>
+          </div>
+          <div id="goalDetails" style="margin-top:8px"></div>
+        </div>
+        <!-- Message maintien -->
+        <div id="maintienMsg" style="display:none;margin-top:10px;font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">
+          ⚖️ MAINTIEN · <span id="maintienGoal"></span>
+        </div>
+      </div>
+
+      <!-- Saisie poids -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--card-shadow);margin-bottom:16px">
+        <div style="margin-bottom:10px">
           <input type="date" id="weightDate" class="inp" style="width:100%;box-sizing:border-box;max-width:100%;"/>
         </div>
         <div class="weight-input-row">
@@ -1395,37 +1421,19 @@
         </div>
       </div>
 
-      <!-- ── 3. OBJECTIF ── -->
-      <div style="height:1px;background:var(--border);margin:20px 0"></div>
-      <div class="goal-banner" id="goalBanner" style="display:none">
-        <div class="goal-pct-row">
-          <div>
-            <div class="goal-pct-lbl">Objectif</div>
-            <div class="goal-pct-val" id="goalPct">0%</div>
-          </div>
-          <div style="text-align:right">
-            <div class="goal-msg" id="goalMsg"></div>
-            <button onclick="resetOnboarding()" style="background:none;border:none;color:var(--muted2);font-size:9px;font-family:Geist Mono,monospace;cursor:pointer;letter-spacing:1px;margin-top:4px">Modifier ✏</button>
-          </div>
-        </div>
-        <div class="goal-track"><div class="goal-fill" id="goalFill" style="width:0%"></div></div>
-        <div class="goal-details" id="goalDetails"></div>
-      </div>
-
-      <!-- ── 4. ÉVOLUTION DU POIDS ── -->
-      <div style="height:1px;background:var(--border);margin:20px 0"></div>
-      <div class="chart-wrap" id="weightChartWrap">
+      <!-- ── ÉVOLUTION DU POIDS ── -->
+      <div class="chart-wrap" id="weightChartWrap" style="margin-bottom:16px">
         <div class="chart-title">Évolution du poids</div>
         <canvas id="weightChart" height="140"></canvas>
       </div>
 
-      <!-- ── 5. ÉVOLUTION CALORIES (depuis nutrition) ── -->
-      <div class="chart-wrap" id="kcalChartWrap" style="margin-top:16px">
+      <!-- ── ÉVOLUTION CALORIES (depuis nutrition) ── -->
+      <div class="chart-wrap" id="kcalChartWrap" style="margin-bottom:16px">
         <div class="chart-title">Calories — 30 derniers jours</div>
         <canvas id="kcalChart" height="140"></canvas>
       </div>
 
-      <!-- ── 6. HISTORIQUE POIDS ── -->
+      <!-- ── HISTORIQUE POIDS ── -->
       <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="label" style="margin:0">Historique poids</div>
@@ -1436,7 +1444,7 @@
       </div>
       <div class="weight-hist-list" id="weightHistList"></div>
 
-      <!-- ── 7. HISTORIQUE CALORIES (depuis nutrition) ── -->
+      <!-- ── HISTORIQUE CALORIES ── -->
       <div style="height:1px;background:var(--border);margin:20px 0"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="label" style="margin:0">Historique calories</div>
@@ -4737,13 +4745,30 @@
 
   function renderGoalBanner() {
     const profile = getUserProfile();
-    const banner = document.getElementById('goalBanner');
-    if (!profile || !banner) return;
+    if (!profile) return;
 
-    const { startWeight, targetWeight } = profile;
+    const { startWeight, targetWeight, goal } = profile;
     const last = bodyWeights.length ? bodyWeights[bodyWeights.length - 1].kg : startWeight;
+
+    const statsRow     = document.getElementById('goalStatsRow');
+    const progressRow  = document.getElementById('goalProgressRow');
+    const maintienDiv  = document.getElementById('maintienMsg');
+    const maintienGoal = document.getElementById('maintienGoal');
+
+    // Mode maintien : afficher seulement le message, pas de stats
+    if (goal === 'maintien') {
+      if (statsRow)    statsRow.style.display    = 'none';
+      if (progressRow) progressRow.style.display = 'none';
+      if (maintienDiv) maintienDiv.style.display = 'block';
+      if (maintienGoal) maintienGoal.textContent = last ? `Poids actuel ${last} kg` : '';
+      return;
+    }
+
+    // Sèche ou prise de masse
+    if (maintienDiv) maintienDiv.style.display = 'none';
+
     const totalDelta = Math.abs(targetWeight - startWeight);
-    if (totalDelta === 0) { banner.style.display = 'none'; return; }
+    if (!totalDelta || !statsRow) return;
 
     const isLoss = targetWeight < startWeight;
     const progress = isLoss
@@ -4752,29 +4777,34 @@
     const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
     const remaining = Math.abs(last - targetWeight).toFixed(1);
 
-    banner.style.display = 'block';
-    document.getElementById('goalPct').textContent = pct + '%';
+    statsRow.style.display     = 'flex';
+    progressRow.style.display  = 'block';
+
+    const statDepart = document.getElementById('statDepart');
+    const statPct    = document.getElementById('statPct');
+    const statCible  = document.getElementById('statCible');
+    if (statDepart) statDepart.textContent = startWeight + ' kg';
+    if (statPct)    statPct.textContent    = pct + '%';
+    if (statCible)  statCible.textContent  = targetWeight + ' kg';
+
     document.getElementById('goalFill').style.width = pct + '%';
 
-    // Motivational message
     let msg = '';
     if (pct >= 100) msg = '🎯 Objectif atteint !';
     else if (pct >= 75) msg = '💪 Presque là, continue !';
     else if (pct >= 50) msg = '🔥 À mi-chemin, super boulot !';
     else if (pct >= 25) msg = '📈 Bon départ, keep going !';
     else if (pct > 0)   msg = "🚀 C'est parti, on y croit !";
-    else                msg = '💡 ' + (isLoss ? 'Objectif : perdre ' : 'Objectif : prendre ') + totalDelta + ' kg';
+    else msg = '💡 ' + (isLoss ? 'Objectif : perdre ' : 'Objectif : prendre ') + totalDelta + ' kg';
     document.getElementById('goalMsg').textContent = msg;
 
-    // Details
-    const goalLabels = { seche: '🔥 Sèche', maintien: '⚖️ Maintien', prise: '💪 Prise de masse' };
-    const goalBadge = profile.goal ? `<div class="goal-detail" style="grid-column:1/-1"><span style="color:var(--accent);font-family:Geist Mono,monospace;font-size:9px;letter-spacing:1px">${goalLabels[profile.goal] || ''}</span></div>` : '';
+    const goalLabels = { seche: '🔥 Sèche', prise: '💪 Prise de masse' };
+    const goalBadge = goal ? `<span style="font-size:9px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px">${goalLabels[goal] || ''}</span>` : '';
     document.getElementById('goalDetails').innerHTML =
-      `<div class="goal-detail">Départ <span>${startWeight} kg</span></div>` +
-      `<div class="goal-detail">Actuel <span>${last} kg</span></div>` +
-      `<div class="goal-detail">Cible <span>${targetWeight} kg</span></div>` +
+      `<div style="display:flex;gap:12px;flex-wrap:wrap">` +
       `<div class="goal-detail">Restant <span>${remaining} kg</span></div>` +
-      goalBadge;
+      (goalBadge ? `<div class="goal-detail">${goalBadge}</div>` : '') +
+      `</div>`;
   }
 
 
@@ -5485,12 +5515,30 @@
     // (updateWeightClock supprimé — dead code)
     // Goal banner
     renderGoalBanner();
-    const currentEl=document.getElementById('weightCurrent'), deltaEl=document.getElementById('weightDelta');
+    const currentEl = document.getElementById('weightCurrent');
+    const deltaEl   = document.getElementById('weightDelta');
+    const dateLabel = document.getElementById('weightDateLabel');
     if (bodyWeights.length) {
-      const last=bodyWeights[bodyWeights.length-1]; currentEl.textContent=last.kg;
-      if (bodyWeights.length>=2) { const prev=bodyWeights[bodyWeights.length-2]; const diff=(last.kg-prev.kg).toFixed(1); deltaEl.style.display='block'; deltaEl.className='weight-delta '+(diff>0?'up':'down'); deltaEl.textContent=(diff>0?'+':'')+diff+' kg'; }
-      else deltaEl.style.display='none';
-    } else { currentEl.textContent='—'; deltaEl.style.display='none'; }
+      const last = bodyWeights[bodyWeights.length - 1];
+      if (currentEl) currentEl.textContent = last.kg;
+      if (dateLabel) {
+        const d = new Date(last.date);
+        dateLabel.textContent = d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'long', year:'numeric' }).toUpperCase();
+      }
+      if (bodyWeights.length >= 2) {
+        const prev = bodyWeights[bodyWeights.length - 2];
+        const diff = (last.kg - prev.kg).toFixed(1);
+        if (deltaEl) {
+          deltaEl.style.display = 'inline';
+          deltaEl.style.color = diff > 0 ? 'var(--accent2, #e05c4b)' : 'var(--accent)';
+          deltaEl.textContent = (diff > 0 ? '+' : '') + diff + ' kg';
+        }
+      } else if (deltaEl) deltaEl.style.display = 'none';
+    } else {
+      if (currentEl) currentEl.textContent = '—';
+      if (deltaEl) deltaEl.style.display = 'none';
+      if (dateLabel) dateLabel.textContent = '—';
+    }
     drawWeightChart();
     drawKcalChart();
     renderKcalHistory();
@@ -6168,25 +6216,81 @@
       }
 
     } else if (_nutriActiveTab === 'recent') {
-      // Aliments distincts des 7 derniers jours
-      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+      const today     = new Date(); today.setHours(0,0,0,0);
+      const todayStr  = today.toISOString().split('T')[0];
+      const cutoff    = new Date(); cutoff.setDate(cutoff.getDate() - 14);
       const cutoffStr = cutoff.toISOString().split('T')[0];
-      const seen = new Set();
-      const items = [...nutriEntries]
+
+      // Grouper les entrées par date, déduplication par (date+name)
+      const byDate = {};
+      [...nutriEntries]
         .filter(e => e.date >= cutoffStr)
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .filter(e => { if (seen.has(e.name)) return false; seen.add(e.name); return true; })
-        .slice(0, 15)
-        .map(e => ({
-          name: e.name, brand: e.brand || null,
-          kcal: e.kcal, prot: e.prot, gluc: e.gluc, lip: e.lip, fib: e.fib || 0, qty: e.qty,
-          kcal100: e.kcal100 || Math.round(e.kcal / (e.qty||100) * 100),
-          prot100: e.prot100 || Math.round(e.prot / (e.qty||100) * 1000) / 10,
-          gluc100: e.gluc100 || Math.round(e.gluc / (e.qty||100) * 1000) / 10,
-          lip100:  e.lip100  || Math.round(e.lip  / (e.qty||100) * 1000) / 10,
-          fib100:  e.fib100  || Math.round((e.fib||0) / (e.qty||100) * 1000) / 10,
-        }));
-      html = renderList(items, 'Aucun aliment récent (7 derniers jours).');
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+        .forEach(e => {
+          if (!byDate[e.date]) byDate[e.date] = [];
+          if (!byDate[e.date].find(x => x.name === e.name)) {
+            byDate[e.date].push({
+              name: e.name, brand: e.brand || null,
+              kcal: e.kcal, prot: e.prot, gluc: e.gluc, lip: e.lip, fib: e.fib || 0, qty: e.qty,
+              kcal100: e.kcal100 || Math.round(e.kcal / (e.qty||100) * 100),
+              prot100: e.prot100 || Math.round(e.prot / (e.qty||100) * 1000) / 10,
+              gluc100: e.gluc100 || Math.round(e.gluc / (e.qty||100) * 1000) / 10,
+              lip100:  e.lip100  || Math.round(e.lip  / (e.qty||100) * 1000) / 10,
+              fib100:  e.fib100  || Math.round((e.fib||0) / (e.qty||100) * 1000) / 10,
+            });
+          }
+        });
+
+      const sortedDates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
+      if (!sortedDates.length) {
+        html = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Aucun aliment récent (14 derniers jours).</div>`;
+      } else {
+        const getLabel = (dateStr) => {
+          const d = new Date(dateStr + 'T00:00:00');
+          const diffDays = Math.round((today - d) / 86400000);
+          if (diffDays === 0) return "Aujourd'hui";
+          if (diffDays === 1) return 'Hier';
+          if (diffDays <= 6) return `Il y a ${diffDays} jours`;
+          return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        };
+
+        // Construire un cache global et sections
+        const allItems = [];
+        let sectionsHtml = '';
+        sortedDates.forEach(dateStr => {
+          const items = byDate[dateStr];
+          const startIdx = allItems.length;
+          allItems.push(...items);
+          sectionsHtml += `<div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;padding:10px 0 6px;text-transform:lowercase">${getLabel(dateStr)}</div>`;
+          sectionsHtml += `<div style="display:flex;flex-direction:column;gap:6px">` + items.map((f, i) => {
+            const idx = startIdx + i;
+            const isFav = isNutriFavorite(f.name);
+            const prot = Math.round((f.prot||0)*10)/10;
+            const gluc = Math.round((f.gluc||0)*10)/10;
+            const lip  = Math.round((f.lip ||0)*10)/10;
+            return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:var(--card-shadow)" onclick="_recentClick(${idx})">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+                ${f.brand ? `<div style="font-size:10px;color:var(--muted);margin-top:1px;font-family:'Geist Mono',monospace">${f.brand}</div>` : ''}
+                <div style="display:flex;gap:5px;margin-top:6px">
+                  <span style="background:#edf6f1;color:#2C5F4A;border-radius:20px;padding:2px 7px;font-size:9px;font-family:'Geist Mono',monospace">G ${gluc}g</span>
+                  <span style="background:var(--warm);color:var(--muted);border-radius:20px;padding:2px 7px;font-size:9px;font-family:'Geist Mono',monospace">P ${prot}g</span>
+                  <span style="background:#fdf6ee;color:#c8956c;border-radius:20px;padding:2px 7px;font-size:9px;font-family:'Geist Mono',monospace">L ${lip}g</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                <span style="font-size:13px;color:var(--muted);font-family:'Geist Mono',monospace">${f.kcal}</span>
+                <button onclick="event.stopPropagation();toggleNutriFavorite('${f.name.replace(/'/g,"\\'")}',${f.kcal},${f.prot||0},${f.gluc||0},${f.lip||0},${f.fib||0},'${(f.brand||'').replace(/'/g,"\\'")}' )"
+                  style="background:none;border:none;font-size:16px;cursor:pointer;padding:2px;color:${isFav ? 'var(--gold)' : 'var(--muted2)'}">${isFav ? '★' : '☆'}</button>
+                <button onclick="event.stopPropagation();_recentDirect(${idx})"
+                  style="background:var(--accent);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0">+</button>
+              </div>
+            </div>`;
+          }).join('') + `</div>`;
+        });
+        window._nutriRecentCache = allItems;
+        html = sectionsHtml;
+      }
 
     } else if (_nutriActiveTab === 'favorite') {
       const favItems = _nutriFavorites.map(f => ({ ...f }));
@@ -6415,6 +6519,31 @@
     const lip100  = f.lip100  || f.lip;
     const fib100  = f.fib100  || f.fib || 0;
     openNutriQtyModal(encodeURIComponent(f.name), kcal100, prot100, gluc100, lip100, fib100, undefined, f.brand || null, f.servingG || null, f.servingLabel || null);
+  }
+
+  function _recentClick(i) {
+    const f = (window._nutriRecentCache || [])[i];
+    if (!f) return;
+    openNutriQtyModal(encodeURIComponent(f.name), f.kcal100, f.prot100, f.gluc100, f.lip100, f.fib100||0, undefined, f.brand||null, null, null);
+  }
+
+  async function _recentDirect(i) {
+    const f = (window._nutriRecentCache || [])[i];
+    if (!f) return;
+    const qty = f.qty || 100;
+    const r = qty / 100;
+    const entry = {
+      id: Date.now(), date: new Date().toISOString().split('T')[0],
+      meal: _nutriCurrentMeal || 'Déjeuner',
+      name: f.name, brand: f.brand || null, qty,
+      kcal: Math.round(f.kcal100 * r), prot: Math.round(f.prot100 * r * 10)/10,
+      gluc: Math.round(f.gluc100 * r * 10)/10, lip: Math.round(f.lip100 * r * 10)/10,
+      fib: Math.round((f.fib100||0) * r * 10)/10,
+      kcal100: f.kcal100, prot100: f.prot100, gluc100: f.gluc100, lip100: f.lip100, fib100: f.fib100||0
+    };
+    await saveNutriEntry(entry);
+    showToast(f.name + ' ajouté ✓');
+    renderNutritionTab();
   }
 
   function openNutriFromSearchCache(i) {
