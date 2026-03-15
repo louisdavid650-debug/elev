@@ -7508,45 +7508,37 @@
     if (!journal) return;
 
     const MEAL_GOAL_PCT = { 'Petit-déjeuner': 0.30, 'Déjeuner': 0.29, 'En-cas': 0.12, 'Dîner': 0.29 };
-    const MEAL_ICON_BG  = { 'Petit-déjeuner': '#c8956c', 'Déjeuner': '#7ab893', 'En-cas': '#e05c4b', 'Dîner': '#5b8ccc' };
+    const MEAL_RING_COLOR = { 'Petit-déjeuner': '#c8956c', 'Déjeuner': '#1d9e75', 'En-cas': '#e05c4b', 'Dîner': '#5b8ccc' };
 
-    // Un seul bloc carte qui englobe tous les repas
-    const circumference = 2 * Math.PI * 18;
-    journal.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--card-shadow)">` +
+    const circumference = 2 * Math.PI * 15;
+    journal.innerHTML = `<div style="background:#1c1c1e;border-radius:16px;overflow:hidden">` +
       MEALS.map((meal, mi) => {
         const items = todayEntries.filter(e => e.meal === meal);
         const mealKcal = items.reduce((s, e) => s + e.kcal, 0);
         const mealGoal = Math.round(goalKcal * (MEAL_GOAL_PCT[meal] || 0.25));
         const mealPct  = Math.min(mealKcal / mealGoal, 1);
-        const isOpen   = !!_nutriAccordionOpen[meal];
         const icon     = MEAL_ICONS[meal] || '🍽️';
-        const iconBg   = MEAL_ICON_BG[meal] || 'var(--border2)';
+        const ringColor = MEAL_RING_COLOR[meal] || '#888';
         const preview  = items.slice(0, 3).map(e => e.name).join(', ');
-        const dashOffset = circumference - mealPct * circumference;
-        const isLast = mi === MEALS.length - 1;
+        const dashFill = (mealPct * circumference).toFixed(1);
+        const isLast   = mi === MEALS.length - 1;
 
-        return `<div>
-          <div style="display:flex;align-items:center;gap:14px;padding:14px;cursor:pointer" onclick="openMealPage('${meal}')">
-            <div style="position:relative;width:48px;height:48px;flex-shrink:0">
-              <svg width="48" height="48" viewBox="0 0 48 48" style="position:absolute;inset:0;transform:rotate(-90deg)">
-                <circle cx="24" cy="24" r="18" fill="none" stroke="var(--border2)" stroke-width="3"/>
-                <circle cx="24" cy="24" r="18" fill="none" stroke="${iconBg}" stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-dasharray="${circumference.toFixed(1)}"
-                  stroke-dashoffset="${dashOffset.toFixed(1)}"/>
-              </svg>
-              <div style="position:absolute;inset:5px;background:var(--warm);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px">${icon}</div>
-            </div>
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">
-                <div style="font-size:14px;font-weight:600;color:var(--text)">${meal}</div>
-              </div>
-              <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">${mealKcal} / ${mealGoal} kcal</div>
-              ${preview ? `<div style="font-size:10px;color:var(--muted2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}${items.length > 3 ? '…' : ''}</div>` : ''}
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+        return `<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer${!isLast ? ';border-bottom:0.5px solid rgba(255,255,255,0.07)' : ''}" onclick="openMealPage('${meal}')">
+          <div style="position:relative;width:42px;height:42px;flex-shrink:0">
+            <svg width="42" height="42" viewBox="0 0 42 42" style="position:absolute;inset:0;transform:rotate(-90deg)">
+              <circle cx="21" cy="21" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+              <circle cx="21" cy="21" r="15" fill="none" stroke="${ringColor}" stroke-width="3"
+                stroke-linecap="round"
+                stroke-dasharray="${dashFill} ${circumference.toFixed(1)}"/>
+            </svg>
+            <div style="position:absolute;inset:6px;background:#2a2a2c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px">${icon}</div>
           </div>
-          ${!isLast ? `<div style="height:1px;background:var(--border);margin:0 14px"></div>` : ''}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;color:#fff;margin-bottom:2px">${meal}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);font-family:'Geist Mono',monospace">${mealKcal} / ${mealGoal} kcal</div>
+            ${preview ? `<div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}${items.length > 3 ? '…' : ''}</div>` : ''}
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
         </div>`;
       }).join('') + `</div>`;
   }
