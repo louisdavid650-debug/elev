@@ -4547,23 +4547,24 @@
   }
 
   const ONBOARDING_STEPS = [
-    { key: 'firstName',    question: "Comment tu t'appelles ?",        hint: 'TON PRÉNOM',       placeholder: 'Votre prénom', type: 'text' },
-    { key: 'age',          question: 'Quel est ton âge ?',             hint: 'EN ANNÉES',        placeholder: 'Votre âge',  type: 'number', unit: 'ans', min: 10,  max: 100 },
-    { key: 'height',       question: 'Quelle est ta taille ?',         hint: 'EN CENTIMÈTRES',   placeholder: 'Votre taille', type: 'number', unit: 'cm',  min: 100, max: 250 },
-    { key: 'startWeight',  question: 'Quel est ton poids de départ ?', hint: 'EN KILOGRAMMES',   placeholder: 'Votre poids',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
-    { key: 'targetWeight', question: 'Quel est ton poids cible ?',     hint: 'EN KILOGRAMMES',   placeholder: 'Poids cible',  type: 'number', unit: 'kg',  min: 20,  max: 300 },
-    { key: 'goal',         question: 'Quel est ton objectif ?',        hint: 'CHOISIS TON MODE', placeholder: null,  type: 'choice',
+    { key: 'firstName',    question: "Comment tu t'appelles ?",         hint: 'TON PRÉNOM',       placeholder: 'Votre prénom',  type: 'text' },
+    { key: 'age',          question: 'Quel est ton âge ?',              hint: 'EN ANNÉES',        placeholder: 'Votre âge',     type: 'number', unit: 'ans', min: 10,  max: 100 },
+    { key: 'height',       question: 'Quelle est ta taille ?',          hint: 'EN CENTIMÈTRES',   placeholder: 'Votre taille',  type: 'number', unit: 'cm',  min: 100, max: 250 },
+    { key: 'goal',         question: 'Quel est ton objectif ?',         hint: 'CHOISIS TON MODE', placeholder: null, type: 'choice',
       choices: [
         { value: 'seche',     label: 'Sèche',          icon: '🔥', desc: 'Perdre de la masse grasse' },
         { value: 'maintien',  label: 'Maintien',        icon: '⚖️', desc: 'Garder ton poids actuel' },
         { value: 'prise',     label: 'Prise de masse',  icon: '💪', desc: 'Gagner du muscle et du poids' },
       ]
     },
+    { key: 'startWeight',  question: 'Quel est ton poids actuel ?',     hint: 'EN KILOGRAMMES',   placeholder: 'Votre poids',   type: 'number', unit: 'kg',  min: 20,  max: 300 },
+    { key: 'targetWeight', question: 'Quel est ton poids objectif ?',   hint: 'EN KILOGRAMMES',   placeholder: 'Poids objectif', type: 'number', unit: 'kg', min: 20,  max: 300,
+      skip: () => _onboardingData.goal === 'maintien'
+    },
     { key: 'kcalTarget',   question: 'Objectif calorique journalier ?', hint: 'EN KCAL (OPTIONNEL)', placeholder: 'Votre objectif', type: 'number', unit: 'kcal', min: 500, max: 10000, optional: true },
   ];
 
-  // Steps affichés uniquement lors de la création (âge + taille = une seule fois)
-  const EDIT_PROFILE_STEPS = ['startWeight', 'targetWeight', 'goal'];
+  const EDIT_PROFILE_STEPS = ['goal', 'startWeight', 'targetWeight'];
 
   let _onboardingStep = 0;
   let _onboardingData = {};
@@ -4643,10 +4644,10 @@
   }
 
   function getActiveSteps() {
-    if (_onboardingEditMode) {
-      return ONBOARDING_STEPS.filter(s => EDIT_PROFILE_STEPS.includes(s.key));
-    }
-    return ONBOARDING_STEPS;
+    let base = _onboardingEditMode
+      ? ONBOARDING_STEPS.filter(s => EDIT_PROFILE_STEPS.includes(s.key))
+      : ONBOARDING_STEPS;
+    return base.filter(s => !s.skip || !s.skip());
   }
 
   function renderOnboardingStep() {
@@ -4699,6 +4700,7 @@
 
     container.innerHTML = `
       <div class="onboarding-step active">
+        ${_onboardingStep === 0 && !_onboardingEditMode ? `<div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);margin-bottom:6px;line-height:1.2">Bienvenue sur Élev 👋</div><div style="font-size:13px;color:var(--muted);margin-bottom:20px">Dis-nous d'abord ce que tu cherches à accomplir.</div>` : ''}
         <div class="onboarding-question">${step.question}</div>
         <div class="onboarding-hint">${step.hint}</div>
         ${inputHtml}
@@ -4760,6 +4762,13 @@
 
     if (_onboardingStep < steps.length - 1) {
       _onboardingStep++;
+      // Re-évaluer les steps (le skip de targetWeight dépend du goal)
+      const newSteps = getActiveSteps();
+      // Si le step courant dépasse la liste re-évaluée, finir
+      if (_onboardingStep >= newSteps.length) {
+        await finishOnboarding();
+        return;
+      }
       renderOnboardingStep();
     } else {
       await finishOnboarding();
