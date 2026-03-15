@@ -773,7 +773,7 @@
   .nutri-search-item { display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border); }
   .nutri-search-item:last-child { border-bottom:none; }
   .nutri-add-btn { background:var(--accent);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:10px; }
-  .nutri-qty-modal { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:985;display:flex;align-items:center;justify-content:center;padding:16px; }
+  .nutri-qty-modal { position:fixed;inset:0;background:var(--bg);z-index:985;display:flex;flex-direction:column;overflow:hidden; }
   .nutri-qty-sheet { background:var(--surface);border-radius:18px;padding:28px 22px 40px;width:100%;max-width:480px; }
   /* Widget accueil nutrition */
   .sound-sel { background:rgba(44,95,74,0.12) !important; border-color:var(--accent) !important; }
@@ -7079,83 +7079,81 @@
     if (gluc100 >= 50) tags.push({ label: 'Riche en glucides', color: '#b8860b', bg: '#fdf6e3', icon: '⚠️' });
 
     modal.innerHTML = `
-      <div class="nutri-qty-sheet" style="padding:0;border-radius:20px;overflow:hidden;max-height:90vh;display:flex;flex-direction:column">
+      <div style="width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden">
 
-        <!-- Header -->
-        <div style="background:var(--surface2);padding:28px 22px 22px;text-align:center;flex-shrink:0;position:relative">
-          <!-- Flèche fermer -->
-          <button onclick="document.getElementById('nutriQtyModal').remove()" style="position:absolute;top:16px;left:16px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;display:flex;align-items:center">
+        <!-- Header sombre plein écran -->
+        <div style="background:var(--surface2);padding:calc(env(safe-area-inset-top)+12px) 20px 24px;text-align:center;flex-shrink:0;position:relative">
+          <button onclick="document.getElementById('nutriQtyModal').remove()" style="position:absolute;top:calc(env(safe-area-inset-top)+10px);left:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;display:flex;align-items:center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <!-- Crayon édition quantité -->
-          <button onclick="openEditNutriEntry(null,'${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${brand||''}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${encodeURIComponent(name)}','${brand||''}')" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;line-height:1;display:flex;align-items:center">
+          <button onclick="openEditNutriEntry(null,'${encodeURIComponent(name)}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${brand||''}',${kcal100},${prot100},${gluc100},${lip100},${fib100||0},'${encodeURIComponent(name)}','${brand||''}')" style="position:absolute;top:calc(env(safe-area-inset-top)+10px);right:12px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;display:flex;align-items:center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:400;color:var(--text);line-height:1.2">${name}</div>
-          ${brand ? `<div style="font-size:13px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace">${brand}</div>` : ''}
+          <div style="font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;color:var(--text);line-height:1.2;margin-top:8px">${name}</div>
+          ${brand ? `<div style="font-size:13px;color:var(--muted);margin-top:5px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">${brand}</div>` : ''}
         </div>
 
-        <!-- Macros grille -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid var(--border);flex-shrink:0">
-          <div style="text-align:center;padding:16px 8px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Calories</div>
+        <!-- Macros grille 4 colonnes -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border);flex-shrink:0">
+          <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Geist Mono',monospace">KCAL</div>
           </div>
-          <div style="text-align:center;padding:16px 8px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10} g</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Glucides</div>
+          <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}g</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Geist Mono',monospace">GLUC</div>
           </div>
-          <div style="text-align:center;padding:16px 8px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10} g</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Protéines</div>
+          <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10}g</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Geist Mono',monospace">PROT</div>
           </div>
-          <div style="text-align:center;padding:16px 8px">
-            <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10} g</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:3px">Lipides</div>
+          <div style="text-align:center;padding:14px 6px">
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}g</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:'Geist Mono',monospace">LIP</div>
           </div>
         </div>
 
         <!-- Contenu scrollable -->
-        <div style="flex:1;overflow-y:auto;padding:18px 20px">
+        <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px">
 
           ${tags.length ? `
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Notation des aliments</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
-            ${tags.map(t => `<span style="background:${t.bg};color:${t.color};border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:4px">${t.icon} ${t.label}</span>`).join('')}
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Notation des aliments</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+            ${tags.map(t => `<span style="background:${t.bg};color:${t.color};border-radius:20px;padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:5px">${t.icon} ${t.label}</span>`).join('')}
           </div>` : ''}
 
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">Valeurs nutritives</div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px">
-            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)">
-              <span style="font-size:14px;font-weight:600;color:var(--text)">Calories</span>
-              <span style="font-size:14px;font-weight:600;color:var(--text)" id="previewKcalDetail">${Math.round(kcal100*ratio0)} kcal</span>
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Valeurs nutritives</div>
+          <div style="margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border)">
+              <span style="font-size:15px;font-weight:600;color:var(--text)">Calories</span>
+              <span style="font-size:15px;font-weight:600;color:var(--text)" id="previewKcalDetail">${Math.round(kcal100*ratio0)} kcal</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)">
-              <span style="font-size:14px;color:var(--text)">Protéines</span>
-              <span style="font-size:14px;color:var(--text)" id="previewProtDetail">${Math.round(prot100*ratio0*10)/10} g</span>
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border)">
+              <span style="font-size:15px;font-weight:600;color:var(--text)">Protéines</span>
+              <span style="font-size:15px;color:var(--text)" id="previewProtDetail">${Math.round(prot100*ratio0*10)/10} g</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)">
-              <span style="font-size:14px;color:var(--text)">Glucides</span>
-              <span style="font-size:14px;color:var(--text)" id="previewGlucDetail">${Math.round(gluc100*ratio0*10)/10} g</span>
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border)">
+              <span style="font-size:15px;font-weight:600;color:var(--text)">Glucides</span>
+              <span style="font-size:15px;color:var(--text)" id="previewGlucDetail">${Math.round(gluc100*ratio0*10)/10} g</span>
             </div>
-            ${(fib100||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px 10px 28px;border-bottom:0.5px solid var(--border)">
+            ${(fib100||0) > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 0 10px 16px;border-bottom:0.5px solid var(--border)">
               <span style="font-size:13px;color:var(--muted)">Fibres alimentaires</span>
               <span style="font-size:13px;color:var(--muted)" id="previewFibDetail">${Math.round((fib100||0)*ratio0*10)/10} g</span>
             </div>` : ''}
-            <div style="display:flex;justify-content:space-between;padding:10px 14px">
-              <span style="font-size:14px;color:var(--text)">Lipides</span>
-              <span style="font-size:14px;color:var(--text)" id="previewLipDetail">${Math.round(lip100*ratio0*10)/10} g</span>
+            <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border)">
+              <span style="font-size:15px;font-weight:600;color:var(--text)">Lipides</span>
+              <span style="font-size:15px;color:var(--text)" id="previewLipDetail">${Math.round(lip100*ratio0*10)/10} g</span>
             </div>
           </div>
 
           <!-- Quantité -->
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Quantité</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Quantité</div>
+          <div style="display:flex;gap:8px;align-items:center">
             <input class="inp" id="nutriQtyInput" type="number" value="${qty0}" min="1" max="5000"
-              style="flex:1;text-align:center;font-size:24px;font-family:'DM Serif Display',serif"
+              style="flex:1;text-align:center;font-size:26px;font-family:'DM Serif Display',serif"
               oninput="updateNutriPreview()"/>
             <select id="nutriQtyUnit"
-              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;flex-shrink:0"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 10px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;flex-shrink:0"
               onchange="onNutriUnitChange()">
               <option value="g">Gramme</option>
               ${(()=>{
@@ -7169,9 +7167,9 @@
           </div>
         </div>
 
-        <!-- Bouton bas -->
-        <div style="padding:12px 20px calc(env(safe-area-inset-bottom)+12px);flex-shrink:0;border-top:1px solid var(--border)">
-          <button onclick="confirmNutriEntry()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer;font-weight:400">Ajouter</button>
+        <!-- Bouton bas fixe -->
+        <div style="padding:12px 16px calc(env(safe-area-inset-bottom)+12px);flex-shrink:0;border-top:1px solid var(--border);background:var(--bg)">
+          <button onclick="confirmNutriEntry()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:17px;font-family:'DM Serif Display',serif;font-size:17px;cursor:pointer">Ajouter</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
