@@ -7032,7 +7032,7 @@
             <div onclick="toggleMealCard(${i})" style="display:flex;align-items:center;padding:13px 14px;cursor:pointer;gap:10px">
               <div style="flex:1;min-width:0">
                 <div style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
-                <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</div>
+                <div style="font-size:11px;font-family:'Geist Mono',monospace;margin-top:2px"><span style="color:var(--muted)">${m.kcal} kcal</span> · <span style="color:#7ab893">${m.prot}P</span> <span style="color:#6ea8c8">${m.gluc}G</span> <span style="color:#c8956c">${m.lip}L</span> · <span style="color:var(--muted)">${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</span></div>
               </div>
               <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="transition:transform 0.2s;transform:rotate(${isOpen ? '180deg' : '0deg'})"><polyline points="6 9 12 15 18 9"/></svg>
@@ -7050,7 +7050,7 @@
                 <div style="display:flex;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border)">
                   <div style="flex:1;min-width:0">
                     <div style="font-size:13px;color:var(--text);font-weight:500">${ing.name}</div>
-                    <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${ing.qty}g · ${Math.round(ing.prot*10)/10}P ${Math.round(ing.gluc*10)/10}G ${Math.round(ing.lip*10)/10}L</div>
+                    <div style="font-size:10px;font-family:'Geist Mono',monospace;margin-top:1px"><span style="color:var(--muted)">${ing.qty}g</span> · <span style="color:#7ab893">${Math.round(ing.prot*10)/10}P</span> <span style="color:#6ea8c8">${Math.round(ing.gluc*10)/10}G</span> <span style="color:#c8956c">${Math.round(ing.lip*10)/10}L</span></div>
                   </div>
                   <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
                     <span style="font-size:12px;color:var(--text);font-family:'Geist Mono',monospace">${Math.round(ing.kcal)} kcal</span>
@@ -7126,7 +7126,7 @@
       <div style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
         <div style="flex:1;min-width:0;cursor:pointer" onclick="editCmIngredient(${i})">
           <div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${ing.qty}g · ${ing.kcal} kcal · ${ing.prot}P ${ing.gluc}G ${ing.lip}L</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;margin-top:2px"><span style="color:var(--muted)">${ing.qty}g · ${ing.kcal} kcal</span> · <span style="color:#7ab893">${ing.prot}P</span> <span style="color:#6ea8c8">${ing.gluc}G</span> <span style="color:#c8956c">${ing.lip}L</span></div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
           <button onclick="editCmIngredient(${i})" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;padding:4px 8px;font-family:'Geist Mono',monospace">✏️</button>
@@ -7427,7 +7427,7 @@
           <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${m.name}</div>
           <button onclick="document.getElementById('mealPortionModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px">✕</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${totalQty}g / portion</div>
+        <div style="font-size:11px;font-family:'Geist Mono',monospace;margin-bottom:20px"><span style="color:var(--muted)">${m.kcal} kcal</span> · <span style="color:#7ab893">${m.prot}P</span> <span style="color:#6ea8c8">${m.gluc}G</span> <span style="color:#c8956c">${m.lip}L</span> <span style="color:var(--muted)">· ${totalQty}g / portion</span></div>
 
         <!-- Option 1 : 1 portion -->
         <button onclick="confirmMealOnePortion(${i});document.getElementById('mealPortionModal').remove()"
