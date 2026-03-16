@@ -7044,13 +7044,17 @@
             ${isOpen && m.ingredients?.length ? `
             <div style="border-top:1px solid var(--border);padding:8px 14px 12px">
               <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">Ingrédients</div>
-              ${m.ingredients.map(ing => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border)">
-                  <div>
-                    <div style="font-size:13px;color:var(--text)">${ing.name}</div>
-                    <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">${ing.qty}g · ${Math.round(ing.prot*10)/10}P ${Math.round(ing.gluc*10)/10}G ${Math.round(ing.lip*10)/10}L</div>
+              ${m.ingredients.map((ing, ii) => `
+                <div style="display:flex;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border)">
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;color:var(--text);font-weight:500">${ing.name}</div>
+                    <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${ing.qty}g · ${Math.round(ing.prot*10)/10}P ${Math.round(ing.gluc*10)/10}G ${Math.round(ing.lip*10)/10}L</div>
                   </div>
-                  <div style="font-size:13px;color:var(--text);font-family:'Geist Mono',monospace;margin-left:10px;flex-shrink:0">${Math.round(ing.kcal)} kcal</div>
+                  <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
+                    <span style="font-size:12px;color:var(--text);font-family:'Geist Mono',monospace">${Math.round(ing.kcal)} kcal</span>
+                    <button onclick="event.stopPropagation();editSavedMealIngredient('${m.id}',${ii})" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:10px;padding:3px 6px;margin-left:4px">✏️</button>
+                    <button onclick="event.stopPropagation();deleteSavedMealIngredient('${m.id}',${ii})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:3px">✕</button>
+                  </div>
                 </div>`).join('')}
             </div>` : ''}
           </div>`;
@@ -7370,29 +7374,283 @@
   function openMealAsEntry(i) {
     const m = (window._nutriSuggCache || [])[i];
     if (!m) return;
+
+    const existing = document.getElementById('mealPortionModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'mealPortionModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:996;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
     const totalQty = m.qty || m.ingredients?.reduce((s, ing) => s + ing.qty, 0) || 100;
-    // Les macros sont pour le plat entier (1 portion = totalQty g)
-    // On recalcule les valeurs pour 100g pour openNutriQtyModal
-    const kcal100 = Math.round(m.kcal / totalQty * 100);
-    const prot100 = Math.round(m.prot / totalQty * 1000) / 10;
-    const gluc100 = Math.round(m.gluc / totalQty * 1000) / 10;
-    const lip100  = Math.round(m.lip  / totalQty * 1000) / 10;
-    const fib100  = Math.round((m.fib || 0) / totalQty * 1000) / 10;
-    // Ouvre la modal avec la portion entière pré-sélectionnée
-    openNutriQtyModal(
-      encodeURIComponent(m.name),
-      kcal100, prot100, gluc100, lip100, fib100,
-      totalQty,       // quantité par défaut = 1 portion complète
-      null,
-      totalQty,       // servingG = taille de la portion
-      '1 portion'     // label affiché dans le select
-    );
+
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:24px 20px calc(env(safe-area-inset-bottom)+24px)" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${m.name}</div>
+          <button onclick="document.getElementById('mealPortionModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${totalQty}g / portion</div>
+
+        <!-- Option 1 : 1 portion -->
+        <button onclick="confirmMealOnePortion(${i});document.getElementById('mealPortionModal').remove()"
+          style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px 20px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+          <div style="text-align:left">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px">1 portion</div>
+            <div style="font-size:10px;opacity:0.8;font-family:'Geist Mono',monospace;margin-top:2px">${totalQty}g · ${m.kcal} kcal</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        <!-- Option 2 : Personnaliser -->
+        <button onclick="document.getElementById('mealPortionModal').remove();openMealCustomizeModal(${i})"
+          style="width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:14px;padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+          <div style="text-align:left">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)">Personnaliser</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">Ajuster le grammage de chaque ingrédient</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  async function confirmMealOnePortion(i) {
+    const m = (window._nutriSuggCache || [])[i];
+    if (!m) return;
+    const entry = {
+      id: Date.now(),
+      date: _nutriViewDate,
+      meal: _nutriActiveMeal || 'Déjeuner',
+      name: m.name, brand: null,
+      qty: m.qty || m.ingredients?.reduce((s, ing) => s + ing.qty, 0) || 100,
+      kcal: m.kcal, prot: m.prot, gluc: m.gluc, lip: m.lip, fib: m.fib || 0,
+      kcal100: Math.round(m.kcal / (m.qty || 100) * 100),
+      prot100: Math.round(m.prot / (m.qty || 100) * 1000) / 10,
+      gluc100: Math.round(m.gluc / (m.qty || 100) * 1000) / 10,
+      lip100:  Math.round(m.lip  / (m.qty || 100) * 1000) / 10,
+      fib100:  Math.round((m.fib || 0) / (m.qty || 100) * 1000) / 10,
+    };
+    closeNutriAdd();
+    await saveNutriEntry(entry);
+    showToast(m.name.slice(0, 30) + ' ajouté ✓');
+    _nutriAccordionOpen[entry.meal] = true;
+    renderNutritionTab();
+  }
+
+  function openMealCustomizeModal(i) {
+    const m = (window._nutriSuggCache || [])[i];
+    if (!m || !m.ingredients?.length) return;
+    // Copie profonde des ingrédients pour ne pas modifier la recette de base
+    const customIngs = m.ingredients.map(ing => ({ ...ing }));
+
+    const existing = document.getElementById('mealCustomizeModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'mealCustomizeModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:996;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    function buildContent() {
+      const totKcal = Math.round(customIngs.reduce((s,g) => s+g.kcal, 0));
+      const totProt = Math.round(customIngs.reduce((s,g) => s+g.prot, 0)*10)/10;
+      const totGluc = Math.round(customIngs.reduce((s,g) => s+g.gluc, 0)*10)/10;
+      const totLip  = Math.round(customIngs.reduce((s,g) => s+g.lip,  0)*10)/10;
+
+      return `
+        <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+          <!-- Header -->
+          <div style="padding:20px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">${m.name}</div>
+              <button onclick="document.getElementById('mealCustomizeModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px">✕</button>
+            </div>
+            <!-- Résumé macros live -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface2);border-radius:10px;overflow:hidden">
+              <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="mcTotKcal">${totKcal}</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">KCAL</div></div>
+              <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent)" id="mcTotProt">${totProt}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">PROT</div></div>
+              <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="mcTotGluc">${totGluc}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">GLUC</div></div>
+              <div style="text-align:center;padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="mcTotLip">${totLip}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">LIP</div></div>
+            </div>
+          </div>
+          <!-- Liste ingrédients -->
+          <div style="flex:1;overflow-y:auto;padding:12px 20px">
+            ${customIngs.map((ing, ii) => {
+              const kcal100 = Math.round(ing.kcal / ing.qty * 100);
+              const prot100 = Math.round(ing.prot / ing.qty * 1000) / 10;
+              const gluc100 = Math.round(ing.gluc / ing.qty * 1000) / 10;
+              const lip100  = Math.round(ing.lip  / ing.qty * 1000) / 10;
+              const fib100  = Math.round((ing.fib||0) / ing.qty * 1000) / 10;
+              return `<div style="margin-bottom:14px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+                  <div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
+                  <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace" id="mcIng${ii}Kcal">${Math.round(ing.kcal)} kcal</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <input type="number" id="mcIngQty${ii}" value="${ing.qty}" min="0" max="2000"
+                    style="width:72px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:8px;background:var(--warm);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;box-sizing:border-box;flex-shrink:0"
+                    oninput="updateMealCustomize(${ii},${kcal100},${prot100},${gluc100},${lip100},${fib100},this.value)"/>
+                  <span style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;flex-shrink:0">g</span>
+                  <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace" id="mcIng${ii}Macros">${ing.prot}P ${ing.gluc}G ${ing.lip}L</div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          <!-- Bouton ajouter -->
+          <div style="padding:12px 20px calc(env(safe-area-inset-bottom)+12px);border-top:1px solid var(--border);flex-shrink:0">
+            <button onclick="confirmMealCustomize(${i})"
+              style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer">
+              Ajouter ce repas →
+            </button>
+          </div>
+        </div>`;
+    }
+
+    modal.innerHTML = buildContent();
+    document.body.appendChild(modal);
+    // Stocker la copie des ingrédients personnalisés
+    window._mealCustomIngs = customIngs;
+    window._mealCustomIdx = i;
+  }
+
+  function updateMealCustomize(ii, kcal100, prot100, gluc100, lip100, fib100, qtyStr) {
+    const qty = parseFloat(qtyStr) || 0;
+    const r = qty / 100;
+    if (window._mealCustomIngs) {
+      window._mealCustomIngs[ii].qty  = qty;
+      window._mealCustomIngs[ii].kcal = Math.round(kcal100 * r);
+      window._mealCustomIngs[ii].prot = Math.round(prot100 * r * 10) / 10;
+      window._mealCustomIngs[ii].gluc = Math.round(gluc100 * r * 10) / 10;
+      window._mealCustomIngs[ii].lip  = Math.round(lip100  * r * 10) / 10;
+      window._mealCustomIngs[ii].fib  = Math.round((fib100||0) * r * 10) / 10;
+    }
+    // Mettre à jour l'affichage de cet ingrédient
+    const kEl = document.getElementById('mcIng' + ii + 'Kcal');
+    const mEl = document.getElementById('mcIng' + ii + 'Macros');
+    if (kEl) kEl.textContent = Math.round(kcal100 * r) + ' kcal';
+    if (mEl) mEl.textContent = Math.round(prot100*r*10)/10+'P '+Math.round(gluc100*r*10)/10+'G '+Math.round(lip100*r*10)/10+'L';
+    // Mettre à jour les totaux
+    const ings = window._mealCustomIngs || [];
+    const totKcal = document.getElementById('mcTotKcal');
+    const totProt = document.getElementById('mcTotProt');
+    const totGluc = document.getElementById('mcTotGluc');
+    const totLip  = document.getElementById('mcTotLip');
+    if (totKcal) totKcal.textContent = Math.round(ings.reduce((s,g) => s+g.kcal, 0));
+    if (totProt) totProt.textContent = Math.round(ings.reduce((s,g) => s+g.prot, 0)*10)/10+'g';
+    if (totGluc) totGluc.textContent = Math.round(ings.reduce((s,g) => s+g.gluc, 0)*10)/10+'g';
+    if (totLip)  totLip.textContent  = Math.round(ings.reduce((s,g) => s+g.lip,  0)*10)/10+'g';
+  }
+
+  async function confirmMealCustomize(i) {
+    const m = (window._nutriSuggCache || [])[i];
+    const ings = window._mealCustomIngs || [];
+    if (!m || !ings.length) return;
+    const totKcal = Math.round(ings.reduce((s,g) => s+g.kcal, 0));
+    const totProt = Math.round(ings.reduce((s,g) => s+g.prot, 0)*10)/10;
+    const totGluc = Math.round(ings.reduce((s,g) => s+g.gluc, 0)*10)/10;
+    const totLip  = Math.round(ings.reduce((s,g) => s+g.lip,  0)*10)/10;
+    const totFib  = Math.round(ings.reduce((s,g) => s+(g.fib||0), 0)*10)/10;
+    const totQty  = Math.round(ings.reduce((s,g) => s+(g.qty||0), 0));
+    const entry = {
+      id: Date.now(), date: _nutriViewDate,
+      meal: _nutriActiveMeal || 'Déjeuner',
+      name: m.name, brand: null, qty: totQty,
+      kcal: totKcal, prot: totProt, gluc: totGluc, lip: totLip, fib: totFib,
+      kcal100: totQty ? Math.round(totKcal/totQty*100) : 0,
+      prot100: totQty ? Math.round(totProt/totQty*1000)/10 : 0,
+      gluc100: totQty ? Math.round(totGluc/totQty*1000)/10 : 0,
+      lip100:  totQty ? Math.round(totLip /totQty*1000)/10 : 0,
+      fib100:  totQty ? Math.round(totFib /totQty*1000)/10 : 0,
+    };
+    document.getElementById('mealCustomizeModal')?.remove();
+    closeNutriAdd();
+    await saveNutriEntry(entry);
+    showToast(m.name.slice(0, 30) + ' ajouté ✓');
+    _nutriAccordionOpen[entry.meal] = true;
+    renderNutritionTab();
   }
 
   window._openMealCards = new Set();
   function toggleMealCard(i) {
     if (window._openMealCards.has(i)) window._openMealCards.delete(i);
     else window._openMealCards.add(i);
+    renderNutriAddBody();
+  }
+
+  function editSavedMealIngredient(mealId, ingIdx) {
+    const meal = _nutriMeals.find(m => m.id === mealId);
+    if (!meal || !meal.ingredients) return;
+    const ing = meal.ingredients[ingIdx];
+    if (!ing) return;
+    const kcal100 = Math.round(ing.kcal / ing.qty * 100);
+    const prot100 = Math.round(ing.prot / ing.qty * 1000) / 10;
+    const gluc100 = Math.round(ing.gluc / ing.qty * 1000) / 10;
+    const lip100  = Math.round(ing.lip  / ing.qty * 1000) / 10;
+    const fib100  = Math.round((ing.fib || 0) / ing.qty * 1000) / 10;
+
+    const existing = document.getElementById('savedMealIngModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'savedMealIngModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:996;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px calc(env(safe-area-inset-bottom)+20px)" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)">${ing.name}</div>
+          <button onclick="document.getElementById('savedMealIngModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:16px">
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="smiKcal">${ing.kcal}</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">KCAL</div></div>
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent)" id="smiProt">${ing.prot}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">PROT</div></div>
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="smiGluc">${ing.gluc}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">GLUC</div></div>
+          <div style="text-align:center;padding:10px 4px"><div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="smiLip">${ing.lip}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">LIP</div></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <input type="number" id="smiQty" value="${ing.qty}" min="1" max="5000"
+            style="flex:1;text-align:center;font-size:24px;font-family:'DM Serif Display',serif;padding:10px;background:var(--warm);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;box-sizing:border-box"
+            oninput="(function(){const r=parseFloat(this.value)/100;document.getElementById('smiKcal').textContent=Math.round(${kcal100}*r);document.getElementById('smiProt').textContent=Math.round(${prot100}*r*10)/10+'g';document.getElementById('smiGluc').textContent=Math.round(${gluc100}*r*10)/10+'g';document.getElementById('smiLip').textContent=Math.round(${lip100}*r*10)/10+'g'}).call(this)"/>
+          <span style="font-size:14px;color:var(--muted);font-family:'Geist Mono',monospace">g</span>
+        </div>
+        <button onclick="confirmEditSavedMealIngredient('${mealId}',${ingIdx},${kcal100},${prot100},${gluc100},${lip100},${fib100})"
+          style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer">Modifier ✓</button>
+      </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('smiQty')?.focus(), 100);
+  }
+
+  async function confirmEditSavedMealIngredient(mealId, ingIdx, kcal100, prot100, gluc100, lip100, fib100) {
+    const meal = _nutriMeals.find(m => m.id === mealId);
+    if (!meal) return;
+    const qty = parseInt(document.getElementById('smiQty')?.value) || 100;
+    const r = qty / 100;
+    meal.ingredients[ingIdx] = { ...meal.ingredients[ingIdx], qty, kcal: Math.round(kcal100*r), prot: Math.round(prot100*r*10)/10, gluc: Math.round(gluc100*r*10)/10, lip: Math.round(lip100*r*10)/10, fib: Math.round((fib100||0)*r*10)/10 };
+    // Recalculer les totaux du plat
+    meal.kcal = Math.round(meal.ingredients.reduce((s,i) => s+i.kcal, 0));
+    meal.prot = Math.round(meal.ingredients.reduce((s,i) => s+i.prot, 0)*10)/10;
+    meal.gluc = Math.round(meal.ingredients.reduce((s,i) => s+i.gluc, 0)*10)/10;
+    meal.lip  = Math.round(meal.ingredients.reduce((s,i) => s+i.lip,  0)*10)/10;
+    meal.qty  = Math.round(meal.ingredients.reduce((s,i) => s+i.qty,  0));
+    localStorage.setItem('elev_nutri_meals', JSON.stringify(_nutriMeals));
+    try { await sbSave('nutri_meals', [meal]); } catch(e) {}
+    document.getElementById('savedMealIngModal')?.remove();
+    showToast('Ingrédient modifié ✓');
+    renderNutriAddBody();
+  }
+
+  async function deleteSavedMealIngredient(mealId, ingIdx) {
+    const meal = _nutriMeals.find(m => m.id === mealId);
+    if (!meal || !meal.ingredients) return;
+    if (meal.ingredients.length <= 1) { showToast('Le plat doit avoir au moins 1 ingrédient'); return; }
+    meal.ingredients.splice(ingIdx, 1);
+    meal.kcal = Math.round(meal.ingredients.reduce((s,i) => s+i.kcal, 0));
+    meal.prot = Math.round(meal.ingredients.reduce((s,i) => s+i.prot, 0)*10)/10;
+    meal.gluc = Math.round(meal.ingredients.reduce((s,i) => s+i.gluc, 0)*10)/10;
+    meal.lip  = Math.round(meal.ingredients.reduce((s,i) => s+i.lip,  0)*10)/10;
+    meal.qty  = Math.round(meal.ingredients.reduce((s,i) => s+i.qty,  0));
+    localStorage.setItem('elev_nutri_meals', JSON.stringify(_nutriMeals));
+    try { await sbSave('nutri_meals', [meal]); } catch(e) {}
+    showToast('Ingrédient supprimé');
     renderNutriAddBody();
   }
 
