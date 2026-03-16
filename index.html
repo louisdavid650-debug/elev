@@ -1444,6 +1444,16 @@
       </div>
     </div>
     <div class="routines-list" id="routinesList"></div>
+
+    <!-- Séance libre -->
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="label">Séance libre</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-add" style="flex:1" onclick="startFreeSessionType('musculation');switchTab('session')">🏋️ Musculation</button>
+        <button class="btn-add" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--border2)" onclick="openOtherSportPicker();switchTab('session')">🏃 Autre sport</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ══ POIDS DU CORPS ══ -->
@@ -2563,9 +2573,7 @@
       switchTab('home');
       setTimeout(() => openSessionFullscreen(), 100);
     } else {
-      const lastTab = localStorage.getItem('elev_last_tab') || 'home';
-      const validTabs = ['home','routines','poids','nutrition','stats'];
-      switchTab(validTabs.includes(lastTab) ? lastTab : 'home');
+      switchTab('home');
     }
     // Charger le profil depuis Supabase EN PREMIER (source de vérité)
     // puis décider si onboarding nécessaire — évite de demander les infos déjà connues
@@ -4926,57 +4934,97 @@
     const el = document.getElementById('routinesList');
     if (!routines.length) { el.innerHTML=`<div class="empty"><div class="empty-icon">📌</div><div class="empty-title">Aucune séance</div><div class="empty-sub">Crée ta première séance ci-dessus.</div></div>`; return; }
 
-    const MUSCLE_COLORS = {
-      'épaules':   { bg:'#fdf1e8', color:'#c8956c' },
-      'pectoraux': { bg:'#edf6f1', color:'#2C5F4A' },
-      'triceps':   { bg:'#f0edf9', color:'#7b68b5' },
-      'dos':       { bg:'#e8f0fa', color:'#5b8ccc' },
-      'biceps':    { bg:'#edf9f6', color:'#2C8A6E' },
-      'jambes':    { bg:'#fdf1e8', color:'#c8956c' },
-      'quadriceps':{ bg:'#fdf1e8', color:'#c8956c' },
-      'quads':     { bg:'#fdf1e8', color:'#c8956c' },
-      'ischios':   { bg:'#e8f0fa', color:'#5b8ccc' },
-      'mollets':   { bg:'#edf9f6', color:'#2C8A6E' },
-      'abdos':     { bg:'#f0edf9', color:'#7b68b5' },
-      'fessiers':  { bg:'#fde8ee', color:'#c0396b' },
-      'adducteurs':{ bg:'#f0edf9', color:'#7b68b5' },
-      'abducteurs':{ bg:'#e8f0fa', color:'#5b8ccc' },
+    // Palette de verts Élev pour les muscles
+    const MUSCLE_DOTS = {
+      'épaules':    '#2C5F4A',
+      'pectoraux':  '#4A8C6A',
+      'pecs':       '#4A8C6A',
+      'triceps':    '#8CAA7A',
+      'dos':        '#2C5F4A',
+      'biceps':     '#4A8C6A',
+      'quadriceps': '#2C5F4A',
+      'quads':      '#2C5F4A',
+      'ischios':    '#4A8C6A',
+      'ischio-jambiers': '#4A8C6A',
+      'mollets':    '#8CAA7A',
+      'abdos':      '#8CAA7A',
+      'fessiers':   '#4A8C6A',
+      'adducteurs': '#8CAA7A',
+      'abducteurs': '#2C5F4A',
     };
-    const getTagStyle = (muscle) => {
-      const key = muscle.toLowerCase();
-      const c = MUSCLE_COLORS[key] || { bg:'var(--warm)', color:'var(--muted)' };
-      return `background:${c.bg};color:${c.color}`;
+    const muscleLabel = m => {
+      if (!m) return '';
+      const k = m.toLowerCase();
+      if (k === 'pectoraux') return 'Pecs';
+      return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
     };
+    const dotColor = m => MUSCLE_DOTS[m?.toLowerCase()] || '#2C5F4A';
 
     el.innerHTML = routines.map((r, ri) => {
-      const muscles = [...new Set(r.exercises.map(e => e.muscle).filter(Boolean))];
+      const muscles = [...new Set(r.exercises.filter(e => !e.isWarmup).map(e => e.muscle).filter(Boolean))];
       const isEditing = inlineEditRoutineId === r.id;
-      return `<div style="background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:var(--card-shadow);border:0.5px solid var(--border)"
+
+      // Comptage par muscle
+      const muscleCounts = {};
+      r.exercises.filter(e => !e.isWarmup).forEach(e => {
+        if (e.muscle) muscleCounts[e.muscle] = (muscleCounts[e.muscle] || 0) + 1;
+      });
+
+      // Extraire le numéro de jour du nom (ex: "J1 — Push A" → "J1")
+      const dayMatch = r.name.match(/^(J\d+)/i);
+      const dayBadge = dayMatch ? dayMatch[1].toUpperCase() : '';
+      const titleName = dayMatch ? r.name.replace(/^J\d+\s*[—\-–]\s*/i, '') : r.name;
+
+      return `<div style="background:var(--surface);border-radius:16px;overflow:hidden;box-shadow:var(--card-shadow);border:0.5px solid var(--border)"
         draggable="true" data-ri="${ri}"
         ondragstart="onRoutineDragStart(event,${ri})"
         ondragover="onRoutineDragOver(event)"
         ondrop="onRoutineDrop(event,${ri})"
         ondragend="onRoutineDragEnd(event)"
         ontouchstart="onRoutineTouchStart(event,${ri})">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:${(openRoutineIds.has(r.id)&&!isEditing)||muscles.length?'0.5px solid var(--border)':'none'}">
-          <div style="flex:1;min-width:0" onclick="toggleRoutineExs(${r.id})">
-            <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px">${r.exercises.length} exercice${r.exercises.length>1?'s':''}</div>
+
+        <!-- Header -->
+        <div style="padding:16px 16px 12px;border-bottom:0.5px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-family:'DM Serif Display',serif;font-size:20px;font-style:italic;color:var(--text);cursor:pointer" onclick="toggleRoutineExs(${r.id})">${titleName}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+              ${dayBadge ? `<span style="font-size:10px;padding:3px 10px;border-radius:20px;background:var(--accent);color:#fff;letter-spacing:1px;font-family:'Geist Mono',monospace">${dayBadge}</span>` : ''}
+              <button onclick="launchRoutineFromList(${r.id})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              </button>
+              <button onclick="toggleInlineEdit(${ri})" style="width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button onclick="deleteRoutine(${ri})" style="width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </button>
+            </div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-            <button onclick="launchRoutineFromList(${r.id})" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            </button>
-            <button onclick="toggleInlineEdit(${ri})" style="width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-            <button onclick="deleteRoutine(${ri})" style="width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-            </button>
-          </div>
+          <!-- Muscles avec dots -->
+          ${muscles.length ? `<div style="display:flex;gap:14px;flex-wrap:wrap">${muscles.map(m => `
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:6px;height:6px;border-radius:50%;background:${dotColor(m)};flex-shrink:0"></div>
+              <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">${muscleLabel(m)}</span>
+              <span style="font-size:11px;color:var(--text);font-weight:500;font-family:'Geist Mono',monospace">${muscleCounts[m]}</span>
+            </div>`).join('')}
+          </div>` : ''}
         </div>
-        ${muscles.length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;padding:8px 14px;border-bottom:0.5px solid var(--border)">${muscles.map(m => `<span style="font-size:9px;${getTagStyle(m)};padding:3px 9px;border-radius:20px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">${m.toUpperCase()}</span>`).join('')}</div>` : ''}
-        <div class="rc-exs-list ${(openRoutineIds.has(r.id)&&!isEditing)?'open':''}" onclick="toggleRoutineExs(${r.id})">${r.exercises.map(ex=>`<div class="rc-ex-row"><div style="flex:1;min-width:0"><div class="rc-ex-name">${ex.isWarmup?'🔥 ':''}${ex.name}</div>${ex.muscle?`<div class="rc-ex-muscle">${ex.muscle}</div>`:''}</div><div class="rc-ex-sets">${ex.sets}s · ${ex.repsTarget ? ex.repsTarget + (ex.unit==='sec' ? 's' : 'r') + ' · ' : ''}${ex.restTime??90}s repos</div></div>`).join('')}</div>
+
+        <!-- Liste exercices (expandable) -->
+        <div class="rc-exs-list ${(openRoutineIds.has(r.id)&&!isEditing)?'open':''}" onclick="toggleRoutineExs(${r.id})">
+          ${r.exercises.map(ex => `
+            <div style="display:flex;align-items:center;padding:8px 16px;gap:10px;border-bottom:0.5px solid var(--border)">
+              <div style="width:5px;height:5px;border-radius:50%;background:${dotColor(ex.muscle)};flex-shrink:0"></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ex.isWarmup ? '🔥 ' : ''}${ex.name}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px">
+                <span style="font-size:12px;color:var(--text);font-weight:500;font-family:'Geist Mono',monospace">${ex.sets}×${ex.repsTarget ? ex.repsTarget + (ex.unit==='sec'?'s':'') : '—'}</span>
+                <span style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">${ex.restTime??90}s repos</span>
+              </div>
+            </div>`).join('')}
+        </div>
+
         <div class="rc-inline-edit ${isEditing?'open':''}" id="inlineEdit-${r.id}"></div>
       </div>`;
     }).join('');
