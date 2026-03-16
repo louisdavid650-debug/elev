@@ -8449,7 +8449,7 @@
     if (gluc100 >= 50) tags.push({ label: 'Riche en glucides', color: '#b8860b', bg: '#fdf6e3', icon: '⚠️' });
 
     modal.innerHTML = `
-      <div style="background:var(--surface);border-radius:20px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:440px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);overflow:hidden" onclick="event.stopPropagation()">
 
         <!-- Header -->
         <div style="background:var(--surface2);padding:16px 52px 14px;text-align:center;flex-shrink:0;position:relative;border-radius:20px 20px 0 0">
@@ -8519,7 +8519,7 @@
         </div>
 
         <!-- Barre bas : quantité + bouton -->
-        <div style="flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:14px 0 calc(env(safe-area-inset-bottom)+14px);border-radius:0 0 20px 20px">
+        <div style="flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:14px 0 calc(max(16px,env(safe-area-inset-bottom))+8px);border-radius:0 0 20px 20px">
           <div style="margin:0 16px 10px;display:flex;gap:10px">
             <input type="number" id="nutriQtyInput" value="${qty0}" min="1" max="5000"
               style="width:76px;flex-shrink:0;text-align:center;font-size:20px;font-family:'DM Serif Display',serif;padding:10px 6px;background:var(--warm);border:1px solid var(--border);border-radius:10px;color:var(--text);box-sizing:border-box;outline:none"
