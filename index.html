@@ -7098,12 +7098,104 @@
     if (empty) empty.style.display = 'none';
     list.innerHTML = _cmIngredients.map((ing, i) => `
       <div style="display:flex;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
-        <div style="flex:1;min-width:0">
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="editCmIngredient(${i})">
           <div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
           <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${ing.qty}g · ${ing.kcal} kcal · ${ing.prot}P ${ing.gluc}G ${ing.lip}L</div>
         </div>
-        <button onclick="removeCmIngredient(${i})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px 0 4px 10px">✕</button>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
+          <button onclick="editCmIngredient(${i})" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;padding:4px 8px;font-family:'Geist Mono',monospace">✏️</button>
+          <button onclick="removeCmIngredient(${i})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:16px;padding:4px 6px">✕</button>
+        </div>
       </div>`).join('');
+  }
+
+  function editCmIngredient(i) {
+    const ing = _cmIngredients[i];
+    if (!ing) return;
+    openCmQtyModal(ing.name, ing.kcal / ing.qty * 100, ing.prot / ing.qty * 100, ing.gluc / ing.qty * 100, ing.lip / ing.qty * 100, (ing.fib || 0) / ing.qty * 100, ing.qty, i);
+  }
+
+  function openCmQtyModal(name, kcal100, prot100, gluc100, lip100, fib100, defaultQty, editIdx) {
+    const existing = document.getElementById('cmQtyModal');
+    if (existing) existing.remove();
+    const qty0 = defaultQty || 100;
+    const ratio0 = qty0 / 100;
+    const modal = document.createElement('div');
+    modal.id = 'cmQtyModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:995;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px calc(env(safe-area-inset-bottom)+20px)" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+          <button onclick="document.getElementById('cmQtyModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;padding:0 0 0 10px;flex-shrink:0">✕</button>
+        </div>
+        <!-- Preview macros -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:16px">
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="cmPrevKcal">${Math.round(kcal100*ratio0)}</div>
+            <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">KCAL</div>
+          </div>
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent)" id="cmPrevProt">${Math.round(prot100*ratio0*10)/10}g</div>
+            <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">PROT</div>
+          </div>
+          <div style="text-align:center;padding:10px 4px;border-right:1px solid var(--border)">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="cmPrevGluc">${Math.round(gluc100*ratio0*10)/10}g</div>
+            <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">GLUC</div>
+          </div>
+          <div style="text-align:center;padding:10px 4px">
+            <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)" id="cmPrevLip">${Math.round(lip100*ratio0*10)/10}g</div>
+            <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">LIP</div>
+          </div>
+        </div>
+        <!-- Quantité -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <input type="number" id="cmQtyInput" value="${qty0}" min="1" max="5000"
+            style="flex:1;text-align:center;font-size:24px;font-family:'DM Serif Display',serif;padding:10px;background:var(--warm);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;box-sizing:border-box"
+            oninput="updateCmPreview(${kcal100},${prot100},${gluc100},${lip100},${fib100})"/>
+          <span style="font-size:14px;color:var(--muted);font-family:'Geist Mono',monospace;flex-shrink:0">g</span>
+        </div>
+        <button onclick="confirmCmIngredient(${kcal100},${prot100},${gluc100},${lip100},${fib100},'${name.replace(/'/g,"\\'")}',${editIdx !== undefined ? editIdx : 'undefined'})"
+          style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer">
+          ${editIdx !== undefined ? 'Modifier ✓' : 'Ajouter →'}
+        </button>
+      </div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => document.getElementById('cmQtyInput')?.focus(), 200);
+  }
+
+  function updateCmPreview(kcal100, prot100, gluc100, lip100, fib100) {
+    const qty = parseFloat(document.getElementById('cmQtyInput')?.value) || 100;
+    const r = qty / 100;
+    const s = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    s('cmPrevKcal', Math.round(kcal100 * r));
+    s('cmPrevProt', Math.round(prot100 * r * 10) / 10 + 'g');
+    s('cmPrevGluc', Math.round(gluc100 * r * 10) / 10 + 'g');
+    s('cmPrevLip',  Math.round(lip100  * r * 10) / 10 + 'g');
+  }
+
+  function confirmCmIngredient(kcal100, prot100, gluc100, lip100, fib100, name, editIdx) {
+    const qty = parseInt(document.getElementById('cmQtyInput')?.value) || 100;
+    if (qty <= 0) return;
+    const r = qty / 100;
+    const entry = {
+      name, qty,
+      kcal: Math.round(kcal100 * r),
+      prot: Math.round(prot100 * r * 10) / 10,
+      gluc: Math.round(gluc100 * r * 10) / 10,
+      lip:  Math.round(lip100  * r * 10) / 10,
+      fib:  Math.round((fib100 || 0) * r * 10) / 10,
+    };
+    if (editIdx !== undefined && editIdx >= 0) {
+      _cmIngredients[editIdx] = entry;
+    } else {
+      _cmIngredients.push(entry);
+    }
+    updateCmSummary();
+    renderCmIngredients();
+    document.getElementById('cmQtyModal')?.remove();
+    closeIngredientSearch();
   }
 
   function removeCmIngredient(i) {
@@ -7114,8 +7206,37 @@
 
   function openIngredientSearch() {
     document.getElementById('ingredientSearchInput').value = '';
-    document.getElementById('ingredientSearchBody').innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>';
     document.getElementById('ingredientSearchModal').style.display = 'flex';
+    // Afficher les aliments récents avant toute saisie
+    const body = document.getElementById('ingredientSearchBody');
+    const seen = new Set();
+    const recent = [...nutriEntries]
+      .sort((a,b) => b.date.localeCompare(a.date))
+      .filter(e => { if (seen.has(e.name)) return false; seen.add(e.name); return true; })
+      .slice(0, 12)
+      .map(e => ({
+        name: e.name, brand: e.brand || null,
+        kcal: e.kcal100 || Math.round(e.kcal / (e.qty||100) * 100),
+        prot: e.prot100 || Math.round(e.prot / (e.qty||100) * 1000) / 10,
+        gluc: e.gluc100 || Math.round(e.gluc / (e.qty||100) * 1000) / 10,
+        lip:  e.lip100  || Math.round(e.lip  / (e.qty||100) * 1000) / 10,
+        fib:  e.fib100  || 0,
+      }));
+    if (recent.length) {
+      window._ingredientCache = recent;
+      body.innerHTML = `<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin:8px 0 10px">Récemment consommés</div>` +
+        recent.map((f, i) => `
+          <div style="display:flex;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+              ${f.brand ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:1px">${f.brand}</div>` : ''}
+              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${f.prot}P · ${f.gluc}G · ${f.lip}L · ${f.kcal} kcal/100g</div>
+            </div>
+            <button onclick="addIngredientToMeal(${i})" style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:10px;line-height:1;padding:0">+</button>
+          </div>`).join('');
+    } else {
+      body.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>';
+    }
     setTimeout(() => document.getElementById('ingredientSearchInput')?.focus(), 200);
   }
 
@@ -7200,21 +7321,7 @@
   function addIngredientToMeal(i) {
     const f = (window._ingredientCache || [])[i];
     if (!f) return;
-    // Demander la quantité
-    const qty = parseInt(prompt(`Quantité de "${f.name}" (g) :`, '100'));
-    if (!qty || qty <= 0) return;
-    const ratio = qty / 100;
-    _cmIngredients.push({
-      name: f.name, qty,
-      kcal: Math.round(f.kcal * ratio),
-      prot: Math.round(f.prot * ratio * 10) / 10,
-      gluc: Math.round(f.gluc * ratio * 10) / 10,
-      lip:  Math.round(f.lip  * ratio * 10) / 10,
-      fib:  Math.round((f.fib || 0) * ratio * 10) / 10,
-    });
-    updateCmSummary();
-    renderCmIngredients();
-    closeIngredientSearch();
+    openCmQtyModal(f.name, f.kcal, f.prot, f.gluc, f.lip, f.fib || 0, 100, undefined);
   }
 
   async function saveMealRecipe() {
@@ -10455,19 +10562,20 @@
 
 <!-- ══ MODAL RECHERCHE INGRÉDIENT ══ -->
 <div id="ingredientSearchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:990;align-items:flex-end;justify-content:center">
-  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;height:75vh;display:flex;flex-direction:column">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;height:82vh;display:flex;flex-direction:column">
     <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <button onclick="closeIngredientSearch()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:0;line-height:1">←</button>
-        <div style="font-size:15px;font-weight:500;color:var(--text)">Choisir un ingrédient</div>
+        <div style="font-size:15px;font-weight:500;color:var(--text);flex:1">Choisir un ingrédient</div>
+        <button onclick="openCustomFoodModal()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:9px;font-family:'Geist Mono',monospace;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap">+ Créer</button>
       </div>
       <div style="position:relative">
         <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none">🔍</span>
-        <input id="ingredientSearchInput" class="inp" placeholder="Rechercher…" oninput="ingredientSearchDebounce()"
-          autocomplete="off" style="width:100%;padding-left:36px;font-size:14px"/>
+        <input id="ingredientSearchInput" class="inp" placeholder="Rechercher un aliment…" oninput="ingredientSearchDebounce()"
+          autocomplete="off" style="width:100%;padding-left:36px;font-size:14px;box-sizing:border-box"/>
       </div>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:8px 16px" id="ingredientSearchBody">
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 16px" id="ingredientSearchBody">
       <div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Tapez pour rechercher un aliment…</div>
     </div>
   </div>
