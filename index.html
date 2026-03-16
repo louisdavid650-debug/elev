@@ -289,8 +289,8 @@
   /* ── Onboarding ── */
   /* ── Full-screen onboarding overlay ── */
   .fullscreen-onboarding { position: fixed; inset: 0; z-index: 1100; background: var(--bg); display: flex; flex-direction: column; justify-content: flex-start; padding: 0; animation: fadeUp 0.3s ease; overflow: hidden; }
-  .fob-body { flex: 1; overflow-y: auto; padding: 64px 32px 8px; }
-  .fob-footer { padding: 12px 32px max(24px, env(safe-area-inset-bottom)); background: var(--bg); flex-shrink: 0; }
+  .fob-body { flex: 1; overflow-y: auto; padding: 64px 32px 16px; min-height: 0; }
+  .fob-footer { padding: 12px 32px calc(max(20px, env(safe-area-inset-bottom)) + 4px); background: var(--bg); flex-shrink: 0; border-top: 1px solid var(--border); }
   .fob-logo { font-family: 'DM Serif Display', serif; font-size: 13px; letter-spacing: 7px; text-transform: uppercase; color: var(--muted); margin-bottom: 48px; }
   .fob-step-count { font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted2); text-transform: uppercase; margin-bottom: 16px; }
   .fob-question { font-family: 'DM Serif Display', serif; font-size: 32px; font-weight: 300; color: var(--text); line-height: 1.2; margin-bottom: 8px; }
@@ -328,8 +328,8 @@
   .onboarding-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: Geist Mono, monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; }
   .onboarding-back { background: none; border: none; color: var(--muted); font-size: 11px; font-family: Geist Mono, monospace; cursor: pointer; margin-top: 12px; width: 100%; text-align: center; }
   /* ── Daily greeting overlay ── */
-  .daily-overlay { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 40px 32px max(32px, env(safe-area-inset-bottom)); text-align: center; background: var(--bg); gap: 0; }
-  .daily-overlay-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .daily-overlay { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 40px 32px calc(max(28px, env(safe-area-inset-bottom)) + 8px); text-align: center; background: var(--bg); gap: 0; overflow-y: auto; }
+  .daily-overlay-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
   .daily-greeting-name { font-family: 'DM Serif Display', serif; font-size: 52px; font-style: italic; color: var(--text); line-height: 1; margin-bottom: 4px; }
   .daily-greeting-title { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; font-style: italic; color: var(--muted); line-height: 1.4; margin-bottom: 8px; }
   .daily-greeting-sub { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-bottom: 48px; }
@@ -1224,7 +1224,10 @@
       <div id="routinePickerList" style="margin-bottom:4px"></div>
       <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);margin-bottom:16px">
         <div class="label">Séance libre</div>
-        <button id="freeSessionToggleBtn" class="btn-add" style="width:100%;" onclick="toggleFreeSessionBlock()">Démarrer une séance libre</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-add" style="flex:1" onclick="startFreeSessionType('musculation')">🏋️ Musculation</button>
+          <button class="btn-add" style="flex:1;background:var(--surface);color:var(--text);border:1px solid var(--border2)" onclick="openOtherSportPicker()">🏃 Autre sport</button>
+        </div>
       </div>
     </div>
 
@@ -1532,10 +1535,17 @@
         </div>
         <!-- Panel histo poids -->
         <div id="histPanelPoids2" style="padding:12px">
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">
-            <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:140px;font-size:11px;padding:5px 8px" onchange="renderWeightTab()" title="Filtrer par mois"/>
-            <button onclick="sbLoad('body_weights').then(d=>{bodyWeights=d;bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));renderWeightTab();showToast('Rechargé ✓')})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" title="Recharger">↻</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="display:flex;gap:6px">
+              <button onclick="weightHistoPrevWeek()" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--muted);cursor:pointer">← Semaine préc.</button>
+              <button onclick="weightHistoToday()" id="weightHistoTodayBtn" style="background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:5px 10px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--accent);cursor:pointer">Aujourd'hui</button>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="pr-search-inp" id="weightSearchDate" type="month" style="width:120px;font-size:11px;padding:5px 8px" onchange="_weightHistoWeekOffset=0;renderWeightTab()" title="Filtrer par mois"/>
+              <button onclick="sbLoad('body_weights').then(d=>{bodyWeights=d;bodyWeights.sort((a,b)=>a.date.localeCompare(b.date));renderWeightTab();showToast('Rechargé ✓')})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" title="Recharger">↻</button>
+            </div>
           </div>
+          <div id="weightHistWeekLabel" style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-bottom:8px;text-align:center"></div>
           <div class="weight-hist-list" id="weightHistList"></div>
         </div>
         <!-- Panel histo calories -->
@@ -3286,20 +3296,66 @@
   }
 
   function startFreeSession() {
-    if (exercises.length && !confirm('Démarrer une nouvelle séance libre ? La séance en cours sera perdue.')) return;
+    startFreeSessionType('musculation');
+  }
+
+  function startFreeSessionType(type) {
+    if (exercises.length && !confirm('Démarrer une nouvelle séance ? La séance en cours sera perdue.')) return;
     exercises = []; loadedRoutineId = null; resetTimer(); skipRest(); clearDraft();
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    document.getElementById('sessionNotes').value = '';
-    document.getElementById('freeSessionRoutineTag').textContent = '';
-    // Auto-start timer
+    if (document.getElementById('sessionNotes')) document.getElementById('sessionNotes').value = '';
+    document.getElementById('freeSessionRoutineTag').textContent = type === 'musculation' ? '' : '';
+    window._freeSessionType = type;
     timerStartedAt = Date.now();
     timerInterval = setInterval(() => { timerSec++; updateTimer(); }, 1000);
     timerRunning = true;
     const btn = document.getElementById('timerBtn');
     if (btn) { btn.textContent = '⏸'; btn.classList.add('active'); }
     renderExercises(); renderRoutinePicker();
-    showToast('Séance libre démarrée ⚡');
+    showToast(type === 'musculation' ? '🏋️ Séance libre démarrée' : `🏃 Séance ${type} démarrée`);
     openSessionFullscreen();
+  }
+
+  const OTHER_SPORTS = [
+    '🎿 Ski','🏂 Snowboard','🚴 Vélo','🏃 Course à pied','🏊 Natation',
+    '🧘 Yoga','🥊 Boxe','⚽ Football','🏀 Basketball','🎾 Tennis',
+    '🏐 Volleyball','🧗 Escalade','🚣 Aviron','🤸 Gymnastique',
+    '🏋️ CrossFit','🥋 Arts martiaux','🏌️ Golf','🛹 Skateboard',
+    '🏇 Équitation','🎣 Pêche','🤽 Water-polo','🏄 Surf','Autre…'
+  ];
+
+  function openOtherSportPicker() {
+    const existing = document.getElementById('otherSportModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'otherSportModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:980;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:18px 18px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column" onclick="event.stopPropagation()">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:16px">Choisir un sport</div>
+        <div style="overflow-y:auto;flex:1;display:flex;flex-wrap:wrap;gap:8px;padding-bottom:8px">
+          ${OTHER_SPORTS.map(s => `
+            <button onclick="pickOtherSport('${s.replace(/'/g,"\\'")}');document.getElementById('otherSportModal').remove()"
+              style="background:var(--warm);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap">${s}</button>
+          `).join('')}
+        </div>
+        <button onclick="document.getElementById('otherSportModal').remove()"
+          style="width:100%;margin-top:12px;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);cursor:pointer;flex-shrink:0">
+          Annuler
+        </button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  function pickOtherSport(sport) {
+    if (sport === 'Autre…') {
+      const custom = prompt('Nom du sport :');
+      if (!custom) return;
+      startFreeSessionType(custom);
+    } else {
+      startFreeSessionType(sport);
+    }
   }
 
   function toggleAddExForm() {
@@ -6131,6 +6187,33 @@
     }
   }
 
+  let _weightHistoWeekOffset = 0; // 0 = semaine en cours, -1 = semaine dernière, etc.
+
+  function weightHistoPrevWeek() {
+    _weightHistoWeekOffset--;
+    document.getElementById('weightSearchDate').value = '';
+    renderWeightTab();
+  }
+
+  function weightHistoToday() {
+    _weightHistoWeekOffset = 0;
+    document.getElementById('weightSearchDate').value = '';
+    renderWeightTab();
+  }
+
+  function _getWeekBounds(offset) {
+    const now = new Date();
+    const dow = now.getDay(); // 0=dim
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1) + offset * 7);
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23,59,59,999);
+    const toStr = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    return { start: toStr(monday), end: toStr(sunday), mondayLabel: monday.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}), sundayLabel: sunday.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) };
+  }
+
   function renderWeightTab() {
     // Set default date to today
     const dateEl = document.getElementById('weightDate');
@@ -6170,8 +6253,22 @@
     if (!bodyWeights.length) { histEl.innerHTML='<div style="padding:16px;font-size:11px;color:var(--muted2);text-align:center">Aucun enregistrement encore.</div>'; return; }
     const monthFilter = document.getElementById('weightSearchDate')?.value || '';
     let displayWeights = [...bodyWeights].reverse();
-    if (monthFilter) displayWeights = displayWeights.filter(w => w.date.startsWith(monthFilter));
-    else displayWeights = displayWeights.slice(0, 14);
+    const weekLabel = document.getElementById('weightHistWeekLabel');
+
+    if (monthFilter) {
+      // Filtre par mois explicite
+      displayWeights = displayWeights.filter(w => w.date.startsWith(monthFilter));
+      if (weekLabel) weekLabel.textContent = '';
+    } else {
+      // Navigation par semaine
+      const { start, end, mondayLabel, sundayLabel } = _getWeekBounds(_weightHistoWeekOffset);
+      displayWeights = displayWeights.filter(w => w.date >= start && w.date <= end);
+      const isCurrentWeek = _weightHistoWeekOffset === 0;
+      if (weekLabel) weekLabel.textContent = isCurrentWeek ? `SEMAINE EN COURS · ${mondayLabel} – ${sundayLabel}` : `SEMAINE DU ${mondayLabel} AU ${sundayLabel}`;
+      // Bouton "Aujourd'hui" grisé si déjà sur la semaine courante
+      const todayBtn = document.getElementById('weightHistoTodayBtn');
+      if (todayBtn) todayBtn.style.opacity = isCurrentWeek ? '0.4' : '1';
+    }
     if (!displayWeights.length) { histEl.innerHTML='<div style="padding:16px;font-size:11px;color:var(--muted2);text-align:center">Aucun résultat pour ce mois.</div>'; return; }
     histEl.innerHTML=displayWeights.map((w,i,arr)=>{
       const prev=arr[i+1]; const diff=prev?(w.kg-prev.kg).toFixed(1):null;
@@ -6925,19 +7022,39 @@
       if (!meals.length) {
         html = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Aucun plat enregistré.<br><span style="font-size:11px;opacity:0.7">Appuie sur "Créer un plat" pour commencer.</span></div>`;
       } else {
-        window._nutriSuggCache = meals.map(m => ({ name: m.name, kcal: m.kcal, prot: m.prot, gluc: m.gluc, lip: m.lip, fib: m.fib || 0 }));
-        html = meals.map((m, i) => `
-          <div style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border)">
-            <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:600;color:var(--text)">${m.name}</div>
-              <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</div>
+        window._nutriSuggCache = meals.map(m => ({ ...m }));
+        html = meals.map((m, i) => {
+          const isOpen = window._openMealCards && window._openMealCards.has(i);
+          return `
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:var(--card-shadow)">
+            <!-- Header cliquable -->
+            <div onclick="toggleMealCard(${i})" style="display:flex;align-items:center;padding:13px 14px;cursor:pointer;gap:10px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+                <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${m.kcal} kcal · ${m.prot}P ${m.gluc}G ${m.lip}L · ${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="transition:transform 0.2s;transform:rotate(${isOpen ? '180deg' : '0deg'})"><polyline points="6 9 12 15 18 9"/></svg>
+                <button onclick="event.stopPropagation();deleteSavedMeal('${m.id}')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px">🗑</button>
+                <button onclick="event.stopPropagation();openMealAsEntry(${i})"
+                  style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0">+</button>
+              </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px">
-              <button onclick="deleteSavedMeal('${m.id}')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px">🗑</button>
-              <button onclick="openNutriFromCache(${i})"
-                style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">+</button>
-            </div>
-          </div>`).join('');
+            <!-- Accordéon ingrédients -->
+            ${isOpen && m.ingredients?.length ? `
+            <div style="border-top:1px solid var(--border);padding:8px 14px 12px">
+              <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">Ingrédients</div>
+              ${m.ingredients.map(ing => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border)">
+                  <div>
+                    <div style="font-size:13px;color:var(--text)">${ing.name}</div>
+                    <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">${ing.qty}g · ${Math.round(ing.prot*10)/10}P ${Math.round(ing.gluc*10)/10}G ${Math.round(ing.lip*10)/10}L</div>
+                  </div>
+                  <div style="font-size:13px;color:var(--text);font-family:'Geist Mono',monospace;margin-left:10px;flex-shrink:0">${Math.round(ing.kcal)} kcal</div>
+                </div>`).join('')}
+            </div>` : ''}
+          </div>`;
+        }).join('');
       }
     }
 
@@ -7140,6 +7257,36 @@
     const lip100  = f.lip100  || f.lip;
     const fib100  = f.fib100  || f.fib || 0;
     openNutriQtyModal(encodeURIComponent(f.name), kcal100, prot100, gluc100, lip100, fib100, undefined, f.brand || null, f.servingG || null, f.servingLabel || null);
+  }
+
+  // Ouvre un plat enregistré avec "1 portion" en premier
+  function openMealAsEntry(i) {
+    const m = (window._nutriSuggCache || [])[i];
+    if (!m) return;
+    const totalQty = m.qty || m.ingredients?.reduce((s, ing) => s + ing.qty, 0) || 100;
+    // Les macros sont pour le plat entier (1 portion = totalQty g)
+    // On recalcule les valeurs pour 100g pour openNutriQtyModal
+    const kcal100 = Math.round(m.kcal / totalQty * 100);
+    const prot100 = Math.round(m.prot / totalQty * 1000) / 10;
+    const gluc100 = Math.round(m.gluc / totalQty * 1000) / 10;
+    const lip100  = Math.round(m.lip  / totalQty * 1000) / 10;
+    const fib100  = Math.round((m.fib || 0) / totalQty * 1000) / 10;
+    // Ouvre la modal avec la portion entière pré-sélectionnée
+    openNutriQtyModal(
+      encodeURIComponent(m.name),
+      kcal100, prot100, gluc100, lip100, fib100,
+      totalQty,       // quantité par défaut = 1 portion complète
+      null,
+      totalQty,       // servingG = taille de la portion
+      '1 portion'     // label affiché dans le select
+    );
+  }
+
+  window._openMealCards = new Set();
+  function toggleMealCard(i) {
+    if (window._openMealCards.has(i)) window._openMealCards.delete(i);
+    else window._openMealCards.add(i);
+    renderNutriAddBody();
   }
 
   function _recentClick(i) {
