@@ -265,7 +265,7 @@
   .btn-ghost.danger:hover { border-color: var(--accent2); color: var(--accent2); }
   .create-routine-form { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 18px; box-shadow: var(--card-shadow); }
   .routine-ex-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-  .routine-ex-edit-row { background: var(--warm); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display:flex; flex-direction:column; gap:6px; transition: opacity 0.15s; }
+  .routine-ex-edit-row { background: var(--surface); border: 0.5px solid var(--border); border-radius: 14px; padding: 12px 14px; display:flex; flex-direction:column; gap:8px; transition: opacity 0.15s; box-shadow: var(--card-shadow); }
   .routine-ex-edit-row.rex-warmup { border-color: rgba(201,150,42,0.4); background: rgba(201,150,42,0.06); }
   .routine-ex-edit-row.rex-superset { border-color: rgba(74,140,92,0.4); background: rgba(74,140,92,0.06); }
   .routine-ex-edit-row.ex-dragging { opacity: 0.4; }
@@ -4923,6 +4923,7 @@
         ondragover="event.preventDefault();this.classList.add('ex-drag-over')"
         ondragleave="this.classList.remove('ex-drag-over')"
         ondrop="event.preventDefault();this.classList.remove('ex-drag-over');if(inlineExDragSrc!==null&&inlineExDragSrc!==${i}){const moved=draftRoutineExs.splice(inlineExDragSrc,1)[0];draftRoutineExs.splice(${i},0,moved);inlineExDragSrc=null;renderInlineDraftExs('${routineId}');}">
+        <!-- Ligne 1 : handle + nom + actions -->
         <div class="routine-ex-edit-top">
           <span class="ex-drag-handle" title="Déplacer" draggable="true"
             ondragstart="inlineExDragSrc=${i};document.getElementById('inline-ex-row-${routineId}-${i}').classList.add('ex-dragging');event.dataTransfer.effectAllowed='move'"
@@ -4931,7 +4932,8 @@
             ontouchmove="onInlineExTouchMove(event,${i},'${routineId}')"
             ontouchend="onInlineExTouchEnd(event,${i},'${routineId}')">⠿</span>
           <div class="rex-name-wrap" style="flex:1;position:relative">
-            <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
+            <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom de l'exercice"
+              style="font-family:'DM Serif Display',serif;font-size:15px;font-style:italic;background:transparent;border:none;border-bottom:1px solid var(--border);border-radius:0;padding:4px 2px;width:100%;outline:none;color:var(--text)"
               oninput="draftRoutineExs[${i}].name=this.value;filterInlineRowExSug('${routineId}',${i},this.value)"
               onfocus="filterInlineRowExSug('${routineId}',${i},this.value)"
               onblur="setTimeout(()=>{const b=document.getElementById('inlineRowExSug-${routineId}-${i}');if(b)b.classList.remove('show');},180)"
@@ -4941,25 +4943,27 @@
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
             <button onclick="toggleInlineDraftSuperset(${i},'${routineId}')"
               title="${isInSS ? 'Retirer du superset' : 'Lier en superset avec le suivant'}"
-              style="background:${isInSS?'var(--accent)':'none'};color:${isInSS?'#fff':'var(--muted)'};border:1px solid ${isInSS?'var(--accent)':'var(--border)'};border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;font-family:'Geist Mono',monospace">⇄</button>
-            <button class="routine-ex-del" onclick="draftRoutineExs.splice(${i},1);renderInlineDraftExs('${routineId}')" style="font-size:14px;padding:4px 8px;">✕</button>
+              style="background:${isInSS?'var(--accent)':'none'};color:${isInSS?'#fff':'var(--muted)'};border:0.5px solid ${isInSS?'var(--accent)':'var(--border)'};border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer">⇄</button>
+            <button onclick="draftRoutineExs.splice(${i},1);renderInlineDraftExs('${routineId}')"
+              style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px">✕</button>
           </div>
         </div>
-        <div class="routine-ex-edit-bot" style="flex-wrap:wrap;gap:6px">
-          <select class="rex-inp" style="flex:1;min-width:100px" onchange="draftRoutineExs[${i}].muscle=this.value">
+        <!-- Ligne 2 : muscle + séries + reps + repos -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-left:28px">
+          <select class="rex-inp" style="flex:1;min-width:100px;font-size:11px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 8px" onchange="draftRoutineExs[${i}].muscle=this.value">
             <option value="">Muscle</option>
             ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdos','Fessiers','Adducteurs','Abducteurs','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
           </select>
-          <input class="rex-inp" type="number" style="width:50px;text-align:center;flex-shrink:0" placeholder="Séries" value="${ex.sets}" min="1" max="10"
+          <input class="rex-inp" type="number" style="width:48px;text-align:center;flex-shrink:0;font-size:13px;font-weight:500;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px" placeholder="Séries" value="${ex.sets}" min="1" max="10"
             oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3"/>
-          <input class="rex-inp" type="text" style="width:58px;text-align:center;flex-shrink:0" placeholder="${ex.unit==='sec'?'Durée':'Reps'}" value="${ex.repsTarget||''}" maxlength="8"
+          <input class="rex-inp" type="text" style="width:56px;text-align:center;flex-shrink:0;font-size:13px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px" placeholder="${ex.unit==='sec'?'Durée':'Reps'}" value="${ex.repsTarget||''}" maxlength="8"
             oninput="draftRoutineExs[${i}].repsTarget=this.value.trim()"/>
-          <select class="rex-inp" style="width:80px;flex-shrink:0" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
+          <select class="rex-inp" style="width:78px;flex-shrink:0;font-size:11px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px" onchange="onInlineDraftRestChange('${routineId}',${i},this)">
             ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans'],['custom','Perso.']].map(([v,l])=>`<option value="${v}" ${v!=='custom'&&parseInt(ex.restTime)===parseInt(v)?'selected':v==='custom'&&![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'selected':''}>${l}</option>`).join('')}
           </select>
           <input class="rex-inp" type="number" placeholder="Sec." min="5" max="600"
             id="inlineDraftRest-${routineId}-${i}"
-            style="width:52px;flex-shrink:0;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'}"
+            style="width:52px;flex-shrink:0;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'};border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px"
             value="${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?ex.restTime:''}"
             oninput="draftRoutineExs[${i}].restTime=parseInt(this.value)||90"/>
         </div>
