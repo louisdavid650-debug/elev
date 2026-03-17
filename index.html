@@ -61,6 +61,11 @@
   html.dark header svg text { fill: var(--text); }
   html.dark header svg line { stroke: var(--text); }
   html.dark body { color: var(--text); }
+  .ex-menu-item { display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;color:var(--text);font-family:'Geist Mono',monospace;font-size:13px;border-bottom:0.5px solid var(--border);transition:background 0.15s; }
+  .ex-menu-item:last-child { border-bottom:none; }
+  .ex-menu-item:active { background:var(--surface2); }
+  .ex-menu-danger { color:#c0392b; }
+  .ex-menu-danger svg { stroke:#c0392b; }
   html.dark .bottom-nav { background: rgba(28,28,30,0.97); }
   html.dark header { background: rgba(28,28,30,0.97); border-bottom-color: var(--border); }
 
@@ -3550,9 +3555,9 @@
             <div class="ex-meta">${ex.muscle?'<span class="ex-muscle-tag">'+ex.muscle+'</span>':''}${pr?'<span class="ex-pr-badge">🏆 PR '+pr.weight+'kg × '+pr.reps+'reps</span>':''}${ex.sets.some(s=>s.warmup)?'<span class="warmup-badge">🔥 Échauff.</span>':''}</div></div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:11px;letter-spacing:0.5px;font-family:Geist Mono,monospace;" onclick="openSSPicker(${ei})" title="Superset">⇄</button>
-            <button class="ex-del" style="background:#f0ece6;color:var(--muted);font-size:13px;" onclick="openReplaceModal(${ei})">✏️</button>
-            <button class="ex-del" onclick="delEx(${ei})">✕</button>
+            <button onclick="openExMenu(${ei})" style="width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--muted)"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            </button>
           </div></div>
         <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps</div><div style="font-size:9px">${lastLabel ? lastLabel : 'Dernière'}</div><div>✓</div></div>
         ${(() => {
@@ -3894,6 +3899,43 @@
   }
   function _rerender() { if (_sessionFsOpen) { flushFsInputs(); renderSessionFs(); syncFsTimer(); } else { renderExercises(); } autosaveDraft(); }
   function delEx(ei) { exercises.splice(ei,1); _rerender(); }
+
+  // ── Menu contextuel exercice ──
+  let _exMenuEi = null;
+  function openExMenu(ei) {
+    _exMenuEi = ei;
+    const ex = exercises[ei];
+    if (!ex) return;
+    document.getElementById('exMenuTitle').textContent = ex.name;
+    const hasWarmup = ex.sets.some(s => s.warmup);
+    document.getElementById('exMenuItems').innerHTML = `
+      <div onclick="closeExMenu();setTimeout(()=>toggleReorderMode(),100)" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+        <span>Réorganiser</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>openReplaceModal(_exMenuEi),100)" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+        <span>Remplacer l'exercice</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>openSSPicker(_exMenuEi),100)" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Ajouter au superset</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>toggleWarmup(_exMenuEi),100)" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a7 7 0 00-7 7c0 4 3 6 5 8l2 3 2-3c2-2 5-4 5-8a7 7 0 00-7-7z"/></svg>
+        <span>${hasWarmup ? "Retirer l'échauffement" : "Ajouter des séries d'échauffement"}</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>{if(confirm('Supprimer '+exercises[_exMenuEi]?.name+' ?'))delEx(_exMenuEi);},100)" class="ex-menu-item ex-menu-danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        <span>Retirer l'exercice</span>
+      </div>
+    `;
+    document.getElementById('exMenuOverlay').style.display = 'block';
+  }
+  function closeExMenu() {
+    document.getElementById('exMenuOverlay').style.display = 'none';
+    _exMenuEi = null;
+  }
   function addSet(ei) { exercises[ei].sets.push({w:'',r:'',done:false}); _rerender(); }
   function delSet(ei, si) { if (exercises[ei].sets.length <= 1) { showToast('Minimum 1 série'); return; } exercises[ei].sets.splice(si, 1); _rerender(); }
 
@@ -11960,6 +12002,15 @@
     </div>
     </div><!-- end expicker-config-sheet -->
   </div>
+
+<!-- ══ MENU CONTEXTUEL EXERCICE ══ -->
+<div id="exMenuOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1070" onclick="closeExMenu()">
+  <div id="exMenuSheet" style="position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 0 max(24px,env(safe-area-inset-bottom));max-width:500px;margin:0 auto" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 16px"></div>
+    <div id="exMenuTitle" style="font-family:'DM Serif Display',serif;font-size:16px;font-style:italic;color:var(--text);padding:0 20px 12px;border-bottom:0.5px solid var(--border)"></div>
+    <div id="exMenuItems"></div>
+  </div>
+</div>
 
 </body>
 </html>
