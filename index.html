@@ -3583,7 +3583,7 @@
         ${(() => {
           const wuSets = ex.sets.filter(s => s.warmup);
           const workSets = ex.sets.filter(s => !s.warmup);
-          const pctLabels = ['50%','70%','85%'];
+          const wuReps = ['8','5','3'];
           let html = '';
           if (wuSets.length) {
             html += '<div class="warmup-sep">🔥 Échauffement</div>';
@@ -3591,7 +3591,7 @@
               <div class="set-n wu-n">W${wi+1}</div>
               <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
               <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
-              <div class="set-prev wu-prev">${pctLabels[wi]||''}<span>× ${s.r||'?'}</span></div>
+              <div class="set-prev wu-prev">${wuReps[wi]||'?'}<span> reps</span></div>
               <div style="display:flex;align-items:center;gap:4px">
                 <button class="set-tick wu-tick ${s.done?'done':''}" onclick="tickWU(${ei},${wi})">${s.done?'✓':'·'}</button>
               </div>
@@ -4075,7 +4075,32 @@
     exercises[ei].sets[si][f]=v;
     autosaveDraft();
     const isWarmup = exercises[ei].sets[si].warmup;
-    if (f==='w'&&v&&!isWarmup) { const w=parseFloat(v); if(w>0&&checkNewPR(exercises[ei].name,w)){const card=document.getElementById(`excard-${ei}`);if(card)card.classList.add('pr-flash');setTimeout(()=>card&&card.classList.remove('pr-flash'),1500);showToast(`🏆 Nouveau PR sur ${exercises[ei].name} !`);if(navigator.vibrate)navigator.vibrate([80,40,120]);} }
+
+    // Recalcul automatique des poids warmup quand on entre le poids de la première série de travail
+    if (f==='w' && !isWarmup && v) {
+      const w = parseFloat(v);
+      if (w > 0) {
+        const ex = exercises[ei];
+        const wuSets = ex.sets.filter(s => s.warmup);
+        if (wuSets.length) {
+          const pcts = [0.5, 0.7, 0.85];
+          wuSets.forEach((s, wi) => {
+            const rounded = Math.round(w * (pcts[wi] || 0.5) * 2) / 2; // arrondi 0.5kg
+            s.w = rounded;
+          });
+          _rerender();
+          return;
+        }
+        // PR check
+        if (checkNewPR(ex.name, w)) {
+          const card = document.getElementById(`excard-${ei}`);
+          if (card) card.classList.add('pr-flash');
+          setTimeout(() => card && card.classList.remove('pr-flash'), 1500);
+          showToast(`🏆 Nouveau PR sur ${ex.name} !`);
+          if (navigator.vibrate) navigator.vibrate([80,40,120]);
+        }
+      }
+    }
   }
   function updWU(ei, wi, f, v) {
     const wuSets = exercises[ei].sets.filter(s => s.warmup);
