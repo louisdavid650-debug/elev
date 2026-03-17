@@ -10702,7 +10702,7 @@
     }
 
     if (_fsExEditIdx !== null && exercises[_fsExEditIdx]) {
-      // Mode édition en séance en cours
+      // Mode édition en séance en cours — fermer juste la sheet
       const ex = exercises[_fsExEditIdx];
       ex.name = name; ex.muscle = muscle; ex.repsTarget = repsTarget; ex.restTime = restTime;
       const workSets = ex.sets.filter(s => !s.warmup);
@@ -10711,7 +10711,11 @@
       while (workSets.length > sets) workSets.pop();
       ex.sets = [...wuSets, ...workSets];
       _fsExEditIdx = null;
+      closeExPickerConfig();
+      autosaveDraft();
+      _rerender();
       showToast('"' + name + '" modifié ✓');
+      return;
     } else {
       // Mode ajout en séance en cours
       const newSets = Array.from({length: sets}, () => ({w:'',r:'',done:false}));
@@ -10747,7 +10751,6 @@
     const restMap = {60:'1 min',90:'1 min 30',120:'2 min',180:'3 min',0:'Sans'};
     document.querySelectorAll('#exPickerRestOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o.textContent === (restMap[_exPickerConfig.restTime]||'1 min 30')));
     document.getElementById('exPickerWarmup').checked = _exPickerConfig.warmup;
-    document.getElementById('exPickerModal').classList.add('open');
     document.getElementById('exPickerConfig').classList.add('open');
   }
 
