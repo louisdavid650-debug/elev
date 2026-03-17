@@ -640,6 +640,36 @@
   .ex-card.ex-dragging { opacity:0.4; }
   .ex-card.ex-drag-over { border-color: var(--accent); border-style: dashed; }
 
+  /* ── Exercise Picker Modal ── */
+  #exPickerModal { position:fixed;inset:0;z-index:1050;background:var(--bg);display:none;flex-direction:column;overflow:hidden; }
+  #exPickerModal.open { display:flex; }
+  .expicker-header { padding:calc(env(safe-area-inset-top)+12px) 16px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg); }
+  .expicker-search-wrap { flex:1;position:relative;display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0 12px;gap:8px; }
+  .expicker-search-inp { flex:1;background:none;border:none;outline:none;font-family:'Geist Mono',monospace;font-size:13px;color:var(--text);padding:10px 0; }
+  .expicker-search-inp::placeholder { color:var(--muted2); }
+  .expicker-muscles { display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);scrollbar-width:none; }
+  .expicker-muscles::-webkit-scrollbar { display:none; }
+  .expicker-chip { background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:5px 14px;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;font-family:'Geist Mono',monospace; }
+  .expicker-chip.on { background:var(--accent);border-color:var(--accent);color:#fff; }
+  .expicker-list { flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 16px 100px; }
+  .expicker-item { display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all 0.15s; }
+  .expicker-item:hover,.expicker-item:active { border-color:var(--accent);background:var(--accent-light); }
+  .expicker-item-name { font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);line-height:1.2; }
+  .expicker-item-meta { font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:3px;letter-spacing:0.5px; }
+  .expicker-item-freq { font-size:9px;background:var(--accent-light);color:var(--accent);border-radius:20px;padding:2px 8px;font-family:'Geist Mono',monospace; }
+  /* Step 2 — config */
+  .expicker-config { position:absolute;inset:0;background:var(--bg);z-index:10;display:none;flex-direction:column;overflow:hidden; }
+  .expicker-config.open { display:flex; }
+  .expicker-stepper { display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border); }
+  .expicker-stepper-label { font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase; }
+  .expicker-stepper-ctrl { display:flex;align-items:center;gap:14px; }
+  .expicker-minus,.expicker-plus { width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--muted);transition:all 0.15s; }
+  .expicker-plus { background:var(--accent);border-color:var(--accent);color:#fff; }
+  .expicker-val { font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);min-width:28px;text-align:center; }
+  .expicker-rest-opts { display:flex;gap:8px;flex-wrap:wrap; }
+  .expicker-rest-opt { background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Geist Mono',monospace;transition:all 0.15s; }
+  .expicker-rest-opt.on { background:var(--accent);border-color:var(--accent);color:#fff; }
+
   /* ── Meal page swipe to close ── */
   #mealPageOverlay { transition: transform 0.3s cubic-bezier(.4,0,.2,1); transform: translateX(0); }
   #mealPageOverlay.slide-out { transform: translateX(100%); }
@@ -10259,6 +10289,185 @@
   }
 
   let _reorderMode = false;
+  // ── Exercise Picker Modal ──
+  let _exPickerMuscleFilter = '';
+  let _exPickerConfig = { sets: 3, repsTarget: '8–12', restTime: 90, warmup: false };
+  let _exPickerSelected = null;
+
+  function openExPickerModal() {
+    _exPickerMuscleFilter = '';
+    document.getElementById('exPickerSearch').value = '';
+    document.querySelectorAll('.expicker-chip').forEach((c,i) => c.classList.toggle('on', i===0));
+    document.getElementById('exPickerConfig').classList.remove('open');
+    document.getElementById('exPickerModal').classList.add('open');
+    renderExPickerList();
+    setTimeout(() => document.getElementById('exPickerSearch').focus(), 200);
+  }
+
+  function closeExPickerModal() {
+    document.getElementById('exPickerModal').classList.remove('open');
+  }
+
+  function setExPickerMuscle(muscle, chip) {
+    _exPickerMuscleFilter = muscle;
+    document.querySelectorAll('.expicker-chip').forEach(c => c.classList.remove('on'));
+    chip.classList.add('on');
+    renderExPickerList();
+  }
+
+  function renderExPickerList() {
+    const q = (document.getElementById('exPickerSearch')?.value || '').trim().toLowerCase();
+    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const qNorm = norm(q);
+
+    // Compter l'usage de chaque exercice
+    const usageMap = {};
+    exercises.concat(sessions.flatMap(s => s.exercises || [])).forEach(e => {
+      const k = norm(e.name); usageMap[k] = (usageMap[k]||0) + 1;
+    });
+
+    // Construire la liste : historique + base locale
+    const known = getKnownExercises();
+    const seen = new Set();
+    let items = [];
+
+    // D'abord les exercices connus avec usage
+    known.forEach(e => {
+      const k = norm(e.name);
+      if (seen.has(k)) return;
+      if (_exPickerMuscleFilter && e.muscle !== _exPickerMuscleFilter) return;
+      if (q && !norm(e.name).includes(qNorm)) return;
+      seen.add(k);
+      items.push({ ...e, _usage: usageMap[k]||0 });
+    });
+
+    // Tri : déjà utilisés en premier, puis par pertinence
+    items.sort((a, b) => {
+      if ((a._usage>0) !== (b._usage>0)) return b._usage>0 ? 1 : -1;
+      if (!q) return (b._usage - a._usage) || a.name.localeCompare(b.name);
+      const ra = norm(a.name).startsWith(qNorm) ? 0 : 1;
+      const rb = norm(b.name).startsWith(qNorm) ? 0 : 1;
+      return ra - rb || a.name.localeCompare(b.name);
+    });
+
+    const list = document.getElementById('exPickerList');
+    if (!items.length) {
+      list.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace">
+        ${q ? 'Aucun résultat pour « ' + q + ' »' : 'Aucun exercice trouvé'}
+        <div style="margin-top:12px">
+          <button onclick="openExPickerConfigCustom()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer">+ Créer « ${q || 'Nouvel exercice'} »</button>
+        </div>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = items.map(ex => {
+      const freq = ex._usage > 0 ? `<span class="expicker-item-freq">${ex._usage > 1 ? ex._usage + '×' : 'Déjà utilisé'}</span>` : '';
+      const muscle = ex.muscle ? `<span style="color:var(--terra)">${ex.muscle}</span>` : '';
+      return `<div class="expicker-item" onclick="openExPickerConfig(${JSON.stringify(ex.name).replace(/</g,'&lt;')},${JSON.stringify(ex.muscle||'').replace(/</g,'&lt;')})">
+        <div style="flex:1;min-width:0">
+          <div class="expicker-item-name">${ex.name}</div>
+          <div class="expicker-item-meta" style="display:flex;align-items:center;gap:6px;margin-top:4px">${muscle}${freq}</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="flex-shrink:0;margin-left:8px"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
+    }).join('');
+
+    // Bouton créer en bas si recherche active
+    if (q) {
+      list.innerHTML += `<div style="text-align:center;padding:16px 0 8px">
+        <button onclick="openExPickerConfigCustom()" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:10px 20px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer;width:100%">+ Créer « ${q} »</button>
+      </div>`;
+    }
+  }
+
+  function openExPickerConfig(name, muscle) {
+    _exPickerSelected = { name, muscle };
+    _exPickerConfig = { sets: 3, repsTarget: '8–12', restTime: 90, warmup: false };
+    document.getElementById('exPickerConfigTitle').textContent = name;
+    document.getElementById('exPickerConfigName').textContent = name;
+    document.getElementById('exPickerConfigMuscle').textContent = muscle || '';
+    document.getElementById('exPickerSetsVal').textContent = '3';
+    document.querySelectorAll('#exPickerRepsOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o.textContent === '8–12'));
+    document.querySelectorAll('#exPickerRestOpts .expicker-rest-opt').forEach((o,i) => o.classList.toggle('on', i===1));
+    document.getElementById('exPickerWarmup').checked = false;
+    document.getElementById('exPickerConfig').classList.add('open');
+  }
+
+  function openExPickerConfigCustom() {
+    const q = document.getElementById('exPickerSearch')?.value.trim() || 'Nouvel exercice';
+    openExPickerConfig(q, _exPickerMuscleFilter || '');
+  }
+
+  function closeExPickerConfig() {
+    document.getElementById('exPickerConfig').classList.remove('open');
+  }
+
+  function exPickerAdjust(field, delta) {
+    if (field === 'sets') {
+      _exPickerConfig.sets = Math.max(1, Math.min(10, (_exPickerConfig.sets||3) + delta));
+      document.getElementById('exPickerSetsVal').textContent = _exPickerConfig.sets;
+    }
+  }
+
+  function selectExPickerReps(el, val) {
+    _exPickerConfig.repsTarget = val;
+    document.querySelectorAll('#exPickerRepsOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o === el));
+  }
+
+  function selectExPickerRest(el, val) {
+    _exPickerConfig.restTime = val;
+    document.querySelectorAll('#exPickerRestOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o === el));
+  }
+
+  function confirmExPicker() {
+    if (!_exPickerSelected) return;
+    const { name, muscle } = _exPickerSelected;
+    const { sets, repsTarget, restTime } = _exPickerConfig;
+    const warmup = document.getElementById('exPickerWarmup').checked;
+    const newSets = Array.from({length: sets}, () => ({w:'',r:'',done:false}));
+    if (warmup) newSets.unshift({w:'',r:'',done:false,warmup:true});
+    exercises.push({ id: Date.now() + Math.random(), name, muscle, restTime, repsTarget, sets: newSets });
+    autosaveDraft();
+    closeExPickerModal();
+    _rerender();
+    showToast('"' + name + '" ajouté ✓');
+  }
+
+  // ── FS Exercise Edit ──
+  let _fsExEditIdx = null;
+  function openFsExEdit(ei) {
+    _fsExEditIdx = ei;
+    const ex = exercises[ei];
+    if (!ex) return;
+    document.getElementById('fsExEditName').value = ex.name || '';
+    document.getElementById('fsExEditMuscle').value = ex.muscle || '';
+    document.getElementById('fsExEditSug').classList.remove('show');
+    document.getElementById('fsExEditModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('fsExEditName').focus(), 100);
+  }
+  function closeFsExEdit() {
+    document.getElementById('fsExEditModal').style.display = 'none';
+    _fsExEditIdx = null;
+  }
+  function saveFsExEdit() {
+    if (_fsExEditIdx === null || !exercises[_fsExEditIdx]) return;
+    exercises[_fsExEditIdx].name = document.getElementById('fsExEditName').value.trim() || exercises[_fsExEditIdx].name;
+    exercises[_fsExEditIdx].muscle = document.getElementById('fsExEditMuscle').value;
+    closeFsExEdit();
+    _rerender();
+  }
+  function filterFsExEditSug(q) {
+    const box = document.getElementById('fsExEditSug');
+    if (!box) return;
+    const matches = q ? getKnownExercises().filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onmousedown="event.preventDefault();document.getElementById('fsExEditName').value='${e.name.replace(/'/g, String.fromCharCode(39))}';document.getElementById('fsExEditMuscle').value='${(e.muscle||'').replace(/'/g, String.fromCharCode(39))}';document.getElementById('fsExEditSug').classList.remove('show')">
+      <span>${e.name}</span>${e.muscle ? '<span class="ex-sug-muscle">' + e.muscle + '</span>' : ''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+
   function toggleReorderMode() {
     _reorderMode = !_reorderMode;
     document.body.classList.toggle('reorder-mode', _reorderMode);
@@ -10409,10 +10618,15 @@
 
   // ── Notes par exercice ──
   function toggleExNote(ei) {
-    const area = document.getElementById('ex-note-' + ei) || document.querySelector(`#excard-${ei} .ex-note-area`);
+    const area = document.getElementById('ex-note-' + ei)
+      || document.getElementById('ex-note-fs-' + ei)
+      || document.querySelector(`#excard-${ei} .ex-note-area`)
+      || document.querySelector(`#fsexcard-${ei} .ex-note-area`);
     if (!area) return;
     const isVisible = area.style.display !== 'none';
     area.style.display = isVisible ? 'none' : 'block';
+    const btn = document.getElementById('ex-note-btn-fs-' + ei) || document.getElementById('ex-note-btn-' + ei);
+    if (btn) btn.classList.toggle('wu-active', !isVisible);
     if (!isVisible) setTimeout(() => area.focus(), 50);
   }
   function updExNote(ei, val) {
@@ -10681,41 +10895,21 @@
         <div class="ex-actions-row">
           <button class="add-set" onclick="addSet(${ei})">+ Série</button>
           <button class="add-set wu-btn${ex.sets.some(s=>s.warmup)?' wu-active':''}" onclick="toggleWarmup(${ei})">${ex.sets.some(s=>s.warmup)?'🔥 Retirer':'🔥 Échauff.'}</button>
+          <button class="add-set" onclick="openFsExEdit(${ei})" style="font-size:11px">✏️ Modifier</button>
           <button class="ex-note-toggle${ex.note ? ' wu-active' : ''}" onclick="toggleExNote(${ei})" id="ex-note-btn-fs-${ei}">📝 Notes</button>
         </div>
-        ${ex.note !== undefined ? `<textarea class="ex-note-area" placeholder="Note sur l'exercice..." oninput="exercises[${ei}].note=this.value">${ex.note||''}</textarea>` : ''}
+        <textarea class="ex-note-area" id="ex-note-fs-${ei}" placeholder="Note sur l'exercice..." style="display:${ex.note ? 'block' : 'none'}" oninput="exercises[${ei}].note=this.value;updExNote(${ei},this.value)">${ex.note||''}</textarea>
       </div>`;
     }).join('') : `<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Aucun exercice — ajoute-en un ci-dessous</div>`;
 
     body.innerHTML = muscleHtml + `
       <div class="label" style="margin-bottom:8px">Exercices</div>
       <div id="exerciseListFs">${exHtml}</div>
-      <div class="add-form" style="margin-bottom:18px;margin-top:12px">
-        <button id="addExToggleBtnFs" class="btn-add" style="width:100%" onclick="toggleAddExFormFs()">+ Ajouter un exercice</button>
-        <div id="addExFormFs" style="display:none;margin-top:12px">
-          <div class="form-row">
-            <div style="position:relative;flex:1">
-              <input class="inp" id="exNameFs" placeholder="Nom de l'exercice" type="text" oninput="filterAddSuggestionsFs()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
-              <div class="ex-suggestions ex-add-suggestions" id="exAddSuggestionsFs"></div>
-            </div>
-            <select class="inp" id="exMuscleFs">
-              <option value="">Muscle</option>
-              <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
-              <option>Biceps</option><option>Triceps</option><option>Quadriceps</option><option>Ischio-jambiers</option>
-              <option>Abdos</option><option>Fessiers</option><option>Adducteurs</option><option>Abducteurs</option><option>Autre</option>
-            </select>
-          </div>
-          <div class="form-row" style="margin-top:8px">
-            <input class="inp" id="exSetsFs" type="number" placeholder="Séries" min="1" max="20" value="3" style="max-width:80px;text-align:center"/>
-            <select class="inp" id="exRestFs" onchange="document.getElementById('exRestCustomFs').style.display=this.value==='custom'?'block':'none'">
-              <option value="60">Repos 1 min</option><option value="90" selected>Repos 1m30</option>
-              <option value="120">Repos 2 min</option><option value="180">Repos 3 min</option>
-              <option value="0">Sans repos</option><option value="custom">Personnalisé...</option>
-            </select>
-            <input class="inp" id="exRestCustomFs" type="number" placeholder="Sec." style="max-width:80px;display:none;" min="5" max="600"/>
-          </div>
-          <button class="btn-add" style="width:100%;margin-top:8px" onclick="addExerciseFs()">+ Ajouter</button>
-        </div>
+      <div style="margin-bottom:18px;margin-top:12px">
+        <button onclick="openExPickerModal()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un exercice
+        </button>
       </div>
       <div class="label">Ressenti & notes</div>
       <textarea class="notes-area" id="sessionNotesFs" placeholder="Comment tu te sens aujourd'hui ?">${document.getElementById('sessionNotes')?.value||''}</textarea>
@@ -11366,6 +11560,138 @@
       </button>
     </div>
 
+  </div>
+</div>
+
+<!-- ══ EXERCISE PICKER MODAL ══ -->
+<div id="exPickerModal">
+  <!-- Header -->
+  <div class="expicker-header">
+    <button onclick="closeExPickerModal()" style="background:none;border:none;cursor:pointer;color:var(--text);padding:4px;display:flex;align-items:center;flex-shrink:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="expicker-search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="expicker-search-inp" id="exPickerSearch" placeholder="Rechercher un exercice…" autocomplete="off"
+        oninput="renderExPickerList()"/>
+    </div>
+  </div>
+  <!-- Filtres muscle -->
+  <div class="expicker-muscles" id="exPickerMuscles">
+    <div class="expicker-chip on" onclick="setExPickerMuscle('',this)">Tout</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Épaules',this)">Épaules</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Pectoraux',this)">Pecs</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Dos',this)">Dos</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Biceps',this)">Biceps</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Triceps',this)">Triceps</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Quadriceps',this)">Quadriceps</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Ischio-jambiers',this)">Ischios</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Abdos',this)">Abdos</div>
+    <div class="expicker-chip" onclick="setExPickerMuscle('Fessiers',this)">Fessiers</div>
+  </div>
+  <!-- Liste exercices -->
+  <div class="expicker-list" id="exPickerList"></div>
+
+  <!-- Step 2 — Configuration -->
+  <div class="expicker-config" id="exPickerConfig">
+    <div class="expicker-header" style="padding-top:calc(env(safe-area-inset-top)+12px)">
+      <button onclick="closeExPickerConfig()" style="background:none;border:none;cursor:pointer;color:var(--text);padding:4px;display:flex;align-items:center;flex-shrink:0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);flex:1;text-align:center" id="exPickerConfigTitle">Configurer</div>
+      <div style="width:30px"></div>
+    </div>
+    <!-- Exercice sélectionné -->
+    <div style="margin:16px 16px 0;background:var(--accent-light);border:1px solid var(--accent);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="exPickerConfigName"></div>
+        <div style="font-size:10px;color:var(--accent);font-family:'Geist Mono',monospace;margin-top:2px" id="exPickerConfigMuscle"></div>
+      </div>
+    </div>
+    <!-- Config -->
+    <div style="flex:1;overflow-y:auto;padding:16px">
+      <!-- Séries -->
+      <div class="expicker-stepper">
+        <div class="expicker-stepper-label">Séries</div>
+        <div class="expicker-stepper-ctrl">
+          <button class="expicker-minus" onclick="exPickerAdjust('sets',-1)">−</button>
+          <div class="expicker-val" id="exPickerSetsVal">3</div>
+          <button class="expicker-plus" onclick="exPickerAdjust('sets',1)">+</button>
+        </div>
+      </div>
+      <!-- Objectif reps -->
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Objectif reps</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="exPickerRepsOpts">
+          <div class="expicker-rest-opt" onclick="selectExPickerReps(this,'6–8')">6–8</div>
+          <div class="expicker-rest-opt on" onclick="selectExPickerReps(this,'8–12')">8–12</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerReps(this,'10–15')">10–15</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerReps(this,'12–20')">12–20</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerReps(this,'Max')">Max</div>
+        </div>
+      </div>
+      <!-- Temps de repos -->
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Temps de repos</div>
+        <div class="expicker-rest-opts" id="exPickerRestOpts">
+          <div class="expicker-rest-opt" onclick="selectExPickerRest(this,60)">1 min</div>
+          <div class="expicker-rest-opt on" onclick="selectExPickerRest(this,90)">1 min 30</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerRest(this,120)">2 min</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerRest(this,180)">3 min</div>
+          <div class="expicker-rest-opt" onclick="selectExPickerRest(this,0)">Sans</div>
+        </div>
+      </div>
+      <!-- Échauffement -->
+      <div style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;text-transform:uppercase">Série d'échauffement</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:2px">Ajoute une série légère avant le travail</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0">
+          <input type="checkbox" id="exPickerWarmup" style="opacity:0;width:0;height:0">
+          <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked" style="position:absolute;inset:0;background:var(--border2);border-radius:13px;cursor:pointer;transition:0.2s" id="exPickerWarmupSlider"></span>
+        </label>
+      </div>
+    </div>
+    <!-- Bouton confirmer -->
+    <div style="padding:12px 16px calc(env(safe-area-inset-bottom)+16px);flex-shrink:0;border-top:1px solid var(--border);background:var(--bg)">
+      <button onclick="confirmExPicker()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'DM Serif Display',serif;font-size:17px;cursor:pointer">
+        Ajouter à la séance
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FS EXERCISE EDIT MODAL ══ -->
+<div id="fsExEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:980;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFsExEdit()">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom)+28px);width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">Modifier l'exercice</div>
+      <button onclick="closeFsExEdit()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0">×</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">NOM</div>
+      <div style="position:relative">
+        <input id="fsExEditName" class="inp" placeholder="Nom de l'exercice" autocomplete="off" style="width:100%;box-sizing:border-box;font-size:15px"
+          oninput="filterFsExEditSug(this.value)"
+          onblur="setTimeout(()=>document.getElementById('fsExEditSug').classList.remove('show'),180)"/>
+        <div class="ex-suggestions ex-add-suggestions" id="fsExEditSug"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px">MUSCLE</div>
+      <select id="fsExEditMuscle" class="inp" style="width:100%;box-sizing:border-box">
+        <option value="">— Aucun —</option>
+        <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
+        <option>Biceps</option><option>Triceps</option><option>Quadriceps</option>
+        <option>Ischio-jambiers</option><option>Abdos</option><option>Fessiers</option>
+        <option>Adducteurs</option><option>Abducteurs</option><option>Autre</option>
+      </select>
+    </div>
+    <button onclick="saveFsExEdit()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:600">Valider</button>
   </div>
 </div>
 
