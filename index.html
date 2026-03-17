@@ -329,11 +329,11 @@
   .onboarding-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-family: Geist Mono, monospace; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; }
   .onboarding-back { background: none; border: none; color: var(--muted); font-size: 11px; font-family: Geist Mono, monospace; cursor: pointer; margin-top: 12px; width: 100%; text-align: center; }
   /* ── Daily greeting overlay ── */
-  .daily-overlay { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 40px 32px calc(max(28px, env(safe-area-inset-bottom)) + 8px); text-align: center; background: var(--bg); gap: 0; overflow-y: auto; }
-  .daily-overlay-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
+  .daily-overlay { position: fixed; inset: 0; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: calc(env(safe-area-inset-top) + 40px) 32px calc(env(safe-area-inset-bottom) + 40px); text-align: center; background: var(--bg); gap: 0; overflow-y: auto; }
+  .daily-overlay-top { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 40px; }
   .daily-greeting-name { font-family: 'DM Serif Display', serif; font-size: 52px; font-style: italic; color: var(--text); line-height: 1; margin-bottom: 4px; }
   .daily-greeting-title { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; font-style: italic; color: var(--muted); line-height: 1.4; margin-bottom: 8px; }
-  .daily-greeting-sub { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-bottom: 48px; }
+  .daily-greeting-sub { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted2); font-family: 'Geist Mono', monospace; margin-bottom: 0; }
   .daily-weight-row { display: flex; gap: 10px; width: 100%; max-width: 320px; margin-bottom: 16px; }
   .daily-weight-inp { flex: 1; background: var(--surface); border: none; border-bottom: 2px solid var(--border2); padding: 12px 8px; font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); outline: none; text-align: center; border-radius: 0; }
   .daily-weight-inp:focus { border-bottom-color: var(--accent); }
@@ -7867,6 +7867,7 @@
   function openNutriFromSearchCache(i) {
     const f = (window._nutriSearchCache || [])[i];
     if (!f) return;
+    if (f._fromOFF) _upsertOFFFood(f); // Sauvegarde silencieuse dans Supabase
     const kcal100 = f.kcal100 || f.kcal;
     const prot100 = f.prot100 || f.prot;
     const gluc100 = f.gluc100 || f.gluc;
@@ -7905,6 +7906,7 @@
   async function addNutriDirectFromSearch(i) {
     const f = (window._nutriSearchCache || [])[i];
     if (!f) return;
+    if (f._fromOFF) _upsertOFFFood(f); // Sauvegarde silencieuse dans Supabase
     const qty = 100;
     const entry = {
       id: Date.now(),
@@ -7921,6 +7923,32 @@
     window._nutriLastAddedId = entry.id;
     renderNutritionTab();
     _animateNutriEntry();
+  }
+
+  async function _upsertOFFFood(f) {
+    if (!f._fromOFF) return;
+    try {
+      const food = {
+        id: 'off_' + f.name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 60) + '_' + Math.abs(f.kcal || 0),
+        name: f.name,
+        brand: f.brand || null,
+        image_url: null,
+        kcal: f.kcal100 || f.kcal,
+        proteins: f.prot100 || f.prot,
+        carbs: f.gluc100 || f.gluc,
+        fat: f.lip100 || f.lip,
+        fiber: f.fib100 || f.fib || 0,
+        scan_count: 0,
+      };
+      await supaFetch('/rest/v1/foods', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates' },
+        body: JSON.stringify(food)
+      });
+    } catch(e) {
+      // Silencieux — pas bloquant pour l'utilisateur
+      console.warn('OFF upsert failed:', e);
+    }
   }
 
   function _animateNutriEntry() {
@@ -8365,7 +8393,8 @@
             gluc: Math.round((n.carbohydrates_100g||0)*10)/10,
             lip:  Math.round((n.fat_100g||0)*10)/10, fib: 0,
             servingG,
-            servingLabel: servingG ? (p.serving_size || servingG + 'g') : null };
+            servingLabel: servingG ? (p.serving_size || servingG + 'g') : null,
+            _fromOFF: true };
         })
         .filter(f => f.name && (f.kcal||f.prot) && !seenOff.has(norm(f.name)));
       if (offItems.length) renderResults([...histMatches, ...genericMatch, ...supaItems, ...offItems], false);
