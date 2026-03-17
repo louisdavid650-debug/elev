@@ -10306,6 +10306,8 @@
 
   function closeExPickerModal() {
     document.getElementById('exPickerModal').classList.remove('open');
+    document.getElementById('exPickerConfig').classList.remove('open');
+    _fsExEditIdx = null;
   }
 
   function setExPickerMuscle(muscle, chip) {
@@ -10425,47 +10427,58 @@
     const { name, muscle } = _exPickerSelected;
     const { sets, repsTarget, restTime } = _exPickerConfig;
     const warmup = document.getElementById('exPickerWarmup').checked;
-    const newSets = Array.from({length: sets}, () => ({w:'',r:'',done:false}));
-    if (warmup) newSets.unshift({w:'',r:'',done:false,warmup:true});
-    exercises.push({ id: Date.now() + Math.random(), name, muscle, restTime, repsTarget, sets: newSets });
+    if (_fsExEditIdx !== null && exercises[_fsExEditIdx]) {
+      // Mode édition — mettre à jour l'exercice existant en conservant les séries déjà remplies
+      const ex = exercises[_fsExEditIdx];
+      ex.name = name;
+      ex.muscle = muscle;
+      ex.repsTarget = repsTarget;
+      ex.restTime = restTime;
+      // Ajuster le nombre de séries de travail
+      const workSets = ex.sets.filter(s => !s.warmup);
+      const wuSets = warmup ? [ex.sets.find(s => s.warmup) || {w:'',r:'',done:false,warmup:true}] : [];
+      while (workSets.length < sets) workSets.push({w:'',r:'',done:false});
+      while (workSets.length > sets) workSets.pop();
+      ex.sets = [...wuSets, ...workSets];
+      _fsExEditIdx = null;
+      showToast('"' + name + '" modifié ✓');
+    } else {
+      // Mode ajout
+      const newSets = Array.from({length: sets}, () => ({w:'',r:'',done:false}));
+      if (warmup) newSets.unshift({w:'',r:'',done:false,warmup:true});
+      exercises.push({ id: Date.now() + Math.random(), name, muscle, restTime, repsTarget, sets: newSets });
+      showToast('"' + name + '" ajouté ✓');
+    }
     autosaveDraft();
     closeExPickerModal();
     _rerender();
-    showToast('"' + name + '" ajouté ✓');
   }
 
-  // ── FS Exercise Edit ──
+  // ── FS Exercise Edit — uses picker modal ──
   let _fsExEditIdx = null;
   function openFsExEdit(ei) {
     _fsExEditIdx = ei;
     const ex = exercises[ei];
     if (!ex) return;
-    document.getElementById('fsExEditName').value = ex.name || '';
-    document.getElementById('fsExEditMuscle').value = ex.muscle || '';
-    document.getElementById('fsExEditSug').classList.remove('show');
-    document.getElementById('fsExEditModal').style.display = 'flex';
-    setTimeout(() => document.getElementById('fsExEditName').focus(), 100);
-  }
-  function closeFsExEdit() {
-    document.getElementById('fsExEditModal').style.display = 'none';
-    _fsExEditIdx = null;
-  }
-  function saveFsExEdit() {
-    if (_fsExEditIdx === null || !exercises[_fsExEditIdx]) return;
-    exercises[_fsExEditIdx].name = document.getElementById('fsExEditName').value.trim() || exercises[_fsExEditIdx].name;
-    exercises[_fsExEditIdx].muscle = document.getElementById('fsExEditMuscle').value;
-    closeFsExEdit();
-    _rerender();
-  }
-  function filterFsExEditSug(q) {
-    const box = document.getElementById('fsExEditSug');
-    if (!box) return;
-    const matches = q ? getKnownExercises().filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : [];
-    if (!matches.length) { box.classList.remove('show'); return; }
-    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onmousedown="event.preventDefault();document.getElementById('fsExEditName').value='${e.name.replace(/'/g, String.fromCharCode(39))}';document.getElementById('fsExEditMuscle').value='${(e.muscle||'').replace(/'/g, String.fromCharCode(39))}';document.getElementById('fsExEditSug').classList.remove('show')">
-      <span>${e.name}</span>${e.muscle ? '<span class="ex-sug-muscle">' + e.muscle + '</span>' : ''}
-    </div>`).join('');
-    box.classList.add('show');
+    // Pre-fill picker config with current exercise values
+    _exPickerSelected = { name: ex.name, muscle: ex.muscle || '' };
+    _exPickerConfig = {
+      sets: ex.sets.filter(s => !s.warmup).length || 3,
+      repsTarget: ex.repsTarget || '8–12',
+      restTime: ex.restTime || 90,
+      warmup: ex.sets.some(s => s.warmup)
+    };
+    // Open picker directly on config step (step 2)
+    document.getElementById('exPickerConfigTitle').textContent = ex.name;
+    document.getElementById('exPickerConfigName').textContent = ex.name;
+    document.getElementById('exPickerConfigMuscle').textContent = ex.muscle || '';
+    document.getElementById('exPickerSetsVal').textContent = _exPickerConfig.sets;
+    document.querySelectorAll('#exPickerRepsOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o.textContent === _exPickerConfig.repsTarget));
+    const restMap = {60:'1 min',90:'1 min 30',120:'2 min',180:'3 min',0:'Sans'};
+    document.querySelectorAll('#exPickerRestOpts .expicker-rest-opt').forEach(o => o.classList.toggle('on', o.textContent === (restMap[_exPickerConfig.restTime]||'1 min 30')));
+    document.getElementById('exPickerWarmup').checked = _exPickerConfig.warmup;
+    document.getElementById('exPickerModal').classList.add('open');
+    document.getElementById('exPickerConfig').classList.add('open');
   }
 
   function toggleReorderMode() {
@@ -11665,11 +11678,6 @@
   </div>
 </div>
 
-<!-- ══ FS EXERCISE EDIT MODAL ══ -->
-<div id="fsExEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:980;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFsExEdit()">
-  <div style="background:var(--surface);border-radius:16px 16px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom)+28px);width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.2)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)">Modifier l'exercice</div>
       <button onclick="closeFsExEdit()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0">×</button>
     </div>
     <div style="margin-bottom:12px">
