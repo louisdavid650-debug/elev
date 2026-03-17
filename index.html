@@ -1205,7 +1205,7 @@
     <div class="home-section-title">Activité</div>
     <div class="home-streak">
       <div class="home-streak-card">
-        <div class="home-snap-label">Séances</div>
+        <div class="home-snap-label">Séances cette semaine</div>
         <div class="home-snap-val" id="homeWeekSessions">0</div>
         <div class="home-snap-sub" id="homeWeekVsLast"></div>
         <div id="homeStreakBars" style="display:flex;gap:3px;align-items:flex-end;margin-top:10px"></div>
@@ -6288,7 +6288,7 @@
     const diff = thisWeekSessions.length - lastWeekSessions.length;
     const isSunday = new Date().getDay() === 0;
     const motivHome = (() => {
-      if (!isSunday) return '';
+      if (!isSunday) return 'Continue comme ça ! 💪';
       const n = thisWeekSessions.length;
       if (diff > 1) return '🔥 En feu cette semaine !';
       if (diff === 1) return '📈 Un de plus que la semaine passée';
