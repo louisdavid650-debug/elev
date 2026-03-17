@@ -633,6 +633,8 @@
   .ex-card { touch-action: manipulation; }
   .ex-drag-handle { cursor:grab;color:var(--muted);font-size:16px;padding:0 6px 0 0;user-select:none;touch-action:none;display:none; }
   body.reorder-mode .ex-drag-handle { display:inline; }
+  .routine-ex-edit-row .ex-drag-handle { display:inline-flex;align-items:center;padding:0 6px 0 2px;font-size:18px;opacity:0.45; }
+  .routine-ex-edit-row .ex-drag-handle:hover { opacity:0.9;color:var(--accent); }
   body.reorder-mode .ex-card { border-color:var(--accent);border-style:dashed; }
   body.reorder-mode #reorderBtn { background:var(--accent);color:#fff;border-color:var(--accent); }
   .ex-card.ex-dragging { opacity:0.4; }
@@ -4395,7 +4397,7 @@
             const globalCounts = {};
             p.trainingDays.forEach(td => {
               const r = routines.find(r => r.id === td.sessionId || String(r.id) === String(td.sessionId));
-              if (r) r.exercises.filter(e => !e.isWarmup).forEach(e => { if (e.muscle) globalCounts[e.muscle] = (globalCounts[e.muscle]||0)+1; });
+              if (r) r.exercises.filter(e => !e.isWarmup).forEach(e => { if (e.muscle) { const nSets = Array.isArray(e.sets) ? e.sets.filter(s => !s.warmup).length : (parseInt(e.sets)||3); globalCounts[e.muscle] = (globalCounts[e.muscle]||0) + nSets; } });
             });
             const entries = Object.entries(globalCounts).sort((a,b) => b[1]-a[1]);
             if (!entries.length) return '';
@@ -4430,7 +4432,7 @@
             let muscleRecap = '';
             if (r) {
               const mCounts = {};
-              r.exercises.filter(e => !e.isWarmup).forEach(e => { if (e.muscle) mCounts[e.muscle] = (mCounts[e.muscle]||0)+1; });
+              r.exercises.filter(e => !e.isWarmup).forEach(e => { if (e.muscle) { const nSets = Array.isArray(e.sets) ? e.sets.filter(s => !s.warmup).length : (parseInt(e.sets)||3); mCounts[e.muscle] = (mCounts[e.muscle]||0) + nSets; } });
               muscleRecap = Object.entries(mCounts).map(([m, cnt]) =>
                 `<div style="display:flex;align-items:center;gap:4px">
                   <div style="width:5px;height:5px;border-radius:50%;background:${dColor(m)}"></div>
@@ -4824,21 +4826,24 @@
       const isInSS = ex.supersetWith !== undefined;
       const showConnector = isInSS && i > 0 && draftRoutineExs[i-1].supersetWith === i;
       return `${showConnector ? `<div style="text-align:center;margin:-4px 0;font-size:9px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;padding:3px 0;background:rgba(74,140,92,0.08);border-radius:4px">⇄ SUPERSET</div>` : ''}
-      <div class="routine-ex-edit-row${isInSS ? ' rex-superset' : ''}" id="inline-ex-row-${routineId}-${i}" draggable="true"
-        ondragstart="inlineExDragSrc=${i};this.classList.add('ex-dragging');event.dataTransfer.effectAllowed='move'"
-        ondragend="this.classList.remove('ex-dragging');document.querySelectorAll('.routine-ex-edit-row').forEach(r=>r.classList.remove('ex-drag-over'))"
+      <div class="routine-ex-edit-row${isInSS ? ' rex-superset' : ''}" id="inline-ex-row-${routineId}-${i}"
         ondragover="event.preventDefault();this.classList.add('ex-drag-over')"
         ondragleave="this.classList.remove('ex-drag-over')"
         ondrop="event.preventDefault();this.classList.remove('ex-drag-over');if(inlineExDragSrc!==null&&inlineExDragSrc!==${i}){const moved=draftRoutineExs.splice(inlineExDragSrc,1)[0];draftRoutineExs.splice(${i},0,moved);inlineExDragSrc=null;renderInlineDraftExs('${routineId}');}">
         <div class="routine-ex-edit-top">
-          <span class="ex-drag-handle" title="Déplacer"
+          <span class="ex-drag-handle" title="Déplacer" draggable="true"
+            ondragstart="inlineExDragSrc=${i};document.getElementById('inline-ex-row-${routineId}-${i}').classList.add('ex-dragging');event.dataTransfer.effectAllowed='move'"
+            ondragend="document.getElementById('inline-ex-row-${routineId}-${i}').classList.remove('ex-dragging');document.querySelectorAll('.routine-ex-edit-row').forEach(r=>r.classList.remove('ex-drag-over'))"
             ontouchstart="onInlineExTouchStart(event,${i},'${routineId}')"
             ontouchmove="onInlineExTouchMove(event,${i},'${routineId}')"
             ontouchend="onInlineExTouchEnd(event,${i},'${routineId}')">⠿</span>
-          <div class="rex-name-wrap" style="flex:1">
+          <div class="rex-name-wrap" style="flex:1;position:relative">
             <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
-              oninput="draftRoutineExs[${i}].name=this.value"
+              oninput="draftRoutineExs[${i}].name=this.value;filterInlineRowExSug('${routineId}',${i},this.value)"
+              onfocus="filterInlineRowExSug('${routineId}',${i},this.value)"
+              onblur="setTimeout(()=>{const b=document.getElementById('inlineRowExSug-${routineId}-${i}');if(b)b.classList.remove('show');},180)"
               autocomplete="off"/>
+            <div class="ex-suggestions ex-add-suggestions" id="inlineRowExSug-${routineId}-${i}"></div>
           </div>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
             <button onclick="toggleInlineDraftSuperset(${i},'${routineId}')"
@@ -4899,7 +4904,31 @@
     box.classList.add('show');
   }
 
-  function addInlineRoutineEx(routineId) {
+  // Autocomplete for existing exercises in inline routine edit
+  function filterInlineRowExSug(routineId, i, q) {
+    const box = document.getElementById('inlineRowExSug-' + routineId + '-' + i);
+    if (!box) return;
+    const matches = q ? getKnownExercises().filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [];
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onmousedown="event.preventDefault();draftRoutineExs[${i}].name='${e.name.replace(/'/g, String.fromCharCode(39))}';renderInlineDraftExs('${routineId}')">
+      <span>${e.name}</span>${e.muscle ? '<span class="ex-sug-muscle">' + e.muscle + '</span>' : ''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+
+  // Autocomplete for exercise name in past session edit
+  function filterEditSessionExSug(ei, q) {
+    const box = document.getElementById('editExSug-' + ei);
+    if (!box) return;
+    const matches = q ? getKnownExercises().filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [];
+    if (!matches.length) { box.classList.remove('show'); return; }
+    box.innerHTML = matches.map(e => `<div class="ex-suggestion" onmousedown="event.preventDefault();editSessionData.exercises[${ei}].name='${e.name.replace(/'/g, String.fromCharCode(39))}';document.getElementById('editExName-${ei}').value='${e.name.replace(/'/g, String.fromCharCode(39))}';document.getElementById('editExSug-${ei}').classList.remove('show')">
+      <span>${e.name}</span>${e.muscle ? '<span class="ex-sug-muscle">' + e.muscle + '</span>' : ''}
+    </div>`).join('');
+    box.classList.add('show');
+  }
+
+    function addInlineRoutineEx(routineId) {
     const name = document.getElementById('inlineRExName-' + routineId)?.value.trim();
     if (!name) { showToast('Entre un nom'); return; }
     const muscle = document.getElementById('inlineRExMuscle-' + routineId)?.value || '';
@@ -9666,9 +9695,15 @@
     body.innerHTML = editSessionData.exercises.map((ex, ei) => `
       <div class="edit-ex-block">
         <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--warm);border-bottom:1px solid var(--border)">
-          <input class="edit-set-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
-            style="flex:1;font-size:13px;font-weight:500;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:2px 4px"
-            onchange="editSessionData.exercises[${ei}].name=this.value"/>
+          <div style="flex:1;position:relative">
+            <input class="edit-set-inp" id="editExName-${ei}" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
+              style="width:100%;font-size:13px;font-weight:500;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:2px 4px"
+              oninput="editSessionData.exercises[${ei}].name=this.value;filterEditSessionExSug(${ei},this.value)"
+              onfocus="filterEditSessionExSug(${ei},this.value)"
+              onblur="setTimeout(()=>{const b=document.getElementById('editExSug-${ei}');if(b)b.classList.remove('show');},180)"
+              autocomplete="off"/>
+            <div class="ex-suggestions ex-add-suggestions" id="editExSug-${ei}"></div>
+          </div>
           <button onclick="delEditEx(${ei})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px" title="Supprimer l'exercice">✕</button>
         </div>
         <div style="display:grid;grid-template-columns:22px 1fr 1fr 28px;gap:4px;padding:6px 12px 2px;border-bottom:1px solid var(--border)">
@@ -11070,24 +11105,22 @@
   <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 0 calc(env(safe-area-inset-bottom)+24px)" id="mealPageScroll">
 
     <!-- Card macros 4 colonnes style F -->
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:0 16px 16px;box-shadow:var(--card-shadow)">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr)">
-        <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);font-weight:400;line-height:1" id="mpKcal">0</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">KCAL</div>
-        </div>
-        <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#7ab893;font-weight:400;line-height:1" id="mpGluc">0g</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">GLUC</div>
-        </div>
-        <div style="text-align:center;padding:14px 6px;border-right:1px solid var(--border)">
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);font-weight:400;line-height:1" id="mpProt">0g</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">PROT</div>
-        </div>
-        <div style="text-align:center;padding:14px 6px">
-          <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#b5cfc3;font-weight:400;line-height:1" id="mpLip">0g</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace;letter-spacing:0.5px">LIP</div>
-        </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px 16px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-family:'DM Serif Display',serif;font-size:36px;color:var(--text);font-weight:400;line-height:1" id="mpKcal">0</div>
+        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">KCAL</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px 16px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-family:'DM Serif Display',serif;font-size:36px;color:#7ab893;font-weight:400;line-height:1" id="mpGluc">0g</div>
+        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">GLUCIDES</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px 16px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-family:'DM Serif Display',serif;font-size:36px;color:var(--accent);font-weight:400;line-height:1" id="mpProt">0g</div>
+        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">PROTÉINES</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:20px 16px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-family:'DM Serif Display',serif;font-size:36px;color:#b5cfc3;font-weight:400;line-height:1" id="mpLip">0g</div>
+        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">LIPIDES</div>
       </div>
     </div>
 
@@ -11108,4 +11141,3 @@
 
 </body>
 </html>
-c
