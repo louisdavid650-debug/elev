@@ -640,6 +640,10 @@
   .ex-card.ex-dragging { opacity:0.4; }
   .ex-card.ex-drag-over { border-color: var(--accent); border-style: dashed; }
 
+  /* ── Meal page swipe to close ── */
+  #mealPageOverlay { transition: transform 0.3s cubic-bezier(.4,0,.2,1); transform: translateX(0); }
+  #mealPageOverlay.slide-out { transform: translateX(100%); }
+
   /* ── Fullscreen session overlay ── */
   .session-fs-overlay {
     position: fixed; top: 0; bottom: 0; z-index: 900;
@@ -7031,9 +7035,11 @@
     if (_nutriActiveTab === 'frequent') {
       // Aliments les plus souvent mangés par cet utilisateur (depuis nutriEntries)
       const countMap = {};
+      const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       nutriEntries.forEach(e => {
-        if (!countMap[e.name]) countMap[e.name] = { count: 0, entry: e };
-        countMap[e.name].count++;
+        const k = norm(e.name);
+        if (!countMap[k]) countMap[k] = { count: 0, entry: e };
+        countMap[k].count++;
       });
       const frequent = Object.values(countMap)
         .sort((a, b) => b.count - a.count)
@@ -8193,7 +8199,22 @@
         if (!usedEntryMap[k]) usedEntryMap[k] = e;
       });
 
-      const sorted = [...items]
+      // Dédupliquer par nom normalisé — garder la version la plus utilisée (ou la première)
+      const deduped = [];
+      const dedupSeen = new Map();
+      for (const f of items) {
+        const k = norm(f.name);
+        if (!dedupSeen.has(k)) {
+          dedupSeen.set(k, deduped.length);
+          deduped.push(f);
+        } else {
+          // Si cette version a une brand et l'existante non, on préfère celle-ci
+          const existIdx = dedupSeen.get(k);
+          if (!deduped[existIdx].brand && f.brand) deduped[existIdx] = { ...deduped[existIdx], brand: f.brand };
+        }
+      }
+
+      const sorted = deduped
         .filter(f => {
           const k = norm(f.name);
           if (usageMap[k] > 0) return true;
@@ -9307,8 +9328,11 @@
     document.getElementById('mealPageTitle').textContent = meal;
     renderMealPage();
     const overlay = document.getElementById('mealPageOverlay');
+    overlay.style.transform = 'translateX(0)';
+    overlay.classList.remove('slide-out');
     overlay.style.display = 'flex';
     overlay.style.flexDirection = 'column';
+    initMealPageSwipe(overlay);
   }
 
   function mealPageAddFood() {
@@ -9321,8 +9345,59 @@
   }
 
   function closeMealPage() {
-    document.getElementById('mealPageOverlay').style.display = 'none';
-    window._mealPageCurrent = null;
+    const overlay = document.getElementById('mealPageOverlay');
+    overlay.classList.add('slide-out');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.classList.remove('slide-out');
+      overlay.style.transform = '';
+      window._mealPageCurrent = null;
+    }, 300);
+  }
+
+  function initMealPageSwipe(overlay) {
+    let startX = 0, startY = 0, isDragging = false;
+    const scrollEl = document.getElementById('mealPageScroll');
+
+    function onTouchStart(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isDragging = false;
+      overlay.style.transition = 'none';
+    }
+    function onTouchMove(e) {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      // Swipe droite uniquement, et seulement si pas un scroll vertical
+      if (!isDragging && Math.abs(dy) > Math.abs(dx)) return;
+      if (dx < 0) return; // ignore swipe gauche
+      if (dx > 8) isDragging = true;
+      if (isDragging) {
+        e.preventDefault();
+        overlay.style.transform = 'translateX(' + Math.max(0, dx) + 'px)';
+      }
+    }
+    function onTouchEnd(e) {
+      overlay.style.transition = '';
+      const dx = e.changedTouches[0].clientX - startX;
+      if (isDragging && dx > 90) {
+        closeMealPage();
+      } else {
+        overlay.style.transform = 'translateX(0)';
+      }
+      isDragging = false;
+    }
+
+    // Remove old listeners to avoid duplicates
+    overlay.removeEventListener('touchstart', overlay._swipeStart);
+    overlay.removeEventListener('touchmove', overlay._swipeMove);
+    overlay.removeEventListener('touchend', overlay._swipeEnd);
+    overlay._swipeStart = onTouchStart;
+    overlay._swipeMove = onTouchMove;
+    overlay._swipeEnd = onTouchEnd;
+    overlay.addEventListener('touchstart', onTouchStart, { passive: true });
+    overlay.addEventListener('touchmove', onTouchMove, { passive: false });
+    overlay.addEventListener('touchend', onTouchEnd, { passive: true });
   }
 
   function renderMealPage() {
