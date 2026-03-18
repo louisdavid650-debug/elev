@@ -3176,7 +3176,7 @@
       if (ex && ex.sets.some(st => !st.warmup && (st.w || st.r))) {
         const days = Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000);
         const label = days === 0 ? "aujourd'hui" : days === 1 ? 'hier' : `il y a ${days}j`;
-        return { sets: ex.sets, date: s.date, label, note: ex.note || null };
+        return { sets: ex.sets.filter(st => !st.warmup), date: s.date, label, note: ex.note || null };
       }
     }
     return null;
