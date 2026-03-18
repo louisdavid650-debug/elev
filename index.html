@@ -3650,6 +3650,18 @@
   }
   // ── Known exercises (from sessions + routines) ──
   window.ALL_EXERCISES = (window.ALL_EXERCISES||[]); // sera rempli après
+  // Mapping équipement automatique
+  function guessEquipment(name) {
+    const n = name.toLowerCase();
+    if (n.includes('barre') || n.includes('olympique')) return 'Barre';
+    if (n.includes('haltère') || n.includes('dumbell')) return 'Haltères';
+    if (n.includes('machine') || n.includes('presse') || n.includes('leg press') || n.includes('hack')) return 'Machine';
+    if (n.includes('câble') || n.includes('cable') || n.includes('poulie') || n.includes('pulley')) return 'Câble / Poulie';
+    if (n.includes('pompe') || n.includes('traction') || n.includes('dips') || n.includes('gainage') || n.includes('planche') || n.includes('burpee')) return 'Poids du corps';
+    if (n.includes('élastique') || n.includes('bande')) return 'Bandes élastiques';
+    return 'Machine'; // default
+  }
+
   const EXERCISE_DB = [
     // ── PECTORAUX ──
     { name: 'Développé couché barre', muscle: 'Pectoraux' },
@@ -10712,11 +10724,75 @@
   let _reorderMode = false;
   // ── Exercise Picker Modal ──
   let _exPickerMuscleFilter = '';
+  let _exPickerEquipFilter = '';
+
+  // Cache images wger
+  const _wgerImageCache = {};
+  async function fetchWgerImage(name) {
+    if (_wgerImageCache[name] !== undefined) return _wgerImageCache[name];
+    try {
+      const q = encodeURIComponent(name.toLowerCase());
+      const res = await fetch(`https://wger.de/api/v2/exercise/search/?term=${q}&language=french&format=json`, { signal: AbortSignal.timeout(3000) });
+      const data = await res.json();
+      const suggestions = data.suggestions || [];
+      if (suggestions.length > 0) {
+        const exId = suggestions[0].data?.id;
+        if (exId) {
+          const imgRes = await fetch(`https://wger.de/api/v2/exerciseimage/?exercise_base=${exId}&is_main=true&format=json`);
+          const imgData = await imgRes.json();
+          const img = imgData.results?.[0]?.image || null;
+          _wgerImageCache[name] = img;
+          return img;
+        }
+      }
+    } catch(e) {}
+    _wgerImageCache[name] = null;
+    return null;
+  }
+
+  function togglePickerDropdown(type) {
+    const mDrop = document.getElementById('muscleDropdown');
+    const eDrop = document.getElementById('equipDropdown');
+    if (type === 'muscle') {
+      const isOpen = mDrop.style.display !== 'none';
+      mDrop.style.display = isOpen ? 'none' : 'block';
+      eDrop.style.display = 'none';
+    } else {
+      const isOpen = eDrop.style.display !== 'none';
+      eDrop.style.display = isOpen ? 'none' : 'block';
+      mDrop.style.display = 'none';
+    }
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#muscleFilterBtn') && !e.target.closest('#muscleDropdown')) {
+      document.getElementById('muscleDropdown') && (document.getElementById('muscleDropdown').style.display = 'none');
+    }
+    if (!e.target.closest('#equipFilterBtn') && !e.target.closest('#equipDropdown')) {
+      document.getElementById('equipDropdown') && (document.getElementById('equipDropdown').style.display = 'none');
+    }
+  });
+  function setPickerMuscle(muscle) {
+    _exPickerMuscleFilter = muscle;
+    document.getElementById('muscleFilterLabel').textContent = muscle || 'Tous les muscles';
+    document.getElementById('muscleFilterBtn').style.borderColor = muscle ? 'var(--accent)' : 'var(--border)';
+    document.getElementById('muscleFilterBtn').style.color = muscle ? 'var(--accent)' : 'var(--text)';
+    document.getElementById('muscleDropdown').style.display = 'none';
+    renderExPickerList();
+  }
+  function setPickerEquip(equip) {
+    _exPickerEquipFilter = equip;
+    document.getElementById('equipFilterLabel').textContent = equip || 'Tous les équipements';
+    document.getElementById('equipFilterBtn').style.borderColor = equip ? 'var(--accent)' : 'var(--border)';
+    document.getElementById('equipFilterBtn').style.color = equip ? 'var(--accent)' : 'var(--text)';
+    document.getElementById('equipDropdown').style.display = 'none';
+    renderExPickerList();
+  }
   let _exPickerConfig = { sets: 3, repsTarget: '8–12', restTime: 90, warmup: false };
   let _exPickerSelected = null;
 
   function openExPickerModal() {
     _exPickerMuscleFilter = '';
+    _exPickerEquipFilter = '';
     document.getElementById('exPickerSearch').value = '';
     document.querySelectorAll('.expicker-chip').forEach((c,i) => c.classList.toggle('on', i===0));
     document.getElementById('exPickerConfig').classList.remove('open');
@@ -10743,28 +10819,25 @@
     const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const qNorm = norm(q);
 
-    // Compter l'usage de chaque exercice
     const usageMap = {};
     exercises.concat(sessions.flatMap(s => s.exercises || [])).forEach(e => {
       const k = norm(e.name); usageMap[k] = (usageMap[k]||0) + 1;
     });
 
-    // Construire la liste : historique + base locale
     const known = getKnownExercises();
     const seen = new Set();
     let items = [];
 
-    // D'abord les exercices connus avec usage
     known.forEach(e => {
       const k = norm(e.name);
       if (seen.has(k)) return;
       if (_exPickerMuscleFilter && e.muscle !== _exPickerMuscleFilter) return;
+      if (_exPickerEquipFilter && guessEquipment(e.name) !== _exPickerEquipFilter) return;
       if (q && !norm(e.name).includes(qNorm)) return;
       seen.add(k);
       items.push({ ...e, _usage: usageMap[k]||0 });
     });
 
-    // Tri : déjà utilisés en premier, puis par pertinence
     items.sort((a, b) => {
       if ((a._usage>0) !== (b._usage>0)) return b._usage>0 ? 1 : -1;
       if (!q) return (b._usage - a._usage) || a.name.localeCompare(b.name);
@@ -10776,7 +10849,7 @@
     const list = document.getElementById('exPickerList');
     if (!items.length) {
       list.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace">
-        ${q ? 'Aucun résultat pour « ' + q + ' »' : 'Aucun exercice trouvé'}
+        ${q ? 'Aucun résultat' : 'Aucun exercice trouvé'}
         <div style="margin-top:12px">
           <button onclick="openExPickerConfigCustom()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer">+ Créer « ${q || 'Nouvel exercice'} »</button>
         </div>
@@ -10786,17 +10859,40 @@
 
     list.innerHTML = items.map(ex => {
       const freq = ex._usage > 0 ? `<span class="expicker-item-freq">${ex._usage > 1 ? ex._usage + '×' : 'Déjà utilisé'}</span>` : '';
-      const muscle = ex.muscle ? `<span style="color:var(--terra)">${ex.muscle}</span>` : '';
+      const equip = guessEquipment(ex.name);
+      const safeId = 'img_' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const cached = _wgerImageCache[ex.name];
+      const imgContent = cached
+        ? `<img src="${cached}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML='<svg width=22 height=22 viewBox=\"0 0 24 24\" fill=none stroke=var(--muted) stroke-width=1.5><path d=\"M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4\"/></svg>'"/>`
+        : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M6 4v16M18 4v16M6 12h12M2 7h4M18 7h4M2 17h4M18 17h4"/></svg>`;
       return `<div class="expicker-item" onclick="openExPickerConfig(${JSON.stringify(ex.name).replace(/</g,'&lt;')},${JSON.stringify(ex.muscle||'').replace(/</g,'&lt;')})">
+        <div id="${safeId}" style="width:52px;height:52px;border-radius:10px;background:var(--surface2);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--border)">${imgContent}</div>
         <div style="flex:1;min-width:0">
           <div class="expicker-item-name">${ex.name}</div>
-          <div class="expicker-item-meta" style="display:flex;align-items:center;gap:6px;margin-top:4px">${muscle}${freq}</div>
+          <div class="expicker-item-meta" style="display:flex;align-items:center;gap:6px;margin-top:3px">
+            ${ex.muscle ? `<span style="color:var(--accent)">${ex.muscle}</span>` : ''}
+            <span style="color:var(--muted)">· ${equip}</span>
+            ${freq}
+          </div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="flex-shrink:0;margin-left:8px"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     }).join('');
 
-    // Bouton créer en bas si recherche active
+    // Charger les images async pour les exercices visibles
+    items.slice(0, 15).forEach(ex => {
+      if (_wgerImageCache[ex.name] === undefined) {
+        fetchWgerImage(ex.name).then(img => {
+          const safeId = 'img_' + ex.name.replace(/[^a-zA-Z0-9]/g, '_');
+          const el = document.getElementById(safeId);
+          if (!el) return;
+          if (img) {
+            el.innerHTML = `<img src="${img}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>`;
+          }
+        });
+      }
+    });
+
     if (q) {
       list.innerHTML += `<div style="text-align:center;padding:16px 0 8px">
         <button onclick="openExPickerConfigCustom()" style="background:none;border:1px dashed var(--border2);border-radius:10px;padding:10px 20px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);cursor:pointer;width:100%">+ Créer « ${q} »</button>
@@ -12041,18 +12137,32 @@
         oninput="renderExPickerList()"/>
     </div>
   </div>
-  <!-- Filtres muscle -->
-  <div class="expicker-muscles" id="exPickerMuscles">
-    <div class="expicker-chip on" onclick="setExPickerMuscle('',this)">Tout</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Épaules',this)">Épaules</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Pectoraux',this)">Pecs</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Dos',this)">Dos</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Biceps',this)">Biceps</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Triceps',this)">Triceps</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Quadriceps',this)">Quadriceps</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Ischio-jambiers',this)">Ischios</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Abdos',this)">Abdos</div>
-    <div class="expicker-chip" onclick="setExPickerMuscle('Fessiers',this)">Fessiers</div>
+  <!-- Filtres muscle + équipement -->
+  <div style="display:flex;gap:8px;padding:10px 16px;flex-shrink:0;border-bottom:0.5px solid var(--border)">
+    <div style="position:relative;flex:1">
+      <button id="muscleFilterBtn" onclick="togglePickerDropdown('muscle')"
+        style="width:100%;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <span id="muscleFilterLabel">Tous les muscles</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="muscleDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden">
+        ${['','Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdominaux','Fessiers','Mollets','Full body'].map(m =>
+          `<div onclick="setPickerMuscle('${m}')" style="padding:11px 14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">${m||'Tous les muscles'}</div>`
+        ).join('')}
+      </div>
+    </div>
+    <div style="position:relative;flex:1">
+      <button id="equipFilterBtn" onclick="togglePickerDropdown('equip')"
+        style="width:100%;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <span id="equipFilterLabel">Tous les équipements</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="equipDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden">
+        ${['','Barre','Haltères','Machine','Câble / Poulie','Poids du corps','Bandes élastiques'].map(e =>
+          `<div onclick="setPickerEquip('${e}')" style="padding:11px 14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">${e||'Tous les équipements'}</div>`
+        ).join('')}
+      </div>
+    </div>
   </div>
   <!-- Liste exercices -->
   <div class="expicker-list" id="exPickerList"></div>
