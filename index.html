@@ -7809,6 +7809,15 @@
             lip:  e.lip100  || Math.round(e.lip /(e.qty||100)*1000)/10,
             fib:  e.fib100  || 0 });
         });
+      // Déduplication finale par nom normalisé
+      const finalSeen = new Set();
+      items = items.filter(f => {
+        const k = norm(f.name);
+        if (finalSeen.has(k)) return false;
+        finalSeen.add(k);
+        return true;
+      });
+
       items.sort((a, b) => {
         const ua = usageMap[norm(a.name)] || 0, ub = usageMap[norm(b.name)] || 0;
         if ((ua>0) !== (ub>0)) return ub>0 ? 1 : -1;
@@ -8017,23 +8026,41 @@
   async function confirmMealOnePortion(i) {
     const m = (window._nutriSuggCache || [])[i];
     if (!m) return;
-    const entry = {
-      id: Date.now(),
-      date: _nutriViewDate,
-      meal: _nutriActiveMeal || 'Déjeuner',
-      name: m.name, brand: null,
-      qty: m.qty || m.ingredients?.reduce((s, ing) => s + ing.qty, 0) || 100,
-      kcal: m.kcal, prot: m.prot, gluc: m.gluc, lip: m.lip, fib: m.fib || 0,
-      kcal100: Math.round(m.kcal / (m.qty || 100) * 100),
-      prot100: Math.round(m.prot / (m.qty || 100) * 1000) / 10,
-      gluc100: Math.round(m.gluc / (m.qty || 100) * 1000) / 10,
-      lip100:  Math.round(m.lip  / (m.qty || 100) * 1000) / 10,
-      fib100:  Math.round((m.fib || 0) / (m.qty || 100) * 1000) / 10,
-    };
+    const mealName = _nutriActiveMeal || 'Déjeuner';
     closeNutriAdd();
-    await saveNutriEntry(entry);
+    // Ajouter chaque ingrédient séparément
+    if (m.ingredients?.length) {
+      for (const ing of m.ingredients) {
+        const entry = {
+          id: Date.now() + Math.random(),
+          date: _nutriViewDate, meal: mealName,
+          name: ing.name, brand: null, qty: ing.qty,
+          kcal: ing.kcal, prot: ing.prot, gluc: ing.gluc, lip: ing.lip, fib: ing.fib || 0,
+          kcal100: ing.qty ? Math.round(ing.kcal / ing.qty * 100) : 0,
+          prot100: ing.qty ? Math.round(ing.prot / ing.qty * 1000) / 10 : 0,
+          gluc100: ing.qty ? Math.round(ing.gluc / ing.qty * 1000) / 10 : 0,
+          lip100:  ing.qty ? Math.round(ing.lip  / ing.qty * 1000) / 10 : 0,
+          fib100:  ing.qty ? Math.round((ing.fib||0) / ing.qty * 1000) / 10 : 0,
+        };
+        await saveNutriEntry(entry);
+      }
+    } else {
+      // Pas d'ingrédients — ajouter le plat entier comme une seule entrée
+      const entry = {
+        id: Date.now(), date: _nutriViewDate, meal: mealName,
+        name: m.name, brand: null,
+        qty: m.qty || 100,
+        kcal: m.kcal, prot: m.prot, gluc: m.gluc, lip: m.lip, fib: m.fib || 0,
+        kcal100: Math.round(m.kcal / (m.qty || 100) * 100),
+        prot100: Math.round(m.prot / (m.qty || 100) * 1000) / 10,
+        gluc100: Math.round(m.gluc / (m.qty || 100) * 1000) / 10,
+        lip100:  Math.round(m.lip  / (m.qty || 100) * 1000) / 10,
+        fib100:  Math.round((m.fib || 0) / (m.qty || 100) * 1000) / 10,
+      };
+      await saveNutriEntry(entry);
+    }
     showToast(m.name.slice(0, 30) + ' ajouté ✓');
-    _nutriAccordionOpen[entry.meal] = true;
+    _nutriAccordionOpen[mealName] = true;
     renderNutritionTab();
   }
 
@@ -8149,28 +8176,27 @@
     const m = (window._nutriSuggCache || [])[i];
     const ings = window._mealCustomIngs || [];
     if (!m || !ings.length) return;
-    const totKcal = Math.round(ings.reduce((s,g) => s+g.kcal, 0));
-    const totProt = Math.round(ings.reduce((s,g) => s+g.prot, 0)*10)/10;
-    const totGluc = Math.round(ings.reduce((s,g) => s+g.gluc, 0)*10)/10;
-    const totLip  = Math.round(ings.reduce((s,g) => s+g.lip,  0)*10)/10;
-    const totFib  = Math.round(ings.reduce((s,g) => s+(g.fib||0), 0)*10)/10;
-    const totQty  = Math.round(ings.reduce((s,g) => s+(g.qty||0), 0));
-    const entry = {
-      id: Date.now(), date: _nutriViewDate,
-      meal: _nutriActiveMeal || 'Déjeuner',
-      name: m.name, brand: null, qty: totQty,
-      kcal: totKcal, prot: totProt, gluc: totGluc, lip: totLip, fib: totFib,
-      kcal100: totQty ? Math.round(totKcal/totQty*100) : 0,
-      prot100: totQty ? Math.round(totProt/totQty*1000)/10 : 0,
-      gluc100: totQty ? Math.round(totGluc/totQty*1000)/10 : 0,
-      lip100:  totQty ? Math.round(totLip /totQty*1000)/10 : 0,
-      fib100:  totQty ? Math.round(totFib /totQty*1000)/10 : 0,
-    };
+    const mealName = _nutriActiveMeal || 'Déjeuner';
     document.getElementById('mealCustomizeModal')?.remove();
     closeNutriAdd();
-    await saveNutriEntry(entry);
+    // Ajouter chaque ingrédient séparément
+    for (const ing of ings) {
+      if (!ing.qty || ing.qty <= 0) continue;
+      const entry = {
+        id: Date.now() + Math.random(),
+        date: _nutriViewDate, meal: mealName,
+        name: ing.name, brand: null, qty: ing.qty,
+        kcal: ing.kcal, prot: ing.prot, gluc: ing.gluc, lip: ing.lip, fib: ing.fib || 0,
+        kcal100: ing.qty ? Math.round(ing.kcal / ing.qty * 100) : 0,
+        prot100: ing.qty ? Math.round(ing.prot / ing.qty * 1000) / 10 : 0,
+        gluc100: ing.qty ? Math.round(ing.gluc / ing.qty * 1000) / 10 : 0,
+        lip100:  ing.qty ? Math.round(ing.lip  / ing.qty * 1000) / 10 : 0,
+        fib100:  ing.qty ? Math.round((ing.fib||0) / ing.qty * 1000) / 10 : 0,
+      };
+      await saveNutriEntry(entry);
+    }
     showToast(m.name.slice(0, 30) + ' ajouté ✓');
-    _nutriAccordionOpen[entry.meal] = true;
+    _nutriAccordionOpen[mealName] = true;
     renderNutritionTab();
   }
 
@@ -12351,7 +12377,7 @@
 </div>
 
 <!-- ══ MODAL RECHERCHE INGRÉDIENT ══ -->
-<div id="ingredientSearchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:990;align-items:center;justify-content:center;padding:20px">
+<div id="ingredientSearchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);overflow:hidden">
     <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
