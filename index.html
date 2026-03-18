@@ -393,6 +393,7 @@
   .ex-replace-sheet { display:flex;flex-direction:column;background:var(--bg);width:100%;max-width:480px;height:92vh;border-radius:20px 20px 0 0;overflow:hidden; }
   @media (min-width:600px) { .ex-replace-sheet { border-radius:16px;height:80vh;box-shadow:0 20px 60px rgba(0,0,0,0.3); } }
   .rp-sheet { background:var(--surface);width:100%;max-width:480px;max-height:calc(100vh - 32px);border-radius:20px;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+  @media (max-width:599px) { .rp-sheet { max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 100px); } }
   .ex-replace-title { font-family:DM Serif Display,serif;font-size:20px;margin-bottom:16px;color:var(--text); }
   .ex-search-wrap { position:relative;margin-bottom:8px; }
   .ex-search-inp { width:100%;padding:10px 14px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:10px;font-size:15px;box-sizing:border-box;outline:none; }
