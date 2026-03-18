@@ -1574,37 +1574,12 @@
       <button onclick="saveRoutineEditor()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;flex-shrink:0">Sauvegarder</button>
     </div>
     <!-- Corps scrollable -->
-    <div style="flex:1;overflow-y:auto;padding:16px 16px 100px">
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">Exercices</div>
-      <div id="routineEditorExList" style="display:flex;flex-direction:column;gap:10px"></div>
-      <!-- Ajouter exercice -->
-      <div style="margin-top:14px">
-        <button onclick="toggleRoutineEditorAddPanel()" id="routineEditorAddBtn" style="width:100%;padding:12px;background:none;border:1px dashed var(--border2);border-radius:12px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer">+ Ajouter un exercice</button>
-        <div id="routineEditorAddPanel" style="display:none;background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:14px;margin-top:10px">
-          <div style="position:relative;margin-bottom:10px">
-            <input class="inp" id="routineEditorExName" placeholder="Nom de l'exercice" type="text"
-              oninput="filterRoutineEditorSug(this.value)" autocomplete="off" style="width:100%;box-sizing:border-box"/>
-            <div class="ex-suggestions ex-add-suggestions" id="routineEditorExSug"></div>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <select class="inp" id="routineEditorExMuscle" style="flex:1">
-              <option value="">Muscle</option>
-              <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
-              <option>Biceps</option><option>Triceps</option><option>Quadriceps</option><option>Ischio-jambiers</option>
-              <option>Abdos</option><option>Fessiers</option><option>Adducteurs</option><option>Abducteurs</option><option>Autre</option>
-            </select>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:12px">
-            <input class="inp" id="routineEditorExSets" type="number" placeholder="Séries" style="width:80px"/>
-            <input class="inp" id="routineEditorExReps" type="text" placeholder="Reps (ex: 8-12)" style="flex:1"/>
-            <select class="inp" id="routineEditorExRest" style="width:90px">
-              <option value="60">1 min</option><option value="90" selected>1m30</option>
-              <option value="120">2 min</option><option value="180">3 min</option><option value="0">Sans</option>
-            </select>
-          </div>
-          <button class="btn-add" style="width:100%" onclick="addRoutineEditorEx()">Confirmer ↵</button>
-        </div>
-      </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 100px" id="routineEditorBody">
+      <div id="routineEditorExList"></div>
+    </div>
+    <!-- Footer fixe -->
+    <div style="padding:12px 16px;border-top:0.5px solid var(--border);flex-shrink:0;background:var(--bg)">
+      <button onclick="openExPickerForRoutineEditor()" style="width:100%;padding:13px;background:none;border:1px dashed var(--border2);border-radius:12px;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer">+ Ajouter un exercice</button>
     </div>
   </div><!-- end inner wrapper -->
   </div>
@@ -10624,47 +10599,93 @@
   function renderRoutineEditorExList() {
     const el = document.getElementById('routineEditorExList');
     if (!el) return;
-    const MUSCLE_DOTS = {'épaules':'#2C5F4A','pectoraux':'#4A8C6A','pecs':'#4A8C6A','triceps':'#8CAA7A','dos':'#2C5F4A','biceps':'#4A8C6A','quadriceps':'#2C5F4A','ischios':'#4A8C6A','ischio-jambiers':'#4A8C6A','mollets':'#8CAA7A','abdos':'#8CAA7A','fessiers':'#4A8C6A','adducteurs':'#8CAA7A','abducteurs':'#2C5F4A'};
-    const dColor = m => MUSCLE_DOTS[m?.toLowerCase()] || '#2C5F4A';
-    el.innerHTML = draftRoutineExs.map((ex, i) => `
-      <div id="reditor-ex-${i}" style="background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--card-shadow)">
-        <!-- Ligne nom + actions -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="color:var(--muted);font-size:18px;cursor:grab;touch-action:none;padding:0 4px 0 0;user-select:none"
-            ontouchstart="onReditorTouchStart(event,${i})"
-            ontouchmove="onReditorTouchMove(event,${i})"
-            ontouchend="onReditorTouchEnd(event,${i})">⠿</span>
-          <div style="flex:1;position:relative">
-            <input value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom de l'exercice"
-              style="font-family:'DM Serif Display',serif;font-size:15px;font-style:italic;color:var(--text);background:transparent;border:none;border-bottom:1px solid var(--border);padding:3px 2px;width:100%;outline:none"
-              oninput="draftRoutineExs[${i}].name=this.value;filterReditorSug(${i},this.value)"
-              onfocus="filterReditorSug(${i},this.value)"
-              onblur="setTimeout(()=>{const s=document.getElementById('reditor-sug-${i}');if(s)s.classList.remove('show')},200)"
-              autocomplete="off"/>
-            <div class="ex-suggestions ex-add-suggestions" id="reditor-sug-${i}"></div>
+
+    if (!draftRoutineExs.length) {
+      el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px;font-family:'Geist Mono',monospace">Aucun exercice</div>`;
+      return;
+    }
+
+    el.innerHTML = draftRoutineExs.map((ex, i) => {
+      const hasWarmup = (ex.warmupSets || 0) > 0;
+      const setsHtml = Array.from({length: ex.sets || 3}, (_, si) => `
+        <div class="set-row" style="display:grid;grid-template-columns:28px 1fr 1fr auto;align-items:center;gap:6px;padding:4px 0">
+          <div style="text-align:center;font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">${si+1}</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <input class="set-inp" type="number" placeholder="—" style="width:100%;text-align:center"
+              oninput="draftRoutineExs[${i}].defaultWeight=this.value"/>
+            <span style="font-size:9px;color:var(--muted)">kg</span>
           </div>
-          <button onclick="draftRoutineExs.splice(${i},1);renderRoutineEditorExList()"
-            style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--border);background:none;cursor:pointer;color:var(--muted);font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <input class="set-inp" type="text" value="${ex.repsTarget||''}" placeholder="${ex.repsTarget||'—'}" style="width:100%;text-align:center"
+              oninput="draftRoutineExs[${i}].repsTarget=this.value"/>
+            <span style="font-size:9px;color:var(--muted)">reps</span>
+          </div>
+          <div style="width:20px"></div>
+        </div>`).join('');
+
+      return `<div class="ex-card" id="reditor-card-${i}" style="margin-bottom:12px">
+        <div class="ex-head">
+          <span class="ex-drag-handle" ontouchstart="onReditorTouchStart(event,${i})" ontouchmove="onReditorTouchMove(event,${i})" ontouchend="onReditorTouchEnd(event,${i})">⠿</span>
+          <div style="flex:1;min-width:0">
+            <div class="ex-name" style="cursor:text" contenteditable="true" onblur="draftRoutineExs[${i}].name=this.textContent.trim();renderRoutineEditorExList()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${ex.name}</div>
+            <div class="ex-meta">${ex.muscle?`<span class="ex-muscle-tag">${ex.muscle}</span>`:''}</div>
+          </div>
+          <button onclick="openReditorExMenu(${i})" style="width:32px;height:32px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--muted)"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+          </button>
         </div>
-        <!-- Ligne muscle + séries + reps + repos -->
-        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-left:28px">
-          <select style="flex:1;min-width:100px;font-size:11px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 8px;color:var(--text)"
-            onchange="draftRoutineExs[${i}].muscle=this.value">
-            <option value="">Muscle</option>
-            ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdos','Fessiers','Adducteurs','Abducteurs','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
-          </select>
-          <input type="number" value="${ex.sets}" min="1" max="20"
-            style="width:48px;text-align:center;font-size:13px;font-weight:500;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px;color:var(--text)"
-            placeholder="Séries" oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3"/>
-          <input type="text" value="${ex.repsTarget||''}" maxlength="8"
-            style="width:56px;text-align:center;font-size:13px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px;color:var(--text)"
-            placeholder="Reps" oninput="draftRoutineExs[${i}].repsTarget=this.value.trim()"/>
-          <select style="width:78px;font-size:11px;border-radius:8px;border:0.5px solid var(--border);background:var(--warm);padding:6px 4px;color:var(--text)"
-            onchange="draftRoutineExs[${i}].restTime=parseInt(this.value)">
-            ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans']].map(([v,l])=>`<option value="${v}" ${parseInt(ex.restTime)===parseInt(v)?'selected':''}>${l}</option>`).join('')}
-          </select>
+        <div class="sets-head"><div>#</div><div>Poids kg</div><div>Reps cible</div><div></div></div>
+        ${setsHtml}
+        <div class="ex-actions-row">
+          <button class="add-set" onclick="draftRoutineExs[${i}].sets=(draftRoutineExs[${i}].sets||3)+1;renderRoutineEditorExList()">+ Série</button>
+          <button class="add-set wu-btn${hasWarmup?' wu-active':''}" onclick="draftRoutineExs[${i}].warmupSets=${hasWarmup?0:1};renderRoutineEditorExList()">${hasWarmup?'🔥 Retirer':'🔥 Échauff.'}</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+  }
+
+  let _reditorMenuIdx = null;
+  function openReditorExMenu(i) {
+    _reditorMenuIdx = i;
+    const ex = draftRoutineExs[i];
+    document.getElementById('exMenuTitle').textContent = ex.name;
+    document.getElementById('exMenuItems').innerHTML = `
+      <div onclick="closeExMenu()" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+        <span>Réorganiser</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>openReditorMusclePicker(${i}),100)" class="ex-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        <span>Changer le muscle</span>
+      </div>
+      <div onclick="closeExMenu();setTimeout(()=>{draftRoutineExs.splice(${i},1);renderRoutineEditorExList();},100)" class="ex-menu-item ex-menu-danger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+        <span>Retirer l'exercice</span>
+      </div>
+    `;
+    document.getElementById('exMenuOverlay').style.display = 'flex';
+  }
+
+  function openReditorMusclePicker(i) {
+    const muscles = ['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdos','Fessiers','Adducteurs','Abducteurs'];
+    const sheet = `<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1090;display:flex;align-items:flex-end;justify-content:center" onclick="this.remove()" id="musclePicker">
+      <div style="background:var(--surface);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:8px 0 32px" onclick="event.stopPropagation()">
+        <div style="width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 16px"></div>
+        ${muscles.map(m => `<div onclick="draftRoutineExs[${i}].muscle='${m}';renderRoutineEditorExList();document.getElementById('musclePicker').remove()"
+          style="padding:14px 20px;font-family:'Geist Mono',monospace;font-size:13px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">${m}</div>`).join('')}
+      </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', sheet);
+  }
+
+  function openExPickerForRoutineEditor() {
+    window._editSessionAddMode = false;
+    window._routineEditorAddMode = true;
+    _exPickerSelected = null;
+    _exPickerConfig = { sets: 3, repsTarget: '8–12', restTime: 90, warmup: false };
+    document.getElementById('exPickerSearch').value = '';
+    document.getElementById('exPickerModal').classList.add('open');
+    renderExPickerList();
   }
 
   // Autocomplete pour l'éditeur
@@ -10975,6 +10996,16 @@
     const { name, muscle } = _exPickerSelected;
     const { sets, repsTarget, restTime } = _exPickerConfig;
     const warmup = document.getElementById('exPickerWarmup').checked;
+
+    if (window._routineEditorAddMode) {
+      // Mode ajout dans éditeur de routine
+      window._routineEditorAddMode = false;
+      draftRoutineExs.push({ name, muscle, sets, repsTarget, restTime, warmupSets: warmup ? 1 : 0 });
+      closeExPickerModal();
+      renderRoutineEditorExList();
+      showToast('"' + name + '" ajouté ✓');
+      return;
+    }
 
     if (window._editSessionAddMode) {
       // Mode ajout dans édition de séance passée
