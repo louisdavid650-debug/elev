@@ -1439,8 +1439,25 @@
             oninput="renderReplaceList()"/>
         </div>
       </div>
-      <!-- Filtres muscle -->
-      <div id="replaceMuscleFilters" style="display:flex;gap:8px;padding:10px 16px;overflow-x:auto;flex-shrink:0;border-bottom:0.5px solid var(--border);scrollbar-width:none"></div>
+      <!-- Filtres muscle + équipement -->
+      <div style="display:flex;gap:8px;padding:10px 16px;flex-shrink:0;border-bottom:0.5px solid var(--border)">
+        <div style="position:relative;flex:1">
+          <button id="replaceMuscleBtn" onclick="toggleReplaceDropdown('muscle')"
+            style="width:100%;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <span id="replaceMuscleLabel">Tous les muscles</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="replaceMuscleDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;max-height:260px;overflow-y:auto"></div>
+        </div>
+        <div style="position:relative;flex:1">
+          <button id="replaceEquipBtn" onclick="toggleReplaceDropdown('equip')"
+            style="width:100%;padding:10px 14px;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px">
+            <span id="replaceEquipLabel">Tous les équipements</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="replaceEquipDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden"></div>
+        </div>
+      </div>
       <!-- Liste résultats -->
       <div id="replaceExList" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 40px"></div>
     </div>
@@ -3948,21 +3965,42 @@
   }
 
   function renderReplaceSection(title, items) {
-    return `<div style="padding:14px 16px 4px">
+    const html = `<div style="padding:14px 16px 4px">
       <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">${title}</div>
       ${items.map(e => {
         const safeName = e.name.replace(/'/g,"\'");
         const safeMuscle = (e.muscle||'').replace(/'/g,"\'");
+        const safeId = 'rimg_' + e.name.replace(/[^a-zA-Z0-9]/g, '_');
+        const equip = guessEquipment(e.name);
+        const cached = _wgerImageCache[e.name];
+        const imgContent = cached
+          ? `<img src="${cached}" style="width:100%;height:100%;object-fit:cover"/>`
+          : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5"><path d="M6 4v16M18 4v16M6 12h12"/></svg>`;
         return `<div onclick="selectAndReplaceEx('${safeName}','${safeMuscle}')"
-          style="display:flex;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border);gap:14px;cursor:pointer">
+          style="display:flex;align-items:center;padding:11px 0;border-bottom:0.5px solid var(--border);gap:12px;cursor:pointer">
+          <div id="${safeId}" style="width:48px;height:48px;border-radius:10px;background:var(--surface2);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--border)">${imgContent}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;color:var(--text)">${e.name}</div>
-            ${e.muscle ? `<div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">${e.muscle}</div>` : ''}
+            <div style="font-size:14px;color:var(--text)">${e.name}</div>
+            <div style="font-size:10px;font-family:'Geist Mono',monospace;margin-top:2px">
+              ${e.muscle ? `<span style="color:var(--accent)">${e.muscle}</span>` : ''}
+              <span style="color:var(--muted)"> · ${equip}</span>
+            </div>
           </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted2)" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
         </div>`;
       }).join('')}
     </div>`;
+    setTimeout(() => {
+      items.forEach(e => {
+        if (_wgerImageCache[e.name] === undefined) {
+          fetchWgerImage(e.name).then(img => {
+            const el = document.getElementById('rimg_' + e.name.replace(/[^a-zA-Z0-9]/g, '_'));
+            if (el && img) el.innerHTML = `<img src="${img}" style="width:100%;height:100%;object-fit:cover"/>`;
+          });
+        }
+      });
+    }, 0);
+    return html;
   }
 
   function selectAndReplaceEx(name, muscle) {
@@ -6349,6 +6387,18 @@
   }
 
   // Exposer sur window après toutes les déclarations
+
+  // ── Init dropdowns exercice ──
+  document.addEventListener('DOMContentLoaded', function() {
+    const md = document.getElementById('muscleDropdown');
+    if (md) md.innerHTML = '<div onclick="setPickerMuscle(\'\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Tous les muscles</div><div onclick="setPickerMuscle(\'Pectoraux\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Pectoraux</div><div onclick="setPickerMuscle(\'Dos\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Dos</div><div onclick="setPickerMuscle(\'Épaules\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Épaules</div><div onclick="setPickerMuscle(\'Biceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Biceps</div><div onclick="setPickerMuscle(\'Triceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Triceps</div><div onclick="setPickerMuscle(\'Quadriceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Quadriceps</div><div onclick="setPickerMuscle(\'Ischio-jambiers\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Ischio-jambiers</div><div onclick="setPickerMuscle(\'Abdominaux\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Abdominaux</div><div onclick="setPickerMuscle(\'Fessiers\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Fessiers</div><div onclick="setPickerMuscle(\'Mollets\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Mollets</div><div onclick="setPickerMuscle(\'Full body\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Full body</div>';
+    const ed = document.getElementById('equipDropdown');
+    if (ed) ed.innerHTML = '<div onclick="setPickerEquip(\'\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Tous les équipements</div><div onclick="setPickerEquip(\'Barre\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Barre</div><div onclick="setPickerEquip(\'Haltères\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Haltères</div><div onclick="setPickerEquip(\'Machine\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Machine</div><div onclick="setPickerEquip(\'Câble / Poulie\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Câble / Poulie</div><div onclick="setPickerEquip(\'Poids du corps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Poids du corps</div><div onclick="setPickerEquip(\'Bandes élastiques\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Bandes élastiques</div>';
+    const rmd = document.getElementById('replaceMuscleDropdown');
+    if (rmd) rmd.innerHTML = '<div onclick="setReplaceMuscleDrop(\'\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Tous les muscles</div><div onclick="setReplaceMuscleDrop(\'Pectoraux\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Pectoraux</div><div onclick="setReplaceMuscleDrop(\'Dos\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Dos</div><div onclick="setReplaceMuscleDrop(\'Épaules\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Épaules</div><div onclick="setReplaceMuscleDrop(\'Biceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Biceps</div><div onclick="setReplaceMuscleDrop(\'Triceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Triceps</div><div onclick="setReplaceMuscleDrop(\'Quadriceps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Quadriceps</div><div onclick="setReplaceMuscleDrop(\'Ischio-jambiers\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Ischio-jambiers</div><div onclick="setReplaceMuscleDrop(\'Abdominaux\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Abdominaux</div><div onclick="setReplaceMuscleDrop(\'Fessiers\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Fessiers</div><div onclick="setReplaceMuscleDrop(\'Mollets\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Mollets</div><div onclick="setReplaceMuscleDrop(\'Full body\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Full body</div>';
+    const red = document.getElementById('replaceEquipDropdown');
+    if (red) red.innerHTML = '<div onclick="setReplaceEquipDrop(\'\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Tous les équipements</div><div onclick="setReplaceEquipDrop(\'Barre\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Barre</div><div onclick="setReplaceEquipDrop(\'Haltères\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Haltères</div><div onclick="setReplaceEquipDrop(\'Machine\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Machine</div><div onclick="setReplaceEquipDrop(\'Câble / Poulie\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Câble / Poulie</div><div onclick="setReplaceEquipDrop(\'Poids du corps\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Poids du corps</div><div onclick="setReplaceEquipDrop(\'Bandes élastiques\')" style="padding:11px 14px;font-family:\'Geist Mono\',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">Bandes élastiques</div>';
+  });
   window.fobNext = fobNext;
   window.fobBack = fobBack;
   window.fobSkip = fobSkip;
@@ -12145,11 +12195,7 @@
         <span id="muscleFilterLabel">Tous les muscles</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div id="muscleDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden">
-        ${['','Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdominaux','Fessiers','Mollets','Full body'].map(m =>
-          `<div onclick="setPickerMuscle('${m}')" style="padding:11px 14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">${m||'Tous les muscles'}</div>`
-        ).join('')}
-      </div>
+      <div id="muscleDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden;max-height:260px;overflow-y:auto"></div>
     </div>
     <div style="position:relative;flex:1">
       <button id="equipFilterBtn" onclick="togglePickerDropdown('equip')"
@@ -12157,11 +12203,7 @@
         <span id="equipFilterLabel">Tous les équipements</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div id="equipDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden">
-        ${['','Barre','Haltères','Machine','Câble / Poulie','Poids du corps','Bandes élastiques'].map(e =>
-          `<div onclick="setPickerEquip('${e}')" style="padding:11px 14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text);cursor:pointer;border-bottom:0.5px solid var(--border)">${e||'Tous les équipements'}</div>`
-        ).join('')}
-      </div>
+      <div id="equipDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:0.5px solid var(--border);border-radius:10px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.12);overflow:hidden"></div>
     </div>
   </div>
   <!-- Liste exercices -->
