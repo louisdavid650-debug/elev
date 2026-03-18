@@ -1495,17 +1495,10 @@
     <!-- ══ SÉANCES ══ -->
     <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
     <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:12px">Séances</div>
-    <button id="createRoutineToggleBtn" style="width:100%;margin-bottom:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="toggleCreateRoutineForm()">+ CRÉER UNE SÉANCE</button>
-    <div class="create-routine-form" id="createRoutineForm" style="display:none">
-      <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
-      <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
-      <div id="routineExList" class="routine-ex-list"></div>
-      <button class="btn-add" style="width:100%;margin-bottom:8px;background:none;border:1px dashed var(--border2);color:var(--muted)" onclick="openExPickerForRoutineEditor()">+ Ajouter un exercice</button>
-      <div style="display:flex;gap:10px">
-        <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la séance</button>
-        <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
-      </div>
-    </div>
+    <button style="width:100%;margin-bottom:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer" onclick="openCreateRoutineOverlay()">+ CRÉER UNE SÉANCE</button>
+    <!-- Champs cachés pour compatibilité avec saveRoutine() -->
+    <input type="hidden" id="routineName"/>
+    <div id="routineExList" style="display:none"></div>
     <div class="routines-list" id="routinesList"></div>
 
     <!-- Séance libre -->
@@ -1517,6 +1510,27 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ══ CREATE ROUTINE OVERLAY ══ -->
+  <div id="createRoutineOverlay" style="display:none;position:fixed;inset:0;z-index:1050;background:var(--bg);flex-direction:column;overflow:hidden">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top)+14px) 16px 14px;border-bottom:0.5px solid var(--border);flex-shrink:0">
+      <button onclick="closeCreateRoutineOverlay()" style="background:none;border:none;color:var(--accent);font-family:'Geist Mono',monospace;font-size:12px;cursor:pointer;padding:4px 0">Annuler</button>
+      <input id="createRoutineName" placeholder="Titre de la séance" type="text"
+        style="font-family:'DM Serif Display',serif;font-size:18px;font-style:italic;color:var(--text);background:none;border:none;outline:none;text-align:center;width:200px"
+        autocomplete="off"/>
+      <button onclick="saveCreateRoutineOverlay()" style="background:none;border:none;color:var(--accent);font-family:'Geist Mono',monospace;font-size:12px;cursor:pointer;font-weight:600;padding:4px 0">Créer</button>
+    </div>
+    <!-- Corps scrollable — exercices + bouton ajouter en bas de liste -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 40px">
+      <div id="createRoutineExList"></div>
+      <button onclick="openExPickerForCreateRoutine()"
+        style="width:100%;padding:14px;margin-top:8px;background:none;border:1.5px dashed var(--border2);border-radius:12px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un exercice
+      </button>
+    </div>
   </div>
 
   <!-- ══ ROUTINE EDITOR OVERLAY ══ -->
@@ -5278,8 +5292,7 @@
     renderDraftRoutineExs();
     document.getElementById('saveRoutineBtn').textContent = 'Enregistrer la routine';
     document.getElementById('cancelEditRoutineBtn').style.display = 'none';
-    document.getElementById('createRoutineForm').style.display = 'none';
-    document.getElementById('createRoutineToggleBtn').textContent = '+ CRÉER UNE SÉANCE';
+    document.getElementById('createRoutineForm')?.style && (document.getElementById('createRoutineForm').style.display = 'none');
   }
 
   async function saveRoutine() {
@@ -10712,6 +10725,62 @@
     document.body.insertAdjacentHTML('beforeend', sheet);
   }
 
+  // ── Création séance overlay ──
+  let _createRoutineExs = [];
+
+  function openCreateRoutineOverlay() {
+    _createRoutineExs = [];
+    document.getElementById('createRoutineName').value = '';
+    renderCreateRoutineExList();
+    document.getElementById('createRoutineOverlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('createRoutineName')?.focus(), 200);
+  }
+
+  function closeCreateRoutineOverlay() {
+    document.getElementById('createRoutineOverlay').style.display = 'none';
+    _createRoutineExs = [];
+  }
+
+  function renderCreateRoutineExList() {
+    const el = document.getElementById('createRoutineExList');
+    if (!el) return;
+    if (!_createRoutineExs.length) { el.innerHTML = ''; return; }
+    // Réutiliser le même rendu que l'éditeur
+    const saved = draftRoutineExs;
+    draftRoutineExs = _createRoutineExs;
+    el.id = 'routineEditorExList';
+    renderRoutineEditorExList();
+    el.id = 'createRoutineExList';
+    draftRoutineExs = saved;
+    // Rebinder les events — patch les onclick pour cibler _createRoutineExs
+    el.querySelectorAll('[onclick]').forEach(btn => {
+      btn.setAttribute('onclick', btn.getAttribute('onclick').replace(/draftRoutineExs/g, '_createRoutineExs'));
+    });
+  }
+
+  function openExPickerForCreateRoutine() {
+    window._createRoutineAddMode = true;
+    window._routineEditorAddMode = false;
+    _exPickerSelected = null;
+    _exPickerConfig = { sets: 3, repsTarget: '8–12', restTime: 90, warmup: false };
+    document.getElementById('exPickerSearch').value = '';
+    _exPickerMuscleFilter = '';
+    _exPickerEquipFilter = '';
+    document.getElementById('exPickerModal').classList.add('open');
+    renderExPickerList();
+  }
+
+  async function saveCreateRoutineOverlay() {
+    const name = document.getElementById('createRoutineName').value.trim();
+    if (!name) { showToast('Entre un nom pour la séance'); document.getElementById('createRoutineName').focus(); return; }
+    if (!_createRoutineExs.length) { showToast('Ajoute au moins un exercice'); return; }
+    // Réutiliser saveRoutine() en injectant les données
+    document.getElementById('routineName').value = name;
+    draftRoutineExs = [..._createRoutineExs];
+    closeCreateRoutineOverlay();
+    await saveRoutine();
+  }
+
   function openExPickerForRoutineEditor() {
     window._editSessionAddMode = false;
     window._routineEditorAddMode = true;
@@ -11030,6 +11099,15 @@
     const { name, muscle } = _exPickerSelected;
     const { sets, repsTarget, restTime } = _exPickerConfig;
     const warmup = document.getElementById('exPickerWarmup').checked;
+
+    if (window._createRoutineAddMode) {
+      window._createRoutineAddMode = false;
+      _createRoutineExs.push({ name, muscle, sets, repsTarget, restTime, warmupSets: warmup ? 1 : 0 });
+      closeExPickerModal();
+      renderCreateRoutineExList();
+      showToast('"' + name + '" ajouté ✓');
+      return;
+    }
 
     if (window._routineEditorAddMode) {
       // Mode ajout dans éditeur de routine
