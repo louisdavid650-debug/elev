@@ -9111,23 +9111,50 @@
           ${brand ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">${brand}</div>` : ''}
         </div>
 
-        <!-- Macros grille 4 colonnes -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--border);flex-shrink:0">
-          <div style="text-align:center;padding:12px 6px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="previewKcal">${Math.round(kcal100*ratio0)}</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">KCAL</div>
+        <!-- Design B : Anneau + barres macros -->
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:16px">
+          <div style="flex-shrink:0;position:relative;width:76px;height:76px">
+            <svg width="76" height="76" viewBox="0 0 76 76" id="previewDonut">
+              <circle cx="38" cy="38" r="28" fill="none" stroke="var(--border)" stroke-width="9"/>
+              <circle cx="38" cy="38" r="28" fill="none" stroke="#7ab893" stroke-width="9" id="previewArcGluc"
+                stroke-dasharray="${Math.round(gluc100/(gluc100+prot100+lip100+0.001)*176)} 176"
+                stroke-linecap="round" transform="rotate(-90 38 38)"/>
+              <circle cx="38" cy="38" r="28" fill="none" stroke="var(--accent)" stroke-width="9" id="previewArcProt"
+                stroke-dasharray="${Math.round(prot100/(gluc100+prot100+lip100+0.001)*176)} 176"
+                stroke-linecap="round" stroke-dashoffset="${-Math.round(gluc100/(gluc100+prot100+lip100+0.001)*176)}"
+                transform="rotate(-90 38 38)"/>
+              <circle cx="38" cy="38" r="28" fill="none" stroke="#e8c49a" stroke-width="9" id="previewArcLip"
+                stroke-dasharray="${Math.round(lip100/(gluc100+prot100+lip100+0.001)*176)} 176"
+                stroke-linecap="round" stroke-dashoffset="${-(Math.round(gluc100/(gluc100+prot100+lip100+0.001)*176)+Math.round(prot100/(gluc100+prot100+lip100+0.001)*176))}"
+                transform="rotate(-90 38 38)"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1" id="previewKcal">${Math.round(kcal100*ratio0)}</div>
+              <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">KCAL</div>
+            </div>
           </div>
-          <div style="text-align:center;padding:12px 6px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}g</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">GLUC</div>
-          </div>
-          <div style="text-align:center;padding:12px 6px;border-right:1px solid var(--border)">
-            <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--accent)" id="previewProt">${Math.round(prot100*ratio0*10)/10}g</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">PROT</div>
-          </div>
-          <div style="text-align:center;padding:12px 6px">
-            <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}g</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">LIP</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+                <span style="font-size:10px;color:#7ab893;font-family:'Geist Mono',monospace;letter-spacing:0.5px">GLUCIDES</span>
+                <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="previewGluc">${Math.round(gluc100*ratio0*10)/10}g</span>
+              </div>
+              <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;background:#7ab893;border-radius:2px;width:${Math.min(Math.round(gluc100/3),100)}%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+                <span style="font-size:10px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:0.5px">PROTÉINES</span>
+                <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="previewProt">${Math.round(prot100*ratio0*10)/10}g</span>
+              </div>
+              <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;background:var(--accent);border-radius:2px;width:${Math.min(Math.round(prot100/1.5),100)}%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+                <span style="font-size:10px;color:#e8c49a;font-family:'Geist Mono',monospace;letter-spacing:0.5px">LIPIDES</span>
+                <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="previewLip">${Math.round(lip100*ratio0*10)/10}g</span>
+              </div>
+              <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="height:100%;background:#e8c49a;border-radius:2px;width:${Math.min(Math.round(lip100/0.6),100)}%"></div></div>
+            </div>
           </div>
         </div>
 
@@ -9387,9 +9414,18 @@
     const lip  = Math.round(f.lip100  * ratio * 10) / 10;
     const fib  = Math.round((f.fib100 || 0) * ratio * 10) / 10;
     const kEl = document.getElementById('previewKcal'); if (kEl) kEl.textContent = kcal;
-    const pEl = document.getElementById('previewProt'); if (pEl) pEl.textContent = prot + ' g';
-    const gEl = document.getElementById('previewGluc'); if (gEl) gEl.textContent = gluc + ' g';
-    const lEl = document.getElementById('previewLip');  if (lEl) lEl.textContent = lip  + ' g';
+    const pEl = document.getElementById('previewProt'); if (pEl) pEl.textContent = prot + 'g';
+    const gEl = document.getElementById('previewGluc'); if (gEl) gEl.textContent = gluc + 'g';
+    const lEl = document.getElementById('previewLip');  if (lEl) lEl.textContent = lip  + 'g';
+    // Mettre à jour les arcs du donut
+    const total = gluc + prot + lip || 1;
+    const circ = 176;
+    const gDash = Math.round(gluc/total*circ);
+    const pDash = Math.round(prot/total*circ);
+    const lDash = Math.round(lip /total*circ);
+    const aG = document.getElementById('previewArcGluc'); if(aG){aG.setAttribute('stroke-dasharray',gDash+' '+circ);}
+    const aP = document.getElementById('previewArcProt'); if(aP){aP.setAttribute('stroke-dasharray',pDash+' '+circ);aP.setAttribute('stroke-dashoffset',-gDash);}
+    const aL = document.getElementById('previewArcLip');  if(aL){aL.setAttribute('stroke-dasharray',lDash+' '+circ);aL.setAttribute('stroke-dashoffset',-(gDash+pDash));}
     const kdEl = document.getElementById('previewKcalDetail'); if (kdEl) kdEl.textContent = kcal + ' kcal';
     const pdEl = document.getElementById('previewProtDetail'); if (pdEl) pdEl.textContent = prot + ' g';
     const gdEl = document.getElementById('previewGlucDetail'); if (gdEl) gdEl.textContent = gluc + ' g';
