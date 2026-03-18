@@ -7240,6 +7240,7 @@
     } catch(e) {}
     renderNutritionTab();
     renderHomeNutriWidget();
+    if (window._mealPageCurrent) renderMealPage();
   }
 
   async function deleteNutriEntry(id) {
@@ -8062,6 +8063,7 @@
     showToast(m.name.slice(0, 30) + ' ajouté ✓');
     _nutriAccordionOpen[mealName] = true;
     renderNutritionTab();
+    renderMealPage();
   }
 
   function openMealCustomizeModal(i) {
@@ -8198,6 +8200,7 @@
     showToast(m.name.slice(0, 30) + ' ajouté ✓');
     _nutriAccordionOpen[mealName] = true;
     renderNutritionTab();
+    renderMealPage();
   }
 
   window._openMealCards = new Set();
