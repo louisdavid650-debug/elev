@@ -7286,6 +7286,7 @@
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
+    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => {
       renderNutriAddBody();
       setTimeout(() => searchEl && searchEl.focus(), 200);
@@ -7332,6 +7333,7 @@
   function closeNutriAdd() {
     const overlay = document.getElementById('nutriAddOverlay');
     overlay.style.display = 'none';
+    document.body.style.overflow = '';
     _nutriActiveMeal = null;
     clearTimeout(_nutriSearchTimer);
     // Rafraîchir la page repas si elle est ouverte
@@ -9712,10 +9714,12 @@
     document.getElementById('nsLip').value  = ns.lip;
     syncNutriMacros('prot');
     document.getElementById('nutriSettingsOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   }
 
   function closeNutriSettings() {
     document.getElementById('nutriSettingsOverlay').style.display = 'none';
+    document.body.style.overflow = '';
   }
 
   function syncNutriMacros(changed) {
@@ -9813,6 +9817,7 @@
     overlay.classList.remove('slide-out');
     overlay.style.display = 'flex';
     overlay.style.flexDirection = '';
+    document.body.style.overflow = 'hidden';
     initMealPageSwipe(overlay);
   }
 
@@ -9828,6 +9833,7 @@
   function closeMealPage() {
     const overlay = document.getElementById('mealPageOverlay');
     overlay.classList.add('slide-out');
+    document.body.style.overflow = '';
     setTimeout(() => {
       overlay.style.display = 'none';
       overlay.classList.remove('slide-out');
