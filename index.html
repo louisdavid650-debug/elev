@@ -1500,47 +1500,7 @@
       <div class="label" style="margin-bottom:14px">Nouvelle séance</div>
       <div class="form-row"><input class="inp" id="routineName" placeholder="Nom (ex: Push A, Legs...)" type="text"/></div>
       <div id="routineExList" class="routine-ex-list"></div>
-      <button class="btn-add" id="rExToggleBtn" style="width:100%;margin-bottom:8px;background:none;border:1px dashed var(--border2);color:var(--muted)" onclick="toggleRExPanel()">+ Ajouter un exercice</button>
-      <div id="rExPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
-        <div class="form-row">
-          <div style="position:relative;flex:1">
-            <input class="inp" id="rExName" placeholder="Nom de l'exercice" type="text" oninput="filterRoutineExSuggestions()" autocomplete="off" style="width:100%;box-sizing:border-box"/>
-            <div class="ex-suggestions ex-add-suggestions" id="rExSuggestions"></div>
-          </div>
-          <select class="inp" id="rExMuscle">
-            <option value="">Muscle</option>
-            <option>Pectoraux</option><option>Dos</option><option>Épaules</option>
-            <option>Biceps</option><option>Triceps</option><option>Quadriceps</option><option>Ischio-jambiers</option>
-            <option>Abdos</option><option>Fessiers</option><option>Adducteurs</option><option>Abducteurs</option><option>Autre</option>
-          </select>
-        </div>
-        <div class="form-row" style="margin-bottom:10px">
-          <input class="inp" id="rExSets" placeholder="Séries (ex: 4)" type="number" style="max-width:90px"/>
-          <!-- Toggle kg / secondes -->
-          <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
-            <button id="rExUnitKg" onclick="setRExUnit('kg')"
-              style="padding:8px 12px;border:none;background:var(--accent);color:#fff;font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.15s">KG</button>
-            <button id="rExUnitSec" onclick="setRExUnit('sec')"
-              style="padding:8px 12px;border:none;background:var(--surface);color:var(--muted);font-family:'Geist Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.15s">SEC</button>
-          </div>
-          <input class="inp" id="rExReps" placeholder="Reps (ex: 8-10)" type="text" style="max-width:90px" maxlength="8"/>
-          <select class="inp" id="rExRest" style="max-width:145px" onchange="toggleCustomRest(this)">
-            <option value="60">Repos 1 min</option>
-            <option value="90" selected>Repos 1 min 30</option>
-            <option value="120">Repos 2 min</option>
-            <option value="180">Repos 3 min</option>
-            <option value="0">Pas de repos</option>
-            <option value="custom">Personnalisé...</option>
-          </select>
-          <input class="inp" id="rExRestCustom" type="number" placeholder="Sec." style="max-width:70px;display:none;" min="5" max="600"/>
-        </div>
-        <!-- Exercice d'échauffement -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <input type="checkbox" id="rExIsWarmup" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer"/>
-          <label for="rExIsWarmup" style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:0.5px;cursor:pointer">🔥 Exercice d'échauffement</label>
-        </div>
-        <button class="btn-add" style="width:100%" onclick="addRoutineEx();toggleRExPanel()">Confirmer ↵</button>
-      </div>
+      <button class="btn-add" style="width:100%;margin-bottom:8px;background:none;border:1px dashed var(--border2);color:var(--muted)" onclick="openExPickerForRoutineEditor()">+ Ajouter un exercice</button>
       <div style="display:flex;gap:10px">
         <button class="btn-add" id="saveRoutineBtn" onclick="saveRoutine()" style="flex:1">Enregistrer la séance</button>
         <button class="btn-ghost" id="cancelEditRoutineBtn" onclick="cancelEditRoutine()" style="display:none">Annuler</button>
@@ -4976,67 +4936,14 @@
     renderDraftRoutineExs();
   }
   function renderDraftRoutineExs() {
-    const html = draftRoutineExs.map((ex, i) => {
-      const isInSS = ex.supersetWith !== undefined;
-      const ssPartnerIdx = isInSS ? draftRoutineExs.findIndex((e,j) => j !== i && e.supersetWith === i || j === ex.supersetWith) : -1;
-      // Connecteur SS entre deux exercices liés
-      const showConnector = isInSS && i > 0 && draftRoutineExs[i-1].supersetWith === i;
-
-      return `${showConnector ? `<div style="text-align:center;margin:-4px 0;font-size:9px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:1px;padding:3px 0;background:rgba(74,140,92,0.08);border-radius:4px">⇄ SUPERSET</div>` : ''}
-      <div class="routine-ex-edit-row${ex.isWarmup ? ' rex-warmup' : ''}${isInSS ? ' rex-superset' : ''}">
-        <div class="routine-ex-edit-top">
-          <div class="rex-name-wrap">
-            <input class="rex-inp rex-name-inp" value="${ex.name.replace(/"/g,'&quot;')}" placeholder="Nom exercice"
-              oninput="draftRoutineExs[${i}].name=this.value; filterDraftExSug(${i}, this.value)"
-              onfocus="filterDraftExSug(${i}, this.value)"
-              autocomplete="off"/>
-            <div class="ex-suggestions ex-add-suggestions" id="draftExSug${i}"></div>
-          </div>
-          <div style="display:flex;gap:4px;align-items:center">
-            <!-- Bouton superset -->
-            <button onclick="toggleDraftSuperset(${i})"
-              title="${isInSS ? 'Retirer du superset' : 'Lier en superset avec le suivant'}"
-              style="background:${isInSS ? 'var(--accent)' : 'none'};color:${isInSS ? '#fff' : 'var(--muted)'};border:1px solid ${isInSS ? 'var(--accent)' : 'var(--border)'};border-radius:6px;padding:4px 7px;font-size:11px;cursor:pointer;font-family:'Geist Mono',monospace;flex-shrink:0">⇄</button>
-            <button class="routine-ex-del" onclick="delDraftEx(${i})" style="font-size:14px;padding:4px 8px;">✕</button>
-          </div>
-        </div>
-        <div class="routine-ex-edit-bot">
-          <select class="rex-inp" style="flex:1" onchange="draftRoutineExs[${i}].muscle=this.value">
-            <option value="">Muscle</option>
-            ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischio-jambiers','Abdos','Fessiers','Adducteurs','Abducteurs','Autre'].map(m=>`<option ${ex.muscle===m?'selected':''}>${m}</option>`).join('')}
-          </select>
-          <input class="rex-inp" type="number" style="width:52px;text-align:center" value="${ex.sets}" min="1" max="10" placeholder="Séries"
-            oninput="draftRoutineExs[${i}].sets=parseInt(this.value)||3" title="Nombre de séries"/>
-          <!-- Toggle kg/sec -->
-          <div style="display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0">
-            <button onclick="draftRoutineExs[${i}].unit='kg';renderDraftRoutineExs()"
-              style="padding:6px 8px;border:none;background:${ex.unit!=='sec'?'var(--accent)':'var(--surface)'};color:${ex.unit!=='sec'?'#fff':'var(--muted)'};font-family:'Geist Mono',monospace;font-size:8px;cursor:pointer">KG</button>
-            <button onclick="draftRoutineExs[${i}].unit='sec';renderDraftRoutineExs()"
-              style="padding:6px 8px;border:none;background:${ex.unit==='sec'?'var(--accent)':'var(--surface)'};color:${ex.unit==='sec'?'#fff':'var(--muted)'};font-family:'Geist Mono',monospace;font-size:8px;cursor:pointer">SEC</button>
-          </div>
-          <input class="rex-inp" type="text" style="width:72px;text-align:center"
-            value="${ex.repsTarget||''}"
-            placeholder="${ex.unit==='sec'?'Durée':'Reps'}"
-            maxlength="8"
-            oninput="draftRoutineExs[${i}].repsTarget=this.value.trim()"/>
-          <select class="rex-inp" style="width:90px" onchange="onDraftRestChange(${i}, this)">
-            ${[['60','1 min'],['90','1m30'],['120','2 min'],['180','3 min'],['0','Sans'],['custom','Perso.']].map(([v,l])=>`<option value="${v}" ${v!=='custom'&&parseInt(ex.restTime)===parseInt(v)?'selected':v==='custom'&&![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'selected':''}>${l}</option>`).join('')}
-          </select>
-          <input class="rex-inp" type="number" placeholder="Sec." min="5" max="600"
-            id="draftRestCustom${i}"
-            style="width:52px;display:${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?'block':'none'}"
-            value="${![0,60,90,120,180].includes(parseInt(ex.restTime))&&ex.restTime>0?ex.restTime:''}"
-            oninput="draftRoutineExs[${i}].restTime=parseInt(this.value)||90"/>
-        </div>
-        <!-- Case échauffement -->
-        <div style="display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-          <input type="checkbox" id="draftWarmup${i}" ${ex.isWarmup?'checked':''} style="width:14px;height:14px;accent-color:var(--gold);cursor:pointer"
-            onchange="draftRoutineExs[${i}].isWarmup=this.checked;renderDraftRoutineExs()"/>
-          <label for="draftWarmup${i}" style="font-size:10px;color:${ex.isWarmup?'#c9962a':'var(--muted)'};font-family:'Geist Mono',monospace;cursor:pointer">🔥 Échauffement</label>
-        </div>
-      </div>`;
-    }).join('');
-    document.getElementById('routineExList').innerHTML = html;
+    // Utiliser routineExList (création) ou routineEditorExList (édition)
+    const targetId = document.getElementById('routineEditorExList') ? 'routineEditorExList' : 'routineExList';
+    const el = document.getElementById('routineExList');
+    if (!el) { renderRoutineEditorExList(); return; }
+    // Swapper temporairement l'id pour réutiliser renderRoutineEditorExList
+    el.id = 'routineEditorExList';
+    renderRoutineEditorExList();
+    el.id = 'routineExList';
   }
 
   function toggleDraftSuperset(i) {
