@@ -9900,9 +9900,36 @@
     const totLip  = Math.round(items.reduce((s,e) => s + (e.lip ||0), 0) * 10) / 10;
 
     document.getElementById('mpKcal').textContent = totKcal;
-    document.getElementById('mpProt').textContent = totProt + ' g';
     document.getElementById('mpGluc').textContent = totGluc + ' g';
+    document.getElementById('mpProt').textContent = totProt + ' g';
     document.getElementById('mpLip').textContent  = totLip  + ' g';
+
+    // Donut + barres
+    const totalMacros = totGluc + totProt + totLip || 1;
+    const circ = 2 * Math.PI * 28; // ~176
+    const glucPct = totGluc / totalMacros;
+    const protPct = totProt / totalMacros;
+    const lipPct  = totLip  / totalMacros;
+    const glucDash = glucPct * circ;
+    const protDash = protPct * circ;
+    const lipDash  = lipPct  * circ;
+    const glucOffset = 0;
+    const protOffset = -glucDash;
+    const lipOffset  = -(glucDash + protDash);
+    const arcGluc = document.getElementById('mpArcGluc');
+    const arcProt = document.getElementById('mpArcProt');
+    const arcLip  = document.getElementById('mpArcLip');
+    if (arcGluc) arcGluc.setAttribute('stroke-dasharray', glucDash + ' ' + circ);
+    if (arcProt) { arcProt.setAttribute('stroke-dasharray', protDash + ' ' + circ); arcProt.setAttribute('stroke-dashoffset', protOffset); }
+    if (arcLip)  { arcLip.setAttribute('stroke-dasharray',  lipDash  + ' ' + circ); arcLip.setAttribute('stroke-dashoffset', lipOffset); }
+    // Barres
+    const profile = userProfile || {};
+    const goalGluc = profile.goalGluc || 300;
+    const goalProt = profile.goalProt || 150;
+    const goalLip  = profile.goalLip  || 60;
+    const bg = document.getElementById('mpBarGluc'); if (bg) bg.style.width = Math.min(totGluc/goalGluc*100,100) + '%';
+    const bp = document.getElementById('mpBarProt'); if (bp) bp.style.width = Math.min(totProt/goalProt*100,100) + '%';
+    const bl = document.getElementById('mpBarLip');  if (bl) bl.style.width = Math.min(totLip/goalLip*100,100)  + '%';
 
     const list = document.getElementById('mealPageList');
     list.style.margin = '0 16px';
@@ -12469,23 +12496,44 @@
   <!-- Contenu scrollable -->
   <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0 16px" id="mealPageScroll">
 
-    <!-- Card macros 4 colonnes compactes -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 16px 12px">
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);font-weight:400;line-height:1" id="mpKcal">0</div>
-        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">KCAL</div>
+    <!-- Design B : Anneau + barres macros -->
+    <div style="margin:0 16px 14px;display:flex;align-items:center;gap:16px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px">
+      <!-- Anneau SVG -->
+      <div style="flex-shrink:0;position:relative;width:76px;height:76px">
+        <svg width="76" height="76" viewBox="0 0 76 76" id="mpDonut">
+          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--border)" stroke-width="9"/>
+          <circle cx="38" cy="38" r="28" fill="none" stroke="#7ab893" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" transform="rotate(-90 38 38)" id="mpArcGluc"/>
+          <circle cx="38" cy="38" r="28" fill="none" stroke="var(--accent)" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" transform="rotate(-90 38 38)" id="mpArcProt"/>
+          <circle cx="38" cy="38" r="28" fill="none" stroke="#e8c49a" stroke-width="9" stroke-dasharray="0 176" stroke-linecap="round" transform="rotate(-90 38 38)" id="mpArcLip"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);line-height:1" id="mpKcal">0</div>
+          <div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:2px">KCAL</div>
+        </div>
       </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#7ab893;font-weight:400;line-height:1" id="mpGluc">0g</div>
-        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">GLUCIDES</div>
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--accent);font-weight:400;line-height:1" id="mpProt">0g</div>
-        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">PROTÉINES</div>
-      </div>
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
-        <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#b5cfc3;font-weight:400;line-height:1" id="mpLip">0g</div>
-        <div style="font-size:9px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1.5px">LIPIDES</div>
+      <!-- Barres macros : Glucides / Protéines / Lipides -->
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:10px;color:#7ab893;font-family:'Geist Mono',monospace;letter-spacing:0.5px">GLUCIDES</span>
+            <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="mpGluc">0g</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div id="mpBarGluc" style="height:100%;background:#7ab893;border-radius:2px;width:0%;transition:width 0.4s"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:10px;color:var(--accent);font-family:'Geist Mono',monospace;letter-spacing:0.5px">PROTÉINES</span>
+            <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="mpProt">0g</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div id="mpBarProt" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width 0.4s"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:10px;color:#e8c49a;font-family:'Geist Mono',monospace;letter-spacing:0.5px">LIPIDES</span>
+            <span style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)" id="mpLip">0g</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div id="mpBarLip" style="height:100%;background:#e8c49a;border-radius:2px;width:0%;transition:width 0.4s"></div></div>
+        </div>
       </div>
     </div>
 
