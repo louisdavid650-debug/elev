@@ -7840,7 +7840,77 @@
   function addIngredientToMeal(i) {
     const f = (window._ingredientCache || [])[i];
     if (!f) return;
+    // Mode personnalisation de plat existant
+    if (window._customizeIngMode) {
+      addIngToCustomize(f);
+      return;
+    }
     openCmQtyModal(f.name, f.kcal, f.prot, f.gluc, f.lip, f.fib || 0, 100, undefined);
+  }
+
+  function openCustomizeIngredientSearch() {
+    window._customizeIngMode = true;
+    openIngredientSearch();
+  }
+
+  function addIngToCustomize(f) {
+    // Ajouter 100g par défaut
+    const qty = 100;
+    const ing = {
+      name: f.name,
+      qty,
+      kcal: Math.round(f.kcal * qty / 100),
+      prot: Math.round(f.prot * qty / 100 * 10) / 10,
+      gluc: Math.round(f.gluc * qty / 100 * 10) / 10,
+      lip:  Math.round(f.lip  * qty / 100 * 10) / 10,
+      fib:  Math.round((f.fib||0) * qty / 100 * 10) / 10,
+    };
+    if (window._mealCustomIngs) {
+      window._mealCustomIngs.push(ing);
+      // Reconstruire le modal
+      const modal = document.getElementById('mealCustomizeModal');
+      if (modal) {
+        const m = (window._nutriSuggCache || [])[window._mealCustomIdx];
+        if (m) {
+          // Reconstruire le contenu avec le nouvel ingrédient
+          const ings = window._mealCustomIngs;
+          const totKcal = Math.round(ings.reduce((s,g) => s+g.kcal, 0));
+          const totProt = Math.round(ings.reduce((s,g) => s+g.prot, 0)*10)/10;
+          const totGluc = Math.round(ings.reduce((s,g) => s+g.gluc, 0)*10)/10;
+          const totLip  = Math.round(ings.reduce((s,g) => s+g.lip,  0)*10)/10;
+          const totEl = modal.querySelector('#mcTotKcal');
+          if (totEl) {
+            modal.querySelector('#mcTotKcal').textContent = totKcal;
+            modal.querySelector('#mcTotProt').textContent = totProt+'g';
+            modal.querySelector('#mcTotGluc').textContent = totGluc+'g';
+            modal.querySelector('#mcTotLip').textContent  = totLip+'g';
+          }
+          // Ajouter la ligne dans la liste
+          const listEl = modal.querySelector('[id^="mcIng0Kcal"]')?.closest('[style*="overflow-y"]');
+          if (listEl) {
+            const ii = ings.length - 1;
+            const kcal100 = f.kcal; const prot100 = f.prot; const gluc100 = f.gluc; const lip100 = f.lip; const fib100 = f.fib||0;
+            const div = document.createElement('div');
+            div.style.marginBottom = '14px';
+            div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+              <div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
+              <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace" id="mcIng${ii}Kcal">${ing.kcal} kcal</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="number" id="mcIngQty${ii}" value="${qty}" min="0" max="2000"
+                style="width:72px;text-align:center;font-size:16px;font-family:'DM Serif Display',serif;padding:8px;background:var(--warm);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;box-sizing:border-box;flex-shrink:0"
+                oninput="updateMealCustomize(${ii},${kcal100},${prot100},${gluc100},${lip100},${fib100},this.value)"/>
+              <span style="font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;flex-shrink:0">g</span>
+              <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace" id="mcIng${ii}Macros">${ing.prot}P ${ing.gluc}G ${ing.lip}L</div>
+            </div>`;
+            listEl.appendChild(div);
+          }
+        }
+      }
+    }
+    window._customizeIngMode = false;
+    closeIngredientSearch();
+    showToast('"' + f.name + '" ajouté ✓');
   }
 
   async function saveMealRecipe() {
@@ -8025,8 +8095,13 @@
               </div>`;
             }).join('')}
           </div>
-          <!-- Bouton ajouter -->
-          <div style="padding:12px 20px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);border-radius:0 0 16px 16px">
+          <!-- Footer -->
+          <div style="padding:12px 20px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);border-radius:0 0 16px 16px;display:flex;flex-direction:column;gap:8px">
+            <button onclick="openCustomizeIngredientSearch()"
+              style="width:100%;background:none;border:1.5px dashed var(--border2);color:var(--muted);border-radius:12px;padding:12px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              AJOUTER UN ALIMENT
+            </button>
             <button onclick="confirmMealCustomize(${i})"
               style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer">
               Ajouter ce repas →
