@@ -10647,8 +10647,11 @@
 
   function nutriCardSwipeMove(e) {
     if (_nutriSwipeStartX === null) return;
-    // Ne pas interférer si le touch est sur un item de repas swipeable
-    if (e.target.closest('[id^="ncard-"]') || e.target.closest('[id^="ndel-"]')) return;
+    // Si le touch est sur un item swipeable → laisser nutriSwipeMove gérer
+    if (e.target.closest('[id^="ncard-"]') || e.target.closest('[id^="ndel-"]')) {
+      e.stopPropagation();
+      return;
+    }
     const dx = e.touches[0].clientX - _nutriSwipeStartX;
     const dy = e.touches[0].clientY - _nutriSwipeStartY;
     if (!_nutriSwipeDir && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
@@ -10707,6 +10710,7 @@
     card.style.transform = offset > 0 ? `translateX(-${offset}px)` : '';
     if (del) del.style.opacity = String(Math.min(offset / 56, 1));
     e.preventDefault();
+    e.stopPropagation();
   }
   function nutriSwipeEnd(e, id) {
     const s = nutriSwipeSessions[id];
