@@ -1885,7 +1885,7 @@
   <div id="nutriAddInner" style="width:100%;max-width:480px;max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px);background:var(--bg);display:flex;flex-direction:column;overflow:hidden;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.25)">
 
     <!-- Header avec safe area iPhone -->
-    <div style="padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg)">
+    <div style="padding:12px 16px 10px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <button onclick="closeNutriAdd()" style="background:var(--surface);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;font-size:16px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">←</button>
         <div style="font-size:16px;font-weight:500;color:var(--text)" id="nutriAddMealTitle">Ajouter</div>
@@ -7519,6 +7519,46 @@
   async function renderNutriAddBody() {
     const body = document.getElementById('nutriAddBody');
     if (!body) return;
+    // Pour repas et recettes, on ignore la recherche et on affiche toujours le contenu
+    if (_nutriSection === 'repas' || _nutriSection === 'recettes') {
+      if (_nutriSection === 'recettes') { renderRecipesSection(body); return; }
+      // repas — rendu direct
+      const meals = _nutriMeals;
+      if (!meals.length) {
+        body.innerHTML = `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Aucun repas enregistré.<br><span style="font-size:11px;opacity:0.7">Crée ton premier repas ci-dessus.</span></div>`;
+      } else {
+        window._nutriSuggCache = meals.map(m => ({ ...m }));
+        body.innerHTML = meals.map((m, i) => {
+          const isOpen = window._openMealCards && window._openMealCards.has(i);
+          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:var(--card-shadow)">
+            <div onclick="toggleMealCard(${i})" style="display:flex;align-items:center;padding:13px 14px;cursor:pointer;gap:10px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+                <div style="font-size:11px;font-family:'Geist Mono',monospace;margin-top:2px"><span style="color:var(--muted)">${m.kcal} kcal</span> · <span style="color:#7ab893">${m.prot}P</span> <span style="color:#6ea8c8">${m.gluc}G</span> <span style="color:#c8956c">${m.lip}L</span> · <span style="color:var(--muted)">${m.ingredients?.length || 0} ingrédient${(m.ingredients?.length || 0) > 1 ? 's' : ''}</span></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" style="transition:transform 0.2s;transform:rotate(${isOpen ? '180deg' : '0deg'})"><polyline points="6 9 12 15 18 9"/></svg>
+                <button onclick="event.stopPropagation();openEditMealModal('${m.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;padding:4px 7px">✏️</button>
+                <button onclick="event.stopPropagation();deleteSavedMeal('${m.id}')" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:4px">🗑</button>
+                <button onclick="event.stopPropagation();openMealAsEntry(${i})" style="background:none;border:2px solid var(--accent);color:var(--accent);border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;flex-shrink:0">+</button>
+              </div>
+            </div>
+            ${isOpen && m.ingredients?.length ? `<div style="border-top:1px solid var(--border);padding:8px 14px 12px">
+              <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px">Ingrédients</div>
+              ${m.ingredients.map((ing,ii) => `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border)">
+                <div style="flex:1"><div style="font-size:13px;color:var(--text);font-weight:500">${ing.name}</div>
+                <div style="font-size:10px;font-family:'Geist Mono',monospace;margin-top:1px"><span style="color:var(--muted)">${ing.qty}g</span> · <span style="color:#7ab893">${Math.round(ing.prot*10)/10}P</span> <span style="color:#6ea8c8">${Math.round(ing.gluc*10)/10}G</span> <span style="color:#c8956c">${Math.round(ing.lip*10)/10}L</span></div></div>
+                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:8px">
+                  <span style="font-size:12px;color:var(--text);font-family:'Geist Mono',monospace">${Math.round(ing.kcal)} kcal</span>
+                  <button onclick="event.stopPropagation();editSavedMealIngredient('${m.id}',${ii})" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:10px;padding:3px 6px">✏️</button>
+                  <button onclick="event.stopPropagation();deleteSavedMealIngredient('${m.id}',${ii})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:3px">✕</button>
+                </div></div>`).join('')}
+            </div>` : ''}
+          </div>`;
+        }).join('');
+      }
+      return;
+    }
     const q = document.getElementById('nutriSearch')?.value.trim();
     if (q && q.length >= 2) return;
 
