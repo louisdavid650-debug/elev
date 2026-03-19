@@ -1914,32 +1914,41 @@
           style="background:var(--accent);color:#fff;border:none;border-radius:12px;width:44px;height:44px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:300">+</button>
       </div>
 
-      <!-- Onglets Fréquents / Récents / Favoris / Plats -->
-      <div style="display:flex;gap:0;margin-bottom:8px" id="nutriAddTabs">
-        <button onclick="setNutriTab('frequent')" id="ntab-frequent"
-          style="flex:1;padding:8px 0;border:none;border-radius:8px 0 0 8px;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--accent);color:#fff">
-          Fréquents
+      <!-- 3 grands boutons : Aliments / Repas / Recettes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
+        <button onclick="setNutriSection('aliments')" id="nsec-aliments"
+          style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1.5px solid var(--accent);border-radius:12px;background:var(--accent-light);cursor:pointer;transition:all 0.15s">
+          <span style="font-size:22px">🥕</span>
+          <span style="font-size:11px;font-weight:500;color:var(--accent);font-family:'Geist Mono',monospace">Aliments</span>
         </button>
-        <button onclick="setNutriTab('recent')" id="ntab-recent"
-          style="flex:1;padding:8px 0;border:none;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-left:none;border-right:none">
-          Récents
+        <button onclick="setNutriSection('repas')" id="nsec-repas"
+          style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;transition:all 0.15s">
+          <span style="font-size:22px">🍱</span>
+          <span style="font-size:11px;font-weight:500;color:var(--muted);font-family:'Geist Mono',monospace">Repas</span>
         </button>
-        <button onclick="setNutriTab('favorite')" id="ntab-favorite"
-          style="flex:1;padding:8px 0;border:none;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-right:none">
-          Favoris
-        </button>
-        <button onclick="setNutriTab('meals')" id="ntab-meals"
-          style="flex:1;padding:8px 0;border:none;border-radius:0 8px 8px 0;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;background:var(--surface);color:var(--muted);border:1px solid var(--border)">
-          Plats
+        <button onclick="setNutriSection('recettes')" id="nsec-recettes"
+          style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;transition:all 0.15s">
+          <span style="font-size:22px">👨‍🍳</span>
+          <span style="font-size:11px;font-weight:500;color:var(--muted);font-family:'Geist Mono',monospace">Recettes</span>
         </button>
       </div>
 
-      <!-- Bouton créer un plat (visible sur l'onglet Plats) -->
-      <div id="nutriCreateMealBtn" style="display:none">
-        <button onclick="openCreateMealModal()"
-          style="width:100%;background:var(--surface);border:1.5px dashed var(--border2);border-radius:12px;padding:12px;font-size:13px;color:var(--accent);cursor:pointer;font-family:'Geist Mono',monospace;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          CRÉER UN PLAT
+      <!-- Sous-onglets Aliments : Fréquents / Récents / Favoris -->
+      <div id="nutriSubTabs" style="display:flex;gap:0;margin-top:8px">
+        <button onclick="setNutriTab('frequent')" id="ntab-frequent"
+          style="flex:1;padding:7px 0;border:none;border-radius:8px 0 0 8px;font-size:11px;font-weight:500;cursor:pointer;background:var(--accent);color:#fff">Fréquents</button>
+        <button onclick="setNutriTab('recent')" id="ntab-recent"
+          style="flex:1;padding:7px 0;border:none;border-radius:0;font-size:11px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-left:none;border-right:none">Récents</button>
+        <button onclick="setNutriTab('favorite')" id="ntab-favorite"
+          style="flex:1;padding:7px 0;border:none;border-radius:0 8px 8px 0;font-size:11px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--muted);border:1px solid var(--border)">Favoris</button>
+      </div>
+
+      <!-- Bouton créer (visible sur Repas et Recettes) -->
+      <div id="nutriCreateBtn" style="display:none;margin-top:8px">
+        <button id="nutriCreateBtnInner" onclick=""
+          style="width:100%;background:var(--surface);border:1.5px dashed var(--border2);border-radius:12px;padding:11px;font-size:12px;color:var(--accent);cursor:pointer;font-family:'Geist Mono',monospace;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span id="nutriCreateBtnLabel">CRÉER UN REPAS</span>
         </button>
       </div>
     </div>
@@ -7399,6 +7408,7 @@
   function openNutriAdd(meal) {
     _nutriActiveMeal = meal;
     _nutriActiveTab = 'frequent';
+    _nutriSection = 'aliments';
     const overlay = document.getElementById('nutriAddOverlay');
     const titleEl = document.getElementById('nutriAddMealTitle');
     const searchEl = document.getElementById('nutriSearch');
@@ -7425,6 +7435,38 @@
     });
   }
 
+  let _nutriSection = 'aliments'; // 'aliments' | 'repas' | 'recettes'
+
+  function setNutriSection(section) {
+    _nutriSection = section;
+    // Mettre à jour les boutons sections
+    ['aliments','repas','recettes'].forEach(s => {
+      const btn = document.getElementById('nsec-' + s);
+      if (!btn) return;
+      const active = s === section;
+      btn.style.border = active ? '1.5px solid var(--accent)' : '1.5px solid var(--border)';
+      btn.style.background = active ? 'var(--accent-light)' : 'var(--surface)';
+      btn.querySelector('span:last-child').style.color = active ? 'var(--accent)' : 'var(--muted)';
+    });
+    // Afficher/masquer sous-onglets et recherche
+    const subTabs = document.getElementById('nutriSubTabs');
+    const searchBar = document.getElementById('nutriSearch')?.closest('div[style*="relative"]')?.parentElement;
+    const createBtn = document.getElementById('nutriCreateBtn');
+    const createInner = document.getElementById('nutriCreateBtnInner');
+    const createLabel = document.getElementById('nutriCreateBtnLabel');
+    if (subTabs) subTabs.style.display = section === 'aliments' ? 'flex' : 'none';
+    if (createBtn) createBtn.style.display = section !== 'aliments' ? 'block' : 'none';
+    if (section === 'repas' && createInner && createLabel) {
+      createLabel.textContent = 'CRÉER UN REPAS';
+      createInner.onclick = () => openCreateMealModal();
+    }
+    if (section === 'recettes' && createInner && createLabel) {
+      createLabel.textContent = 'CRÉER UNE RECETTE';
+      createInner.onclick = () => openCreateRecipeModal();
+    }
+    renderNutriAddBody();
+  }
+
   function setNutriTab(tab) {
     _nutriActiveTab = tab;
     ['frequent','recent','favorite','meals'].forEach(t => {
@@ -7436,8 +7478,7 @@
     const searchEl = document.getElementById('nutriSearch');
     if (searchEl) searchEl.value = '';
     // Afficher/masquer le bouton créer un plat
-    const createBtn = document.getElementById('nutriCreateMealBtn');
-    if (createBtn) createBtn.style.display = tab === 'meals' ? 'block' : 'none';
+    // nutriCreateMealBtn legacy — géré par nutriCreateBtn maintenant
     renderNutriAddBody();
   }
 
@@ -7648,7 +7689,10 @@
         ? renderList(favItems, '')
         : `<div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">Appuie sur ☆ pour ajouter un favori.</div>`;
 
-    } else if (_nutriActiveTab === 'meals') {
+    } else if (_nutriSection === 'recettes') {
+      renderRecipesSection(body);
+      return;
+    } else if (_nutriSection === 'repas' || _nutriActiveTab === 'meals') {
       // Plats enregistrés
       const meals = _nutriMeals;
       if (!meals.length) {
@@ -7988,12 +8032,50 @@
   function addIngredientToMeal(i) {
     const f = (window._ingredientCache || [])[i];
     if (!f) return;
-    // Mode personnalisation de plat existant
-    if (window._customizeIngMode) {
-      addIngToCustomize(f);
+    if (window._customizeIngMode) { addIngToCustomize(f); return; }
+    if (window._recipeIngMode) {
+      window._recipeIngMode = false;
+      closeIngredientSearch();
+      // Demander la quantité via un mini modal
+      const ex = document.getElementById('recipeIngQtyModal'); if (ex) ex.remove();
+      const m = document.createElement('div');
+      m.id = 'recipeIngQtyModal';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1070;display:flex;align-items:center;justify-content:center;padding:0 16px';
+      m.onclick = e => { if (e.target === m) m.remove(); };
+      m.innerHTML = `<div style="background:var(--surface);border-radius:14px;padding:20px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:12px">${f.name}</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-bottom:6px">QUANTITÉ CRU (g)</div>
+        <input type="number" id="recipeIngQtyInp" placeholder="ex: 200" class="inp" style="width:100%;box-sizing:border-box;font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px"/>
+        <div style="display:flex;gap:8px">
+          <button onclick="document.getElementById('recipeIngQtyModal').remove()" style="flex:1;background:none;border:1px solid var(--border2);border-radius:10px;padding:10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Geist Mono',monospace">Annuler</button>
+          <button onclick="confirmRecipeIng(${JSON.stringify(f).replace(/"/g,'&quot;')})" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-family:'DM Serif Display',serif;font-size:14px;cursor:pointer">Ajouter</button>
+        </div>
+      </div>`;
+      document.body.appendChild(m);
+      setTimeout(() => document.getElementById('recipeIngQtyInp')?.focus(), 150);
       return;
     }
     openCmQtyModal(f.name, f.kcal, f.prot, f.gluc, f.lip, f.fib || 0, 100, undefined);
+  }
+
+  function confirmRecipeIng(f) {
+    const qty = parseFloat(document.getElementById('recipeIngQtyInp')?.value);
+    if (!qty || qty <= 0) { showToast('Quantité invalide'); return; }
+    const ratio = qty / 100;
+    const ing = {
+      name: f.name, qty,
+      kcal: Math.round(f.kcal * ratio),
+      prot: Math.round(f.prot * ratio * 10) / 10,
+      gluc: Math.round(f.gluc * ratio * 10) / 10,
+      lip:  Math.round(f.lip  * ratio * 10) / 10,
+      fib:  Math.round((f.fib||0) * ratio * 10) / 10,
+    };
+    const ings = window._getRecipeIngs ? window._getRecipeIngs() : [];
+    ings.push(ing);
+    if (window._setRecipeIngs) window._setRecipeIngs(ings);
+    document.getElementById('recipeIngQtyModal')?.remove();
+    if (window._rebuildRecipeModal) window._rebuildRecipeModal();
+    showToast('"' + f.name + '" ajouté ✓');
   }
 
   function openCustomizeIngredientSearch() {
@@ -8059,6 +8141,218 @@
     window._customizeIngMode = false;
     closeIngredientSearch();
     showToast('"' + f.name + '" ajouté ✓');
+  }
+
+  // ══ RECETTES ══
+  let _nutriRecipes = JSON.parse(localStorage.getItem('elev_nutri_recipes') || '[]');
+
+  function renderRecipesSection(body) {
+    if (!_nutriRecipes.length) {
+      body.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:13px">
+        Aucune recette.<br><span style="font-size:11px;opacity:0.7">Crée ta première recette ci-dessus.</span></div>`;
+      return;
+    }
+    body.innerHTML = _nutriRecipes.map((r, i) => {
+      const totKcal = Math.round(r.ingredients.reduce((s,ing)=>s+ing.kcal,0));
+      const totProt = Math.round(r.ingredients.reduce((s,ing)=>s+ing.prot,0)*10)/10;
+      const totGluc = Math.round(r.ingredients.reduce((s,ing)=>s+ing.gluc,0)*10)/10;
+      const totLip  = Math.round(r.ingredients.reduce((s,ing)=>s+ing.lip,0)*10)/10;
+      const totQtyCru = r.ingredients.reduce((s,ing)=>s+ing.qty,0);
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--text)">${r.name}</div>
+          <button onclick="editRecipe(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px">✏️</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:10px">${r.ingredients.length} ingrédients · ${Math.round(totQtyCru)}g cru · ${totKcal} kcal</div>
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <span style="background:#edf6f1;color:#2C5F4A;border-radius:20px;padding:2px 8px;font-size:10px;font-family:'Geist Mono',monospace">G ${totGluc}g</span>
+          <span style="background:var(--warm);color:var(--muted);border-radius:20px;padding:2px 8px;font-size:10px;font-family:'Geist Mono',monospace">P ${totProt}g</span>
+          <span style="background:#fdf6ee;color:#c8956c;border-radius:20px;padding:2px 8px;font-size:10px;font-family:'Geist Mono',monospace">L ${totLip}g</span>
+        </div>
+        <button onclick="openUseRecipeModal(${i})" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-family:'DM Serif Display',serif;font-size:14px;cursor:pointer">
+          Utiliser cette recette →
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  function openCreateRecipeModal() {
+    const ex = document.getElementById('createRecipeModal');
+    if (ex) ex.remove();
+    let _recipeIngs = [];
+    let _recipeEditId = null;
+
+    const modal = document.createElement('div');
+    modal.id = 'createRecipeModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1060;display:flex;align-items:center;justify-content:center;padding:0 16px';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    function buildRecipeModal() {
+      const totKcal = Math.round(_recipeIngs.reduce((s,i)=>s+i.kcal,0));
+      const totProt = Math.round(_recipeIngs.reduce((s,i)=>s+i.prot,0)*10)/10;
+      const totGluc = Math.round(_recipeIngs.reduce((s,i)=>s+i.gluc,0)*10)/10;
+      const totLip  = Math.round(_recipeIngs.reduce((s,i)=>s+i.lip,0)*10)/10;
+      modal.innerHTML = `<div style="background:var(--surface);border-radius:16px;width:100%;max-width:480px;max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 30px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+        <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <button onclick="document.getElementById('createRecipeModal').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px">✕</button>
+            <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)">Nouvelle recette</div>
+            <div style="width:24px"></div>
+          </div>
+          <input id="recipeNameInp" class="inp" placeholder="Nom de la recette" style="width:100%;box-sizing:border-box;margin-bottom:10px" value="${_recipeEditId!==null?_nutriRecipes[_recipeEditId]?.name||'':''}"/>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface2);border-radius:10px;overflow:hidden;margin-bottom:0">
+            <div style="text-align:center;padding:8px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)">${totKcal}</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace">KCAL</div></div>
+            <div style="text-align:center;padding:8px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:#7ab893">${totGluc}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace">GLUC</div></div>
+            <div style="text-align:center;padding:8px 4px;border-right:1px solid var(--border)"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--accent)">${totProt}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace">PROT</div></div>
+            <div style="text-align:center;padding:8px 4px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--text)">${totLip}g</div><div style="font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace">LIP</div></div>
+          </div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 16px">
+          ${_recipeIngs.length ? _recipeIngs.map((ing,ii)=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:500;color:var(--text)">${ing.name}</div>
+              <div style="font-size:11px;color:var(--muted)">${ing.qty}g · ${ing.kcal} kcal</div></div>
+              <button onclick="_recipeIngs.splice(${ii},1);document.getElementById('createRecipeModal').remove();openCreateRecipeModal._rebuild(_recipeIngs)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 8px">✕</button>
+            </div>`).join('') : '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Ajoute des ingrédients ci-dessous</div>'}
+        </div>
+        <div style="padding:12px 16px 16px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:8px">
+          <button onclick="openRecipeIngSearch()" style="width:100%;background:none;border:1.5px dashed var(--border2);border-radius:10px;padding:11px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);cursor:pointer">+ AJOUTER UN INGRÉDIENT</button>
+          <button onclick="saveRecipe()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'DM Serif Display',serif;font-size:16px;cursor:pointer">Enregistrer la recette</button>
+        </div>
+      </div>`;
+    }
+
+    openCreateRecipeModal._rebuild = function(ings) {
+      _recipeIngs = ings;
+      openCreateRecipeModal();
+    };
+
+    window._recipeIngs = _recipeIngs;
+    window._getRecipeIngs = () => _recipeIngs;
+    window._setRecipeIngs = (v) => { _recipeIngs = v; };
+    window._rebuildRecipeModal = () => buildRecipeModal();
+    buildRecipeModal();
+    document.body.appendChild(modal);
+  }
+
+  function openRecipeIngSearch() {
+    window._recipeIngMode = true;
+    openIngredientSearch();
+  }
+
+  function saveRecipe() {
+    const name = document.getElementById('recipeNameInp')?.value.trim();
+    const ings = window._getRecipeIngs ? window._getRecipeIngs() : [];
+    if (!name) { showToast('Donne un nom à la recette'); return; }
+    if (!ings.length) { showToast('Ajoute au moins un ingrédient'); return; }
+    const recipe = { id: 'rec_' + Date.now(), name, ingredients: ings.map(i=>({...i})) };
+    _nutriRecipes.push(recipe);
+    localStorage.setItem('elev_nutri_recipes', JSON.stringify(_nutriRecipes));
+    document.getElementById('createRecipeModal')?.remove();
+    renderNutriAddBody();
+    showToast('"' + name + '" enregistrée ✓');
+  }
+
+  function editRecipe(i) {
+    const r = _nutriRecipes[i];
+    if (!r) return;
+    window._setRecipeIngs && window._setRecipeIngs(r.ingredients.map(ing=>({...ing})));
+    openCreateRecipeModal();
+    setTimeout(() => {
+      const inp = document.getElementById('recipeNameInp');
+      if (inp) inp.value = r.name;
+    }, 50);
+    window._recipeEditIdx = i;
+  }
+
+  function openUseRecipeModal(i) {
+    const r = _nutriRecipes[i];
+    if (!r) return;
+    const totQtyCru = r.ingredients.reduce((s,ing)=>s+ing.qty,0);
+    const totKcal = Math.round(r.ingredients.reduce((s,i)=>s+i.kcal,0));
+
+    const ex = document.getElementById('useRecipeModal'); if (ex) ex.remove();
+    const modal = document.createElement('div');
+    modal.id = 'useRecipeModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1060;display:flex;align-items:center;justify-content:center;padding:0 16px';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `<div style="background:var(--surface);border-radius:16px;padding:24px 20px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:4px">${r.name}</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:20px">Recette crue : ${Math.round(totQtyCru)}g · ${totKcal} kcal</div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-bottom:6px">POIDS TOTAL CUIT (g)</div>
+        <input type="number" id="recipeWeightCuit" placeholder="ex: 480" class="inp" style="width:100%;box-sizing:border-box;font-family:'DM Serif Display',serif;font-size:18px" oninput="updateRecipePreview(${Math.round(totQtyCru)},${totKcal})"/>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Laisse vide pour utiliser le grammage cru total (${Math.round(totQtyCru)}g)</div>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:1px;margin-bottom:6px">PORTION QUE TU MANGES (g)</div>
+        <input type="number" id="recipePortionQty" placeholder="ex: 150" class="inp" style="width:100%;box-sizing:border-box;font-family:'DM Serif Display',serif;font-size:18px" oninput="updateRecipePreview(${Math.round(totQtyCru)},${totKcal})"/>
+      </div>
+
+      <div id="recipePreviewBox" style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:16px;text-align:center;display:none">
+        <div style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:4px">ESTIMATION</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--text)" id="recipePreviewKcal">—</div>
+        <div style="font-size:11px;color:var(--muted)">kcal pour cette portion</div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('useRecipeModal').remove()" style="flex:1;background:none;border:1px solid var(--border2);border-radius:10px;padding:12px;font-family:'Geist Mono',monospace;font-size:10px;color:var(--muted);cursor:pointer">Annuler</button>
+        <button onclick="confirmUseRecipe(${i},${Math.round(totQtyCru)},${totKcal})" style="flex:2;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'DM Serif Display',serif;font-size:15px;cursor:pointer">Ajouter au repas</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+
+  function updateRecipePreview(totQtyCru, totKcal) {
+    const cuit = parseFloat(document.getElementById('recipeWeightCuit')?.value) || totQtyCru;
+    const portion = parseFloat(document.getElementById('recipePortionQty')?.value);
+    const box = document.getElementById('recipePreviewBox');
+    const kcalEl = document.getElementById('recipePreviewKcal');
+    if (!portion || portion <= 0) { if (box) box.style.display = 'none'; return; }
+    // Ratio : kcal_portion = (portion / cuit) * totKcal
+    const kcalPortion = Math.round((portion / cuit) * totKcal);
+    if (box) box.style.display = 'block';
+    if (kcalEl) kcalEl.textContent = kcalPortion;
+  }
+
+  async function confirmUseRecipe(recipeIdx, totQtyCru, totKcalCru) {
+    const r = _nutriRecipes[recipeIdx];
+    if (!r) return;
+    const cuit = parseFloat(document.getElementById('recipeWeightCuit')?.value) || totQtyCru;
+    const portion = parseFloat(document.getElementById('recipePortionQty')?.value) || totQtyCru;
+    const ratio = (portion / cuit); // ratio portion/cuit
+    const mealName = _nutriActiveMeal || 'Déjeuner';
+
+    document.getElementById('useRecipeModal')?.remove();
+    closeNutriAdd();
+
+    // Ajouter chaque ingrédient avec le ratio appliqué
+    for (const ing of r.ingredients) {
+      const ingRatio = ratio;
+      const entry = {
+        id: Date.now() + Math.random(),
+        date: _nutriViewDate, meal: mealName,
+        name: ing.name, brand: null,
+        qty: Math.round(ing.qty * ingRatio),
+        kcal: Math.round(ing.kcal * ingRatio),
+        prot: Math.round(ing.prot * ingRatio * 10) / 10,
+        gluc: Math.round(ing.gluc * ingRatio * 10) / 10,
+        lip:  Math.round(ing.lip  * ingRatio * 10) / 10,
+        fib:  Math.round((ing.fib||0) * ingRatio * 10) / 10,
+        kcal100: ing.qty ? Math.round(ing.kcal/ing.qty*100) : 0,
+        prot100: ing.qty ? Math.round(ing.prot/ing.qty*1000)/10 : 0,
+        gluc100: ing.qty ? Math.round(ing.gluc/ing.qty*1000)/10 : 0,
+        lip100:  ing.qty ? Math.round(ing.lip/ing.qty*1000)/10 : 0,
+        fib100:  ing.qty ? Math.round((ing.fib||0)/ing.qty*1000)/10 : 0,
+      };
+      await saveNutriEntry(entry);
+    }
+    showToast('"' + r.name + '" ajoutée ✓');
+    _nutriAccordionOpen[mealName] = true;
+    renderNutritionTab();
+    renderMealPage();
   }
 
   async function saveMealRecipe() {
