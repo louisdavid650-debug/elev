@@ -1686,10 +1686,10 @@
 
   <!-- ══ STATS ══ -->
   <!-- ══ NUTRITION ══ -->
-  <div class="section" id="tab-nutrition" style="padding:0">
+  <div class="section" id="tab-nutrition">
 
     <!-- En-tête + réglages -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:24px 24px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);line-height:1.1">Résumé</div>
       <button onclick="openNutriSettings()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);flex-shrink:0">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1699,7 +1699,7 @@
     </div>
 
     <!-- Card résumé macros -->
-    <div id="nutriSummaryCard" style="background:#F7F3ED;margin-bottom:12px;padding:14px 24px;user-select:none;border-bottom:0.5px solid rgba(136,135,128,0.25)"
+    <div id="nutriSummaryCard" style="background:#F7F3ED;border-radius:16px;margin-bottom:16px;padding:20px 20px;user-select:none;border:0.5px solid rgba(136,135,128,0.25)"
       ontouchstart="nutriCardSwipeStart(event)"
       ontouchmove="nutriCardSwipeMove(event)"
       ontouchend="nutriCardSwipeEnd(event)">
@@ -1757,7 +1757,7 @@
     </div>
 
     <!-- Card liste repas -->
-    <div id="nutriJournal" style="background:var(--surface);overflow:hidden;border-top:0.5px solid var(--border);margin-bottom:20px;padding:0 24px"></div>
+    <div id="nutriJournal" style="background:var(--surface);border-radius:16px;overflow:hidden;border:0.5px solid var(--border);margin-bottom:20px"></div>
   </div>
 
   <!-- ══ OVERLAY RÉGLAGES NUTRITION ══ -->
@@ -10025,8 +10025,8 @@
         const hasItems = mealKcal > 0;
         const isLast   = mi === MEALS.length - 1;
 
-        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;${isLast ? '' : 'border-bottom:0.5px solid var(--border)'}" onclick="openMealPage('${meal}')">
-          <div style="width:36px;height:36px;border-radius:10px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
+        return `<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;${isLast ? '' : 'border-bottom:0.5px solid var(--border)'}" onclick="openMealPage('${meal}')">
+          <div style="width:42px;height:42px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:500;color:var(--text)">${meal}</div>
             ${preview
