@@ -6620,18 +6620,72 @@
     const monthDays = new Set(sessions.filter(s => new Date(s.date) >= monthStart).map(s => s.date)).size;
 
     document.getElementById('homeWeekSessions').textContent = thisWeekSessions.length;
-    const diff = thisWeekSessions.length - lastWeekSessions.length;
-    const isSunday = new Date().getDay() === 0;
+
+    // Phrase intelligente basée sur le programme actif
     const motivHome = (() => {
-      if (!isSunday) return 'Continue comme ça ! 💪';
       const n = thisWeekSessions.length;
-      if (diff > 1) return '🔥 En feu cette semaine !';
-      if (diff === 1) return '📈 Un de plus que la semaine passée';
-      if (diff === 0 && n >= 3) return '💪 Belle régularité, continue !';
-      if (diff === 0 && n >= 1) return '✓ Dans les temps, keep going';
-      if (diff === 0 && n === 0) return 'La semaine commence, à toi de jouer';
-      if (diff === -1) return 'Rattrape ça cette semaine 👊';
-      return 'Chaque séance compte 💡';
+      const todayJs = new Date().getDay(); // 0=dim, 1=lun...
+      const activeProg = programs.find(p => p.id === activeProgId);
+
+      // Jours prévus cette semaine selon le programme
+      const plannedDays = activeProg?.trainingDays?.filter(td => td.sessionId) || [];
+      const plannedCount = plannedDays.length;
+
+      // Jours déjà passés cette semaine (lundi=1 → aujourd'hui)
+      // On convertit le jour JS (0=dim) en lundi-based (1=lun...7=dim)
+      const toMon = d => d === 0 ? 7 : d;
+      const todayMon = toMon(todayJs);
+      // Jours prévus qui sont déjà passés ou aujourd'hui
+      const passedPlanned = plannedDays.filter(td => toMon(td.day) <= todayMon);
+      const remainingPlanned = plannedDays.filter(td => toMon(td.day) > todayMon);
+
+      // Routines faites cette semaine
+      const doneRoutineNames = thisWeekSessions.map(s => s.routineName).filter(Boolean);
+
+      // Prochain jour prévu non encore fait
+      const nextMissed = remainingPlanned.find(td => {
+        const r = routines.find(r => r.id === td.sessionId);
+        return r && !doneRoutineNames.includes(r.name);
+      });
+      const nextRoutineName = nextMissed ? routines.find(r => r.id === nextMissed.sessionId)?.name : null;
+      const nextDayName = nextMissed ? ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][nextMissed.day] : null;
+
+      // Séances passées prévues non faites
+      const missedPast = passedPlanned.filter(td => {
+        const r = routines.find(r => r.id === td.sessionId);
+        return r && !doneRoutineNames.includes(r.name);
+      });
+
+      if (!plannedCount) {
+        // Pas de programme configuré
+        if (n === 0) return 'Lance ta première séance ! 🚀';
+        if (n === 1) return 'Bonne reprise ! 💪';
+        return `${n} séances cette semaine, continue ! 🔥`;
+      }
+
+      if (n === 0 && todayMon <= toMon(plannedDays[0]?.day || 1)) {
+        return `Ta semaine commence ${nextDayName ? nextDayName + ' avec ' + nextRoutineName : 'bientôt'} 📅`;
+      }
+
+      if (n >= plannedCount) {
+        return `Programme complet cette semaine ! 🏆`;
+      }
+
+      if (missedPast.length > 0) {
+        const missedName = routines.find(r => r.id === missedPast[0].sessionId)?.name;
+        if (missedName) return `${missedName} manquée — rattrape-la 👊`;
+        return `${missedPast.length} séance${missedPast.length > 1 ? 's' : ''} manquée${missedPast.length > 1 ? 's' : ''} — rattrape ! 👊`;
+      }
+
+      if (nextRoutineName && nextDayName) {
+        return `${n}/${plannedCount} · ${nextRoutineName} ${nextDayName} 📅`;
+      }
+
+      if (n > 0 && remainingPlanned.length === 0) {
+        return `Semaine terminée, ${n}/${plannedCount} séances ✓`;
+      }
+
+      return `${n}/${plannedCount} séances · Continue ! 💪`;
     })();
     document.getElementById('homeWeekVsLast').textContent = motivHome;
     document.getElementById('homeWeekDays').textContent = monthDays;
