@@ -3661,8 +3661,8 @@
             html += '<div class="warmup-sep">🔥 Échauffement</div>';
             html += wuSets.map((s, wi) => `<div class="set-row wu-row">
               <div class="set-n wu-n">W${wi+1}</div>
-              <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
-              <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+              <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" data-ei="${ei}" data-f="w" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+              <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" data-ei="${ei}" data-f="r" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
               <div class="set-prev wu-prev">${wuReps[wi]||'?'}<span> reps</span></div>
               <div style="display:flex;align-items:center;gap:4px">
                 <button class="set-tick wu-tick ${s.done?'done':''}" onclick="tickWU(${ei},${wi})">${s.done?'✓':'·'}</button>
@@ -4236,16 +4236,25 @@
       if (w > 0) {
         const ex = exercises[ei];
         const wuSets = ex.sets.filter(s => s.warmup);
-        if (wuSets.length) {
-          const pcts = [0.5, 0.7, 0.85];
+        // Vérifier que c'est bien la 1ère série de travail
+        const workSets = ex.sets.filter(s => !s.warmup);
+        const isFirstWorkSet = workSets.length > 0 && ex.sets[si] === workSets[0];
+        if (wuSets.length && isFirstWorkSet) {
+          const pcts = [0.5, 0.75, 0.85];
           const wuRepsAuto = [8, 5, 3];
           wuSets.forEach((s, wi) => {
             const rounded = Math.round(w * (pcts[wi] || 0.5) * 2) / 2;
-            s.w = rounded;
+            s.w = rounded > 0 ? rounded : '';
             s.r = wuRepsAuto[wi] || 8;
           });
-          _rerender();
-          return;
+          autosaveDraft();
+          // Mettre à jour les inputs warmup dans le DOM sans rerender complet
+          const wuInputsW = document.querySelectorAll(`[data-ei="${ei}"].wu-inp[data-f="w"]`);
+          const wuInputsR = document.querySelectorAll(`[data-ei="${ei}"].wu-inp[data-f="r"]`);
+          wuSets.forEach((s, wi) => {
+            if (wuInputsW[wi]) wuInputsW[wi].value = s.w;
+            if (wuInputsR[wi]) wuInputsR[wi].value = s.r;
+          });
         }
         // PR check
         if (checkNewPR(ex.name, w)) {
@@ -12394,8 +12403,8 @@
         setsHtml += '<div class="warmup-sep">🔥 Échauffement</div>';
         setsHtml += wuSets.map((s, wi) => `<div class="set-row wu-row">
           <div class="set-n wu-n">W${wi+1}</div>
-          <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
-          <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+          <div><input class="set-inp wu-inp" type="number" value="${s.w}" placeholder="—" data-ei="${ei}" data-f="w" onchange="updWU(${ei},${wi},'w',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
+          <div><input class="set-inp wu-inp" type="number" value="${s.r}" placeholder="—" data-ei="${ei}" data-f="r" onchange="updWU(${ei},${wi},'r',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/></div>
           <div class="set-prev wu-prev">${pctLabels[wi]||''}<span>× ${s.r||'?'}</span></div>
           <div><button class="set-tick wu-tick ${s.done?'done':''}" onclick="tickWU(${ei},${wi})">${s.done?'✓':'·'}</button></div>
           <span></span>
